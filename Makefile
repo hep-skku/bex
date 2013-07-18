@@ -2,16 +2,18 @@
 
 ## Define paths to the libraries
 PDFLIB=$(HOME)/work/Blackhole/lhapdf/lhapdf-5.8.9/lib
+PYTHIA8=$(HOME)/work/Blackhole/pythia8
 
 ## Compiler options
-CXX=g++
+CC=g++
 F77=gfortran
 EXE=bex
-CXXFLAGS=-I.
+CCFLAGS=-I.
+LDFLAGS=-L$(PDFLIB) -lm
 
 ## Actions
-vpath %.h include
-vpath %.o tmp
+#vpath %.h include
+#vpath %.o tmp
 
 all: $(EXE)
 
@@ -19,11 +21,13 @@ SRCS=$(filter-out main.cc,$(notdir $(wildcard src/*.cc)))
 OBJS=$(SRCS:.cc=.o)
 
 $(OBJS): $(addprefix src/,$(*F:.o=.cc))
-	$(CXX) $(CXXFLAGS) -o tmp/$@ -c src/$(*F).cc
+	-mkdir tmp
+	$(CC) $(CCFLAGS) -o tmp/$@ -c src/$(*F).cc
 
 $(EXE): $(OBJS) src/main.cc
-	$(CXX) $(CXXFLAGS) -o bin/$(EXE) src/main.cc $(addprefix tmp/,$(OBJS))
+	-mkdir bin
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o bin/$(EXE) src/main.cc $(addprefix tmp/,$(OBJS))
 
 clean:
 	-rm -f bin/$(EXE)
-	-rm -f tmp/*
+	-rm -rf tmp
