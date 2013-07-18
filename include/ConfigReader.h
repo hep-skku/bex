@@ -1,3 +1,7 @@
+#ifndef ConfigReader_H
+#define ConfigReader_H
+
+#include <sstream>
 #include <string>
 #include <map>
 
@@ -5,11 +9,26 @@ class ConfigReader
 {
 public:
   ConfigReader(const char* fielName, int argc, char* argv[]);
-  template<typename T>
 
-  T get(const std::string name);
   void processInputCommand(const std::string line);
-  void print();
+
+  void print() const;
+  template<typename T>
+  T get(const std::string name) const
+  {
+    DataMap::const_iterator key = data_.find(name);
+    if ( key == data_.end() )
+    {
+      // FIXME: raise exception
+      return T();
+    }
+
+    T value;
+    std::stringstream ss(key->second);
+    ss >> value;
+
+    return value;
+  }
 
 private:
   // Case insensitive map, from http://stackoverflow.com/questions/1801892/making-mapfind-operation-case-insensitive
@@ -29,6 +48,9 @@ private:
     }
   };
 
-  std::map<std::string, std::string, ci_less> data_;
+  typedef std::map<std::string, std::string, ci_less> DataMap;
+  DataMap data_;
 };
+
+#endif
 

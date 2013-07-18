@@ -3,6 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace boost::algorithm;
@@ -47,7 +48,7 @@ void ConfigReader::processInputCommand(const string line)
   data_[name] = value;
 }
 
-void ConfigReader::print()
+void ConfigReader::print() const
 {
   // Print out configurations
   for ( std::map<string, string>::const_iterator key = data_.begin();
@@ -56,4 +57,5 @@ void ConfigReader::print()
     cout << key->first << " = " << key->second << endl;
   }
 }
+
 
