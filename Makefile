@@ -12,22 +12,17 @@ CCFLAGS=-I.
 LDFLAGS=-L$(PDFLIB) -lm
 
 ## Actions
-#vpath %.h include
-#vpath %.o tmp
-
 all: $(EXE)
 
 SRCS=$(filter-out main.cc,$(notdir $(wildcard src/*.cc)))
 OBJS=$(SRCS:.cc=.o)
 
 $(OBJS): $(addprefix src/,$(*F:.o=.cc))
-	-mkdir tmp
 	$(CC) $(CCFLAGS) -o tmp/$@ -c src/$(*F).cc
 
 $(EXE): $(OBJS) src/main.cc
-	-mkdir bin
 	$(CC) $(CCFLAGS) $(LDFLAGS) -o bin/$(EXE) src/main.cc $(addprefix tmp/,$(OBJS))
 
 clean:
 	-rm -f bin/$(EXE)
-	-rm -rf tmp
+	-rm -f tmp/*
