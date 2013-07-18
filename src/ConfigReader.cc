@@ -3,7 +3,6 @@
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <fstream>
-#include <sstream>
 
 using namespace std;
 using namespace boost::algorithm;
