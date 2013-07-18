@@ -1,30 +1,34 @@
 # Makefile
 
 ## Define paths to the libraries
-PDFLIB=$(HOME)/work/Blackhole/lhapdf/lhapdf-5.8.9/lib
+LHAPDF=$(HOME)/work/Blackhole/lhapdf/lhapdf-5.8.9
 PYTHIA8=$(HOME)/work/Blackhole/pythia8
+#INCLUDES=. /opt/local/include $(LHAPDF)/include
 INCLUDES=. /opt/local/include
 
 ## Compiler options
 #CC=g++
 CC=clang++
-F77=gfortran
 EXE=bex
 CCFLAGS=$(addprefix -I,$(INCLUDES))
-LDFLAGS=-L$(PDFLIB) -lm
+LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm
 
 ## Actions
 all: $(EXE)
 
-SRCS=$(filter-out main.cc,$(notdir $(wildcard src/*.cc)))
-OBJS=$(SRCS:.cc=.o)
+SRCS=$(filter-out main.cc PDFInterface.cc,$(notdir $(wildcard src/*.cc)))
+OBJS=$(addprefix tmp/,$(SRCS:.cc=.o))
 
-$(OBJS): $(addprefix src/,$(*F:.o=.cc))
-	$(CC) $(CCFLAGS) -o tmp/$@ -c src/$(*F).cc
+$(OBJS):
+	$(CC) $(CCFLAGS) -o $@ -c src/$(*F).cc
 
-$(EXE): $(OBJS) src/main.cc
-	$(CC) $(CCFLAGS) $(LDFLAGS) -o bin/$(EXE) src/main.cc $(addprefix tmp/,$(OBJS))
+tmp/PDFInterface.o:
+	$(CC) $(CCFLAGS) -I$(LHAPDF)/include -o $@ -c src/$(*F).cc
+
+$(EXE): $(OBJS) tmp/PDFInterface.o
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o bin/$(EXE) src/main.cc $(OBJS)
 
 clean:
 	-rm -f bin/$(EXE)
 	-rm -f tmp/*
+
