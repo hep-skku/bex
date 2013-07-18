@@ -1,9 +1,9 @@
 #include "include/PDFInterface.h"
 #include "LHAPDF/LHAPDF.h"
 
-PDFInterface::PDFInterface(const ConfigReader& cfg)
+PDFInterface::PDFInterface(const int pdfId)
 {
-  pdfId_ = cfg.get<int>("id");
+  pdfId_ = pdfId;
   LHAPDF::initPDF(pdfId_);
 }
 

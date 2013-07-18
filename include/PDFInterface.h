@@ -1,13 +1,12 @@
 #ifndef PDFInterface_H
 #define PDFInterface_H
 
-#include "include/ConfigReader.h"
 #include <vector>
 
 class PDFInterface
 {
 public:
-  PDFInterface(const ConfigReader& cfg);
+  PDFInterface(const int pdfId);
   std::vector<double> loadPDF(const double x, const double q) const;
 
 private:
