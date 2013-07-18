@@ -3,12 +3,13 @@
 ## Define paths to the libraries
 PDFLIB=$(HOME)/work/Blackhole/lhapdf/lhapdf-5.8.9/lib
 PYTHIA8=$(HOME)/work/Blackhole/pythia8
+INCLUDES=. /opt/local/include
 
 ## Compiler options
 CC=g++
 F77=gfortran
 EXE=bex
-CCFLAGS=-I.
+CCFLAGS=$(addprefix -I,$(INCLUDES))
 LDFLAGS=-L$(PDFLIB) -lm
 
 ## Actions
