@@ -1,3 +1,6 @@
+#ifndef Random_H
+#define Random_H
+
 #include "boost/random.hpp"
 #include "boost/random/mersenne_twister.hpp"
 
@@ -30,4 +33,6 @@ private:
   }
   double shift(const double x, const double min, const double max) const;
 };
+
+#endif
 
