@@ -26,7 +26,7 @@ tmp/PDFInterface.o:
 	$(CC) $(CCFLAGS) -I$(LHAPDF)/include -o $@ -c src/$(*F).cc
 
 $(EXE): $(OBJS) tmp/PDFInterface.o
-	$(CC) $(CCFLAGS) $(LDFLAGS) -o bin/$(EXE) src/main.cc $(OBJS)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o bin/$(EXE) src/main.cc $(OBJS) tmp/PDFInterface.o
 
 clean:
 	-rm -f bin/$(EXE)
