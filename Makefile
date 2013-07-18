@@ -6,7 +6,8 @@ PYTHIA8=$(HOME)/work/Blackhole/pythia8
 INCLUDES=. /opt/local/include
 
 ## Compiler options
-CC=g++
+#CC=g++
+CC=clang++
 F77=gfortran
 EXE=bex
 CCFLAGS=$(addprefix -I,$(INCLUDES))
