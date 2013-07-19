@@ -11,6 +11,9 @@ public:
   AbsModel(const ConfigReader& cfg);
   virtual ~AbsModel();
 
+  void calculateCrossSection();
+  virtual void calculatePartonCrossSection() = 0;
+
 protected:
   Random* rnd_;
   PDFInterface* pdf_;
@@ -18,6 +21,8 @@ protected:
   double beamEnergy_;
   double massMin_, massMax_;
   double mD_;
+
+  const static int nCrossSectionIteration = 100000;
 };
 
 #endif

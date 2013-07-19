@@ -7,6 +7,9 @@ class ADDModel : public AbsModel
 {
 public:
   ADDModel(const ConfigReader& cfg);
+
+private:
+  int nDim_;
 };
 
 #endif
