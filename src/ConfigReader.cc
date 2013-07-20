@@ -57,4 +57,18 @@ void ConfigReader::print() const
   }
 }
 
+template<>
+std::vector<double> ConfigReader::get(const std::string name) const
+{
+  std::vector<double> l;
+  DataMap::const_iterator key = data_.find(name);
+  if ( key == data_.end() ) return l; // FIXME: raise exception
+
+  std::stringstream ss(key->second);
+  double val;
+  while ( ss>>val ) l.push_back(val);
+
+  return l;
+}
+
 

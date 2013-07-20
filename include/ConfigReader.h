@@ -1,6 +1,7 @@
 #ifndef ConfigReader_H
 #define ConfigReader_H
 
+#include <vector>
 #include <sstream>
 #include <string>
 #include <map>
@@ -17,11 +18,7 @@ public:
   T get(const std::string name) const
   {
     DataMap::const_iterator key = data_.find(name);
-    if ( key == data_.end() )
-    {
-      // FIXME: raise exception
-      return T();
-    }
+    if ( key == data_.end() ) return T(); // FIXME: raise exception
 
     T value;
     std::stringstream ss(key->second);
@@ -51,6 +48,9 @@ private:
   typedef std::map<std::string, std::string, ci_less> DataMap;
   DataMap data_;
 };
+
+template<> std::vector<double> ConfigReader::get(const std::string name) const;
+
 
 #endif
 
