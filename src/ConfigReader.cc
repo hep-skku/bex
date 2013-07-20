@@ -22,6 +22,12 @@ ConfigReader::ConfigReader(const char* fileName, int argc, char* argv[])
       processInputCommand(line);
     }
   }
+  else
+  {
+    cerr << "!!ConfigReader: cannot open file " << fileName << endl;
+    return;
+    // FIXME: raise exception
+  }
 
   // Read command line options. We don't allow whitespaces here
   for ( int i=0; i<argc; ++i )
@@ -47,6 +53,11 @@ void ConfigReader::processInputCommand(const string line)
   data_[name] = value;
 }
 
+bool ConfigReader::hasOption(const std::string name) const
+{
+  return data_.find(name) != data_.end();
+}
+
 void ConfigReader::print() const
 {
   // Print out configurations
@@ -61,10 +72,9 @@ template<>
 std::vector<double> ConfigReader::get(const std::string name) const
 {
   std::vector<double> l;
-  DataMap::const_iterator key = data_.find(name);
-  if ( key == data_.end() ) return l; // FIXME: raise exception
+  if ( !hasOption(name) ) return l;
 
-  std::stringstream ss(key->second);
+  std::stringstream ss(data_.find(name)->second);
   double val;
   while ( ss>>val ) l.push_back(val);
 

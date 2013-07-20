@@ -14,14 +14,14 @@ public:
   void processInputCommand(const std::string line);
 
   void print() const;
+  bool hasOption(const std::string name) const;
   template<typename T>
   T get(const std::string name) const
   {
-    DataMap::const_iterator key = data_.find(name);
-    if ( key == data_.end() ) return T(); // FIXME: raise exception
+    if ( !hasOption(name) ) return T(); // FIXME: raise exception
 
     T value;
-    std::stringstream ss(key->second);
+    std::stringstream ss(data_.find(name)->second);
     ss >> value;
 
     return value;
