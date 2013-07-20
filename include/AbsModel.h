@@ -12,7 +12,7 @@ public:
   virtual ~AbsModel();
 
   void calculateCrossSection();
-  virtual void calculatePartonCrossSection() = 0;
+  virtual double calculatePartonCrossSection() = 0;
 
 protected:
   Random* rnd_;
@@ -22,7 +22,9 @@ protected:
   double massMin_, massMax_;
   double mD_;
 
-  const static int nCrossSectionIteration = 100000;
+  double xsec_, xsecErr_;
+
+  const static int nXsecIter_ = 100000;
 };
 
 #endif

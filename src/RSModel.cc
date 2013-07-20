@@ -5,7 +5,8 @@ RSModel::RSModel(const ConfigReader& cfg):
 {
 }
 
-double RSModel::CalculatePartonCrossSecction()
+double RSModel::calculatePartonCrossSection()
 {
+  return 0;
 }
 

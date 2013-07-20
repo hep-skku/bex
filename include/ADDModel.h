@@ -7,6 +7,7 @@ class ADDModel : public AbsModel
 {
 public:
   ADDModel(const ConfigReader& cfg);
+  virtual double calculatePartonCrossSection();
 
 private:
   int nDim_;

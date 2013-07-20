@@ -7,6 +7,7 @@ class RSModel : public AbsModel
 {
 public:
   RSModel(const ConfigReader& cfg);
+  virtual double calculatePartonCrossSection();
 };
 
 #endif
