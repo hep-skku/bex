@@ -6,8 +6,13 @@ PYTHIA8=$(HOME)/work/Blackhole/pythia8
 INCLUDES=. /opt/local/include
 
 ## Compiler options
-CC=g++
-#CC=clang++
+## Detect OSX
+ifeq ( $(shell uname),Darwin )
+	CC=clang++
+else
+	CC=g++
+endif
+
 EXE=bex
 CCFLAGS=$(addprefix -I,$(INCLUDES))
 LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm
@@ -48,7 +53,7 @@ tmp/ConfigReader.o: include/ConfigReader.h
 tmp/PDFInterface.o: include/PDFInterface.h
 tmp/RSModel.o: include/RSModel.h include/AbsModel.h include/ConfigReader.h
 tmp/RSModel.o: include/PDFInterface.h include/Random.h
-tmp/Random.o: include/Random.h /usr/include/boost/random.hpp
+tmp/Random.o: include/Random.h
 tmp/Utility.o: include/Utility.h
 tmp/main.o: include/ConfigReader.h include/ADDModel.h include/AbsModel.h
 tmp/main.o: include/PDFInterface.h include/Random.h
