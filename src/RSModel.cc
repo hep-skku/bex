@@ -35,9 +35,9 @@ double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF
   // Consider suppression factor due to profile in extra dimension
   // Assume partons are not polarized; 50% left and 50% right handed
   double weightProfile = 0;
-  weightProfile += rs_wGG_*pdf1(0)*pdf2(0); // Gluon+Gluon
-  weightProfile += rs_wBG_*(pdf1(0)*pdf2(5) + pdf1(5)*pdf2(0)); // Gluon+Bottom
-  weightProfile += rs_wBB_*pdf1(5)*pdf2(5); // Bottom+Bottom
+  weightProfile += rs_wGG_*pdf1(21)*pdf2(21); // gluon+gluon
+  weightProfile += 2*rs_wBG_*(pdf1(21)*pdf2(5) + pdf1(5)*pdf2(21)); // gluon+bottom (and bbar)
+  weightProfile += 4*rs_wBB_*pdf1(5)*pdf2(5); // bottom+bottom (and bbar)
 
   return weightParton*weightProfile;
 }
