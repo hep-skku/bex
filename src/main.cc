@@ -1,6 +1,7 @@
 #include "include/ConfigReader.h"
 #include "include/ADDModel.h"
 #include "include/RSModel.h"
+#include "include/Utility.h"
 
 #include <iostream>
 #include <vector>
@@ -17,6 +18,16 @@ int main(int argc, char* argv[])
   const string modelName = cfg.get<string>("model");
   if ( modelName == "ADD" ) model = new ADDModel(cfg);
   else if ( modelName == "RS" ) model = new RSModel(cfg);
+  else
+  {
+    cout << "!!" << argv[0] << ": model " << modelName << " not supported" << endl;
+    return 2;
+  }
+
+  model->calculateCrossSection();
+  const double xsec = model->getCrossSection();
+  const double xsecErr = model->getCrossSectionError();
+  Utility::printCrossSection(xsec, xsecErr);
 
   return 0;
 }
