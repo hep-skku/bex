@@ -16,6 +16,8 @@ public:
   double getCrossSection();
   double getCrossSectionError();
 
+  void produce();
+
 protected:
   bool isValid_;
   Random* rnd_;

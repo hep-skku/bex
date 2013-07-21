@@ -76,3 +76,28 @@ void AbsModel::calculateCrossSection()
   xsecErr_ = scale*sqrt(sumW2 - sumW*sumW/nXsecIter_)/nXsecIter_;
 }
 
+void AbsModel::produce()
+{
+  if ( !isValid_ ) return;
+
+  PDF pdf1, pdf2;
+  while ( true )
+  {
+    // Same routine in the xsec calculation
+    const double m0 = 1/rnd_->uniform(1/massMax_, 1/massMin_);
+    const double u = m0*m0/s_;
+
+    const double x1 = exp(rnd_->uniform(0, log(u)));
+    const double x2 = u/x1;
+
+    pdf_->loadPDF(x1, m0, pdf1);
+    pdf_->loadPDF(x2, m0, pdf2);
+
+    const double weight = calculatePartonWeight(m0, pdf1, pdf2);
+    if ( weight > rnd_->uniform(0, weightMax_) ) continue;
+
+    // Apply mass loss
+    break;
+  }
+}
+

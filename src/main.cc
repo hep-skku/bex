@@ -2,6 +2,7 @@
 #include "include/ADDModel.h"
 #include "include/RSModel.h"
 #include "include/Utility.h"
+#include "include/Blackhole.h"
 
 #include <iostream>
 #include <vector>
@@ -13,6 +14,8 @@ int main(int argc, char* argv[])
 {
   ConfigReader cfg(argv[1], argc-2, argv+2);
   cfg.print();
+
+  const int nEvent = cfg.get<int>("nEvent");
 
   AbsModel* model = 0;
   const string modelName = cfg.get<string>("model");
@@ -28,6 +31,11 @@ int main(int argc, char* argv[])
   const double xsec = model->getCrossSection();
   const double xsecErr = model->getCrossSectionError();
   Utility::printCrossSection(xsec, xsecErr);
+
+  for ( int i=0; i<nEvent; ++i )
+  {
+    model->produce();
+  }
 
   return 0;
 }
