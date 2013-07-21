@@ -43,6 +43,7 @@ tmp/RSModel.o: include/RSModel.h src/RSModel.cc
 tmp/Random.o: include/Random.h src/Random.cc
 tmp/ConfigReader.o: include/ConfigReader.h src/ConfigReader.cc
 tmp/Utility.o: include/Utility.h src/Utility.cc
+tmp/Blackhole.o: include/Blackhole.h src/Blackhole.cc
 # DO NOT DELETE
 
 tmp/ADDModel.o: include/ADDModel.h include/AbsModel.h include/ConfigReader.h
@@ -55,6 +56,7 @@ tmp/RSModel.o: include/RSModel.h include/AbsModel.h include/ConfigReader.h
 tmp/RSModel.o: include/PDFInterface.h include/Random.h
 tmp/Random.o: include/Random.h
 tmp/Utility.o: include/Utility.h
+tmp/Blackhole.o: include/Blackhole.h
 tmp/main.o: include/ConfigReader.h include/ADDModel.h include/AbsModel.h
 tmp/main.o: include/PDFInterface.h include/Random.h
 tmp/main.o: include/RSModel.h
