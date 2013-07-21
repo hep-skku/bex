@@ -2,6 +2,8 @@
 #include "LHAPDF/LHAPDF.h"
 #include <algorithm>
 #include <iostream>
+#include <stdexcept>
+
 using namespace std;
 
 PDFInterface::PDFInterface(const int pdfSet)
@@ -47,7 +49,7 @@ double PDF::operator()(const int pdgId) const
   /// @arg 6 = \f$ g \f$;
   /// @arg 7..12 = \f$ d \f$, \f$ u \f$, ..., \f$ t \f$.
   if ( pdgId == 21 ) return pdfValues_[6];
-  if ( std::abs(pdgId) == 0 or std::abs(pdgId) > 6 ) return 0; // FIXME : raise exception?
+  if ( std::abs(pdgId) == 0 or std::abs(pdgId) > 6 ) throw out_of_range("Invalid pdgId");
 
   return pdfValues_[pdgId+6];
 }

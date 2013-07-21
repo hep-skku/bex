@@ -5,11 +5,12 @@
 #include <sstream>
 #include <string>
 #include <map>
+#include <exception>
 
 class ConfigReader
 {
 public:
-  ConfigReader(const char* fielName, int argc, char* argv[]);
+  ConfigReader(const char* fileName, int argc, char* argv[]);
 
   void processInputCommand(const std::string line);
 
@@ -18,10 +19,11 @@ public:
   template<typename T>
   T get(const std::string name) const
   {
-    if ( !hasOption(name) ) return T(); // FIXME: raise exception
+    //if ( !hasOption(name) ) throw ;
+    const std::string valueStr = data_.at(name);
 
     T value;
-    std::stringstream ss(data_.find(name)->second);
+    std::stringstream ss(valueStr);//data_.find(name)->second);
     ss >> value;
 
     return value;

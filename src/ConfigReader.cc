@@ -3,6 +3,8 @@
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <exception>
 
 using namespace std;
 using namespace boost::algorithm;
@@ -24,12 +26,8 @@ ConfigReader::ConfigReader(const char* fileName, int argc, char* argv[])
   }
   else
   {
-    cerr << "!!ConfigReader: cannot open file " << fileName << endl;
-    return;
-    // FIXME: raise exception
+    throw exception();
   }
-
-  // Read command line options. We don't allow whitespaces here
   for ( int i=0; i<argc; ++i )
   {
     processInputCommand(argv[i]);
@@ -74,7 +72,9 @@ std::vector<double> ConfigReader::get(const std::string name) const
   std::vector<double> l;
   if ( !hasOption(name) ) return l;
 
-  std::stringstream ss(data_.find(name)->second);
+  std::string valueStr = data_.find(name)->second;
+  std::replace(valueStr.begin(), valueStr.end(), ',', ' ');
+  std::stringstream ss(valueStr);
   double val;
   while ( ss>>val ) l.push_back(val);
 
