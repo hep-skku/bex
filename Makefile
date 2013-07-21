@@ -8,9 +8,9 @@ INCLUDES=. /opt/local/include
 ## Compiler options
 ## Detect OSX
 ifeq ( $(shell uname),Darwin )
-	CC=clang++
+CC=clang++
 else
-	CC=g++
+CC=g++
 endif
 
 EXE=bex
