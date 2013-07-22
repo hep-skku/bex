@@ -16,20 +16,6 @@ public:
 
   void print() const;
   bool hasOption(const std::string name) const;
-  template<typename T>
-  T get(const std::string name) const
-  {
-    //if ( !hasOption(name) ) throw ;
-    const std::string valueStr = data_.at(name);
-
-    T value;
-    std::stringstream ss(valueStr);//data_.find(name)->second);
-    ss >> value;
-
-    return value;
-  }
-
-private:
   // Case insensitive map, from http://stackoverflow.com/questions/1801892/making-mapfind-operation-case-insensitive
   struct ci_less : std::binary_function<std::string, std::string, bool>
   {
@@ -48,11 +34,29 @@ private:
   };
 
   typedef std::map<std::string, std::string, ci_less> DataMap;
+  typedef std::map<std::string, int, ci_less> MenuType;
+
+  // Default getter
+  template<typename T>
+  T get(const std::string name) const
+  {
+    const std::string valueStr = data_.at(name);
+
+    T value;
+    std::stringstream ss(valueStr);//data_.find(name)->second);
+    ss >> value;
+
+    return value;
+  }
+
+  // Alternative getter, choose from menu items
+  int get(const std::string name, const MenuType& itemMap) const;
+
+private:
   DataMap data_;
 };
 
 template<> std::vector<double> ConfigReader::get(const std::string name) const;
-
 
 #endif
 
