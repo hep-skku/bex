@@ -69,11 +69,10 @@ void ConfigReader::print() const
 template<>
 std::vector<double> ConfigReader::get(const std::string name) const
 {
-  std::vector<double> l;
-  if ( !hasOption(name) ) return l;
-
-  std::string valueStr = data_.find(name)->second;
+  std::string valueStr = data_.at(name);
   std::replace(valueStr.begin(), valueStr.end(), ',', ' ');
+
+  std::vector<double> l;
   std::stringstream ss(valueStr);
   double val;
   while ( ss>>val ) l.push_back(val);
@@ -81,4 +80,9 @@ std::vector<double> ConfigReader::get(const std::string name) const
   return l;
 }
 
+int ConfigReader::get(const std::string name, const ConfigReader::MenuType& itemMap) const
+{
+  const std::string value = get<std::string>(name);
+  return itemMap.at(value);
+}
 
