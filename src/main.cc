@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
   model->calculateCrossSection();
   const double xsec = model->getCrossSection();
   const double xsecErr = model->getCrossSectionError();
-  Utility::printCrossSection(xsec, xsecErr);
+  printCrossSection(xsec, xsecErr);
 
   for ( int i=0; i<nEvent; ++i )
   {
