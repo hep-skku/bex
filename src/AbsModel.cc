@@ -5,26 +5,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
+#include "include/Utility.h"
+
 using namespace std;
-
-istream& operator>>(istream& in, std::vector<std::pair<double, double> >& data)
-{
-  string line;
-  while ( getline(in, line) )
-  {
-    const size_t commentPos = line.find('#');
-    if ( commentPos != string::npos ) line.erase(commentPos);
-    boost::algorithm::trim(line);
-    if ( line.empty() or line[0] == '#' ) continue;
-    std::replace(line.begin(), line.end(), ',', ' ');
-
-    stringstream ss(line);
-    double x, y;
-    ss >> x >> y;
-    data.push_back(make_pair(x, y));
-  }
-  return in;
-}
 
 AbsModel::AbsModel(const ConfigReader& cfg)
 {
@@ -66,6 +49,10 @@ AbsModel::AbsModel(const ConfigReader& cfg)
     const std::string mLossFileName = (boost::format("data/yoshino/MLB_N%1%.data") % (nDim_-4)).str();
     ifstream mLossFile(mLossFileName.c_str());
     mLossFile >> mLossTab_;
+
+    // This Yoshino parameters are given in R0 unit.
+    // Convert to Rs unit for convenience
+    // FIXME: implement it.
   }
 
   rnd_ = new Random(cfg.get<int>("seed"));
