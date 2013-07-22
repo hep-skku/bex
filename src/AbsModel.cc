@@ -12,7 +12,24 @@ AbsModel::AbsModel(const ConfigReader& cfg)
   massMin_ = cfg.get<double>("massMin");
   massMax_ = cfg.get<double>("massMax");
   mD_   = cfg.get<double>("mD");
-  formFactorName_ = cfg.get<string>("formFactor");
+
+  ConfigReader::MenuType formFactorMenu;
+  formFactorMenu["Yoshino"] = FormFactorType::YOSHINO;
+  formFactorMenu["FIOP"] = FormFactorType::FIOP;
+  formFactorType_ = cfg.get("formFactor", formFactorMenu);
+
+  if ( formFactorType_ == FormFactorType::YOSHINO and !cfg.hasOption("mLossType") )
+  {
+    mLossType_ = MassLossType::YOSHINO;
+  }
+  else
+  {
+    ConfigReader::MenuType mLossMenu;
+    mLossMenu["Yoshino"] = MassLossType::YOSHINO;
+    mLossMenu["Const"] = MassLossType::CONST;
+    mLossMenu["Fixed"] = MassLossType::CONST;
+    mLossType_ = cfg.get("mLossType", mLossMenu);
+  }
 
   rnd_ = new Random(cfg.get<int>("seed"));
   pdf_ = new PDFInterface(cfg.get<int>("PDFSet"));
