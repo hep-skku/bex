@@ -11,6 +11,9 @@ public:
   AbsModel(const ConfigReader& cfg);
   virtual ~AbsModel();
 
+  struct FormFactorType { enum X { YOSHINO, FIOP, END }; };
+  struct MassLossType { enum X { YOSHINO, CONST, END }; };
+
   void calculateCrossSection();
   virtual double calculatePartonWeight(const double m, const PDF& pdf1, const PDF& pdf2) = 0;
   double getCrossSection();
@@ -35,7 +38,7 @@ protected:
   const static double pi_ = 3.141592L;
 
   // Cached variables for convenience
-  std::string formFactorName_;
+  int formFactorType_, mLossType_;
   double s_;
   double formFactor_;
 };
