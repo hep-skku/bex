@@ -7,6 +7,7 @@
 #include <map>
 #include <exception>
 #include <stdexcept>
+#include <boost/format.hpp>
 
 class ConfigReader
 {
@@ -50,6 +51,16 @@ public:
     std::stringstream ss(data_.at(name));
     ss >> value;
 
+    return value;
+  }
+
+  // Algernative getter, raise exception if value is not in range
+  template<typename T>
+  T get(const std::string name, const T minValue, const T maxValue) const
+  {
+    const T value = get<T>(name);
+    if ( value < minValue ) throw std::underflow_error((boost::format("%1% must not less than %3% (was %2%)") % name % value % minValue).str());
+    if ( value > maxValue ) throw std::overflow_error((boost::format("%1% must not exceed %3% (was %2%)") % name % value % maxValue).str());
     return value;
   }
 
