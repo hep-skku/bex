@@ -5,7 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include <exception>
+#include <stdexcept>
 
 using namespace std;
 using namespace boost::algorithm;
@@ -27,7 +27,7 @@ ConfigReader::ConfigReader(const char* fileName, int argc, char* argv[])
   }
   else
   {
-    throw exception();
+    throw runtime_error(string("Cannot open file") + fileName);
   }
   for ( int i=0; i<argc; ++i )
   {
