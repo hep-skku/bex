@@ -7,11 +7,11 @@ RSModel::RSModel(const ConfigReader& cfg):
 {
   kn2_ = 2./3*pi_;
   formFactor_ = kn2_*pi_;
-  if ( formFactorName_ == "YOSHINO" )
+  if ( formFactorType_ == FormFactorType::YOSHINO )
   {
     formFactor_ = 1; // FIXME: Implement  Yoshino-Rychkov
   }
-  else if ( formFactorName_ == "FIOP" )
+  else if ( formFactorType_ == FormFactorType::FIOP )
   {
     const double fiop = 16./13;
     formFactor_ *= fiop;

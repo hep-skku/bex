@@ -11,11 +11,11 @@ ADDModel::ADDModel(const ConfigReader& cfg):
   kn_ = pow(pow(2., nDim_-4.)*pow(pi_, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 1./(nDim_-3));
   kn2_ = pow(pow(2., nDim_-4.)*pow(pi_, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 2./(nDim_-3));
   formFactor_ = kn2_*pi_;
-  if ( formFactorName_ == "YOSHINO" )
+  if ( formFactorType_ == FormFactorType::YOSHINO )
   {
     formFactor_ = 1; // FIXME : Implement Yoshino-Rychkov
   }
-  else if ( formFactorName_ == "FIOP")
+  else if ( formFactorType_ == FormFactorType::FIOP )
   {
     const double fiop = 4.*pow(1.+(nDim_-2.)*(nDim_-2.)/4., -2./(nDim_-3.));
     formFactor_ *= fiop;
