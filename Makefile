@@ -7,7 +7,7 @@ INCLUDES=. /opt/local/include
 
 ## Compiler options
 ## Detect OSX
-ifeq ( $(shell uname),Darwin )
+ifeq ($(shell uname),Darwin)
 CC=clang++
 else
 CC=g++
