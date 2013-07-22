@@ -5,6 +5,13 @@ using namespace std;
 RSModel::RSModel(const ConfigReader& cfg):
   AbsModel(cfg)
 {
+  if ( nDim_ != 5 )
+  {
+    cerr << "!! RSModel: We do not support RS Blackhole model at " <<  nDim_ << " dimension\n";
+    cerr << "!!          Changing dimension to 5D\n";
+    nDim_ = 5;
+  }
+
   kn2_ = 2./3*pi_;
   formFactor_ = kn2_*pi_;
   if ( formFactorType_ == FormFactorType::YOSHINO )

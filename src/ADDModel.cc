@@ -6,8 +6,6 @@ using namespace std;
 ADDModel::ADDModel(const ConfigReader& cfg):
   AbsModel(cfg)
 {
-  nDim_ = cfg.get<int>("dimension");
-
   kn_ = pow(pow(2., nDim_-4.)*pow(pi_, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 1./(nDim_-3));
   kn2_ = pow(pow(2., nDim_-4.)*pow(pi_, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 2./(nDim_-3));
   formFactor_ = kn2_*pi_;

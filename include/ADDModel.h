@@ -10,9 +10,8 @@ public:
   virtual double calculatePartonWeight(const double m, const PDF& pdf1, const PDF& pdf2);
 
 private:
-  int nDim_;
-
   double kn_, kn2_;
+
 };
 
 #endif

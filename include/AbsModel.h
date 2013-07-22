@@ -26,6 +26,7 @@ protected:
   Random* rnd_;
   PDFInterface* pdf_;
 
+  int nDim_;
   double beamEnergy_;
   double massMin_, massMax_;
   double mD_;
@@ -41,6 +42,7 @@ protected:
   int formFactorType_, mLossType_;
   double s_;
   double formFactor_;
+  std::vector<std::pair<double, double> > mLossTab_;
 };
 
 #endif
