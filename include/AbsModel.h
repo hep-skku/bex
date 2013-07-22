@@ -34,9 +34,7 @@ protected:
   double weightMax_;
   double xsec_, xsecErr_;
 
-  const static double gevToPbarn_ = 3.894e8; //pbarn*GeV2
   const static int nXsecIter_ = 100000;
-  const static double pi_ = 3.141592L;
 
   // Cached variables for convenience
   int formFactorType_, mLossType_;

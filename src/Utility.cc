@@ -1,11 +1,29 @@
 #include "include/Utility.h"
 #include <iostream>
 #include <sstream>
+#include <cmath>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
+
+namespace physics
+{
+
+const double GevToPbarn = 3.894e8; // pbarn*GeV2;
+const double Pi = 3.1415926L;
+const double OmegaDs[] = {
+  2,
+  2*Pi, 4*Pi,
+  2*Pi*Pi, 8./3*Pi*Pi,
+  pow(Pi, 3), 16./15.*pow(Pi, 3),
+  pow(Pi, 4)/3., pow(Pi, 4)/105.*32,
+  pow(Pi, 5)/12.
+};
+
+
+}
 
 void printCrossSection(const double xsec, const double xsecErr)
 {

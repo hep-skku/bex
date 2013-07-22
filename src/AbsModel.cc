@@ -52,7 +52,14 @@ AbsModel::AbsModel(const ConfigReader& cfg)
 
     // This Yoshino parameters are given in R0 unit.
     // Convert to Rs unit for convenience
-    // FIXME: implement it.
+    using physics::OmegaDs;
+    const double r0ToRs = pow( (nDim_-2.)*OmegaDs[nDim_-2]/4./OmegaDs[nDim_-3], 1./(nDim_-3) );
+    for ( int i=0, n=mLossTab_.size(); i<n; ++i )
+    {
+      const double x = mLossTab_[i].first * r0ToRs;
+      const double y = mLossTab_[i].second;
+      mLossTab_[i] = std::make_pair(x, y);
+    }
   }
 
   rnd_ = new Random(cfg.get<int>("seed"));
@@ -112,7 +119,7 @@ void AbsModel::calculateCrossSection()
 
   // Now calculate total cross section and its error
   // Convert xsec to pico-barn unit by multiplying overall constants
-  const double scale = 2*gevToPbarn_*formFactor_;
+  const double scale = 2*physics::GevToPbarn*formFactor_;
   xsec_ = scale*sumW/nXsecIter_;
   xsecErr_ = scale*sqrt(sumW2 - sumW*sumW/nXsecIter_)/nXsecIter_;
 }
