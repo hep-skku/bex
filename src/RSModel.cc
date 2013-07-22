@@ -1,6 +1,10 @@
 #include "include/RSModel.h"
 #include <iostream>
+
+#include "include/Utility.h"
+
 using namespace std;
+using physics::Pi;
 
 RSModel::RSModel(const ConfigReader& cfg):
   AbsModel(cfg)
@@ -12,8 +16,8 @@ RSModel::RSModel(const ConfigReader& cfg):
     nDim_ = 5;
   }
 
-  kn2_ = 2./3*pi_;
-  formFactor_ = kn2_*pi_;
+  kn2_ = 2./3*Pi;
+  formFactor_ = kn2_*Pi;
   if ( formFactorType_ == FormFactorType::YOSHINO )
   {
     formFactor_ = 1; // FIXME: Implement  Yoshino-Rychkov

@@ -1,17 +1,20 @@
 #include "include/ADDModel.h"
 #include <cmath>
+#include "include/Utility.h"
 
 using namespace std;
+using physics::Pi;
 
 ADDModel::ADDModel(const ConfigReader& cfg):
   AbsModel(cfg)
 {
-  kn_ = pow(pow(2., nDim_-4.)*pow(pi_, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 1./(nDim_-3));
-  kn2_ = pow(pow(2., nDim_-4.)*pow(pi_, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 2./(nDim_-3));
-  formFactor_ = kn2_*pi_;
+  kn_ = pow(pow(2., nDim_-4.)*pow(Pi, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 1./(nDim_-3));
+  kn2_ = pow(pow(2., nDim_-4.)*pow(Pi, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 2./(nDim_-3));
+  formFactor_ = kn2_*Pi;
   if ( formFactorType_ == FormFactorType::YOSHINO )
   {
-    formFactor_ = 1; // FIXME : Implement Yoshino-Rychkov
+    const double bmax = mLossTab_.back().first;
+    formFactor_ *= bmax*bmax;
   }
   else if ( formFactorType_ == FormFactorType::FIOP )
   {
