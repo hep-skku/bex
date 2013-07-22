@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -27,10 +28,14 @@ int main(int argc, char* argv[])
     return 2;
   }
 
+  cout << "Calculating cross section...\n\n";
+  cout << "##############################################\n";
   model->calculateCrossSection();
   const double xsec = model->getCrossSection();
   const double xsecErr = model->getCrossSectionError();
   printCrossSection(xsec, xsecErr);
+  cout << boost::format("## Maximum weight = %-23.5g ##\n") % model->getWeightMax();
+  cout << "##############################################\n";
 
   for ( int i=0; i<nEvent; ++i )
   {
