@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <exception>
+#include <stdexcept>
 
 class ConfigReader
 {
@@ -40,10 +41,13 @@ public:
   template<typename T>
   T get(const std::string name) const
   {
-    const std::string valueStr = data_.at(name);
+    if ( !hasOption(name) )
+    {
+      throw std::out_of_range("Cannot find config name " + name);
+    }
 
     T value;
-    std::stringstream ss(valueStr);//data_.find(name)->second);
+    std::stringstream ss(data_.at(name));
     ss >> value;
 
     return value;
