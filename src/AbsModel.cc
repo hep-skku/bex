@@ -52,6 +52,8 @@ AbsModel::AbsModel(const ConfigReader& cfg)
   rnd_ = new Random(cfg.get<int>("seed"));
   pdf_ = new PDFInterface(cfg.get<int>("PDFSet"));
 
+  weightMax_ = 0;
+
   // Calculate constants for speed up
   xsec_ = xsecErr_ = -1;
   s_ = beamEnergy_*beamEnergy_;
