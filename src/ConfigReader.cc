@@ -1,6 +1,7 @@
 #include "include/ConfigReader.h"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -59,16 +60,26 @@ bool ConfigReader::hasOption(const std::string name) const
 void ConfigReader::print() const
 {
   // Print out configurations
+  // Get field widths for pretty-printing
+  for ( int i=0, n=42; i<n; ++i ) cout << "#";
+  cout << "\n## ConfigReader:Printing out parameters ##\n";
   for ( std::map<string, string>::const_iterator key = data_.begin();
         key != data_.end(); ++key )
   {
-    cout << key->first << " = " << key->second << endl;
+    //cout << boost::format("## %1$0% %|15t| = %|20t|%2% ##\n") % key->first % key->second;
+    cout << boost::format("## %1% %|20t| = %2% %|40t|##\n") % key->first % key->second;
   }
+  for ( int i=0, n=42; i<n; ++i ) cout << "#";
+  cout << endl;
 }
 
 template<>
 std::vector<double> ConfigReader::get(const std::string name) const
 {
+  if ( !hasOption(name) )
+  {
+    throw std::out_of_range("Cannot find config name " + name);
+  }
   std::string valueStr = data_.at(name);
   std::replace(valueStr.begin(), valueStr.end(), ',', ' ');
 
@@ -83,6 +94,23 @@ std::vector<double> ConfigReader::get(const std::string name) const
 int ConfigReader::get(const std::string name, const ConfigReader::MenuType& itemMap) const
 {
   const std::string value = get<std::string>(name);
-  return itemMap.at(value);
+  int index;
+  try
+  {
+    index = itemMap.at(value);
+  }
+  catch ( exception& e )
+  {
+    cerr << "!!! Cannot find menu item for " << name << endl;
+    cerr << "!!! Choose among ";
+    for ( ConfigReader::MenuType::const_iterator item = itemMap.begin();
+          item != itemMap.end(); ++item )
+    {
+      cerr << item->first << ":" << item->second << " ";
+    }
+    cerr << endl;
+    throw e;
+  }
+  return index;
 }
 
