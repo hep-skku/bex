@@ -46,20 +46,7 @@ AbsModel::AbsModel(const ConfigReader& cfg)
   }
   else if ( mLossType_ == MassLossType::YOSHINO )
   {
-    const std::string mLossFileName = (boost::format("data/yoshino/MLB_N%1%.data") % (nDim_-4)).str();
-    ifstream mLossFile(mLossFileName.c_str());
-    mLossFile >> mLossTab_;
-
-    // This Yoshino parameters are given in R0 unit.
-    // Convert to Rs unit for convenience
-    using physics::OmegaDs;
-    const double r0ToRs = pow( (nDim_-2.)*OmegaDs[nDim_-2]/4./OmegaDs[nDim_-3], 1./(nDim_-3) );
-    for ( int i=0, n=mLossTab_.size(); i<n; ++i )
-    {
-      const double x = mLossTab_[i].first * r0ToRs;
-      const double y = mLossTab_[i].second;
-      mLossTab_[i] = std::make_pair(x, y);
-    }
+    loadYoshinoDataTable();
   }
 
   rnd_ = new Random(cfg.get<int>("seed"));
@@ -70,6 +57,24 @@ AbsModel::AbsModel(const ConfigReader& cfg)
   s_ = beamEnergy_*beamEnergy_;
 
   isValid_ = true;
+}
+
+void AbsModel::loadYoshinoDataTable()
+{
+  const std::string mLossFileName = (boost::format("data/yoshino/MLB_N%1%.data") % (nDim_-4)).str();
+  ifstream mLossFile(mLossFileName.c_str());
+  mLossFile >> mLossTab_;
+
+  // This Yoshino parameters are given in R0 unit.
+  // Convert to Rs unit for convenience
+  using physics::OmegaDs;
+  const double r0ToRs = pow( (nDim_-2.)*OmegaDs[nDim_-2]/4./OmegaDs[nDim_-3], 1./(nDim_-3) );
+  for ( int i=0, n=mLossTab_.size(); i<n; ++i )
+  {
+    const double x = mLossTab_[i].first * r0ToRs;
+    const double y = mLossTab_[i].second;
+    mLossTab_[i] = std::make_pair(x, y);
+  }
 }
 
 AbsModel::~AbsModel()

@@ -20,7 +20,7 @@ RSModel::RSModel(const ConfigReader& cfg):
   formFactor_ = kn2_*Pi;
   if ( formFactorType_ == FormFactorType::YOSHINO )
   {
-    formFactor_ = 1; // FIXME: Implement  Yoshino-Rychkov
+    loadYoshinoDataTable(); // Reload mass loss data table since nDim_ could be altered
   }
   else if ( formFactorType_ == FormFactorType::FIOP )
   {

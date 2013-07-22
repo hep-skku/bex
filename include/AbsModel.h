@@ -22,6 +22,9 @@ public:
   void produce();
 
 protected:
+  void loadYoshinoDataTable();
+
+protected:
   bool isValid_;
   Random* rnd_;
   PDFInterface* pdf_;
