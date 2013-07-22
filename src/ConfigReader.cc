@@ -60,13 +60,11 @@ bool ConfigReader::hasOption(const std::string name) const
 void ConfigReader::print() const
 {
   // Print out configurations
-  // Get field widths for pretty-printing
   for ( int i=0, n=42; i<n; ++i ) cout << "#";
   cout << "\n## ConfigReader:Printing out parameters ##\n";
   for ( std::map<string, string>::const_iterator key = data_.begin();
         key != data_.end(); ++key )
   {
-    //cout << boost::format("## %1$0% %|15t| = %|20t|%2% ##\n") % key->first % key->second;
     cout << boost::format("## %1% %|20t| = %2% %|40t|##\n") % key->first % key->second;
   }
   for ( int i=0, n=42; i<n; ++i ) cout << "#";
