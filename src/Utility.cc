@@ -27,10 +27,10 @@ const double OmegaDs[] = {
 
 void printCrossSection(const double xsec, const double xsecErr)
 {
-  boost::format fmt("Cross section = %-.3f +- %-.3f");
-  if ( xsec > 1e3 ) cout << fmt % (xsec/1e3) % (xsecErr/1e3) << " (nb)\n";
-  else if ( xsec > 1e-1 ) cout << fmt % xsec % xsecErr << " (pb)\n";
-  else cout << fmt % (xsec*1e3) % (xsecErr*1e3) << " (fb)\n";
+  boost::format fmt("## Cross section = %-.3f +- %-.3f ##");
+  if ( xsec > 1e3 ) cout << fmt % (xsec/1e3) % (xsecErr/1e3) << " (nb) ##\n";
+  else if ( xsec > 1e-1 ) cout << fmt % xsec % xsecErr << " (pb) ##\n";
+  else cout << fmt % (xsec*1e3) % (xsecErr*1e3) << " (fb) ##\n";
 }
 
 istream& operator>>(istream& in, std::vector<std::pair<double, double> >& data)
