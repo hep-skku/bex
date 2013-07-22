@@ -18,6 +18,7 @@ public:
   virtual double calculatePartonWeight(const double m, const PDF& pdf1, const PDF& pdf2) = 0;
   double getCrossSection();
   double getCrossSectionError();
+  double getWeightMax() { return weightMax_; };
 
   void produce();
 
