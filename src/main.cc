@@ -4,10 +4,11 @@
 #include "include/Utility.h"
 #include "include/Blackhole.h"
 
+#include <boost/format.hpp>
+
 #include <iostream>
 #include <vector>
 #include <string>
-#include <boost/format.hpp>
 
 using namespace std;
 

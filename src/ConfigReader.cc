@@ -1,11 +1,12 @@
 #include "include/ConfigReader.h"
 
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <stdexcept>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 using namespace boost::algorithm;

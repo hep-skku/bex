@@ -1,7 +1,8 @@
 #include "include/PDFInterface.h"
 #include "LHAPDF/LHAPDF.h"
-#include <algorithm>
+
 #include <iostream>
+#include <algorithm>
 #include <stdexcept>
 
 using namespace std;

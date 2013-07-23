@@ -1,4 +1,5 @@
 #include "include/Random.h"
+
 #include <cmath>
 
 using namespace std;

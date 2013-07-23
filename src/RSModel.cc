@@ -1,7 +1,7 @@
 #include "include/RSModel.h"
-#include <iostream>
-
 #include "include/Utility.h"
+
+#include <iostream>
 
 using namespace std;
 using physics::Pi;

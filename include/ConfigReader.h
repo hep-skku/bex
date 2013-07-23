@@ -1,14 +1,14 @@
 #ifndef ConfigReader_H
 #define ConfigReader_H
 
-#include <vector>
+#include <boost/format.hpp>
+
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <map>
-#include <exception>
 #include <stdexcept>
-#include <boost/format.hpp>
+#include <vector>
+#include <map>
 
 class ConfigReader
 {

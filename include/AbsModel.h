@@ -1,11 +1,11 @@
 #ifndef AbsModel_H
 #define AbsModel_H
 
-#include <fstream>
-
 #include "include/ConfigReader.h"
 #include "include/PDFInterface.h"
 #include "include/Random.h"
+
+#include <fstream>
 
 class AbsModel
 {

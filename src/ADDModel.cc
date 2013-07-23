@@ -1,5 +1,6 @@
 #include "include/ADDModel.h"
 #include "include/Utility.h"
+
 #include <cmath>
 
 using namespace std;
