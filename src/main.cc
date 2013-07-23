@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     return 2;
   }
 
-  cout << "Calculating cross section...\n\n";
+  cout << "\n+ Calculating cross section...\n\n";
   cout << "##############################################\n";
   model->calculateCrossSection();
   const double xsec = model->getCrossSection();
@@ -37,8 +37,10 @@ int main(int argc, char* argv[])
   cout << boost::format("## Maximum weight = %-23.5g ##\n") % model->getWeightMax();
   cout << "##############################################\n";
 
+  cout << "\n+ Starting to produce events...\n\n";
   for ( int i=0; i<nEvent; ++i )
   {
+    printEventNumber(i, nEvent);
     model->produce();
   }
 

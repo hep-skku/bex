@@ -33,6 +33,19 @@ void printCrossSection(const double xsec, const double xsecErr)
   else cout << fmt % (xsec*1e3) % (xsecErr*1e3) << " (fb) ##\n";
 }
 
+void printEventNumber(int eventNumber, const int nEvent)
+{
+  const static int fw = log10(nEvent+1)+1;
+  const static std::string fmt = (boost::format("+ Producing event: %%%dd") % fw).str();
+  ++eventNumber;
+  if ( eventNumber <= nEvent )
+  {
+    const int x = pow(10, floor(log10(eventNumber)));
+    if ( eventNumber % x != 0 ) return;
+  }
+  cout << boost::format(fmt.c_str()) % eventNumber << endl;
+}
+
 istream& operator>>(istream& in, std::vector<std::pair<double, double> >& data)
 {
   string line;
