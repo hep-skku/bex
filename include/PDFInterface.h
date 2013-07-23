@@ -27,6 +27,7 @@ class PDFInterface
 public:
   PDFInterface(const int pdfSet);
   void loadPDF(const double x, const double q, PDF& pdf) const;
+  int getPDFSet() const { return pdfSet_; }
 
 private:
   int pdfSet_;

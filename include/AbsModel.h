@@ -41,7 +41,7 @@ protected:
 
   int beamId1_, beamId2_;
   int nDim_;
-  double beamEnergy_;
+  double cmEnergy_;
   double massMin_, massMax_;
   double mD_;
 

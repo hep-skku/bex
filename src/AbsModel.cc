@@ -19,9 +19,9 @@ AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
 
   beamId1_ = beamId2_ = 2212;
 
-  beamEnergy_ = cfg.get<double>("beamEnergy", 0, 1e9);
-  massMin_ = cfg.get<double>("massMin", 0., beamEnergy_);
-  massMax_ = cfg.get<double>("massMax", massMin_, beamEnergy_);
+  cmEnergy_ = cfg.get<double>("cmEnergy", 0, 1e9);
+  massMin_ = cfg.get<double>("massMin", 0., cmEnergy_);
+  massMax_ = cfg.get<double>("massMax", massMin_, cmEnergy_);
   massMin_ = cfg.get<double>("massMin", 0., massMax_); // Check once again to check reversed input
   mD_   = cfg.get<double>("mD", 0., 1e9);
   nDim_ = cfg.get<int>("dimension", 4, 11);
@@ -62,7 +62,7 @@ AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
 
   // Calculate constants for speed up
   xsec_ = xsecErr_ = -1;
-  s_ = beamEnergy_*beamEnergy_;
+  s_ = cmEnergy_*cmEnergy_;
 
   isValid_ = true;
 
@@ -94,18 +94,38 @@ void AbsModel::beginJob()
   const double xsec = getCrossSection();
   const double xsecErr = getCrossSectionError();
   const double weightMax = getWeightMax();
+  const double beamEnergy = cmEnergy_/2;
 
   // Open output file
   fout_.open(cfg_.get<string>("lheFile").c_str());
 
   fout_ << "<LesHouchesEvents version=\"1.0\">" << endl;
   fout_ << "<!--//\n";
-  fout_ << boost::format("##  Generated events by %1% on %2%\n\n") % name_ % second_clock::local_time();
+  fout_ << boost::format("## Started %1% on %2%\n\n") % name_ % second_clock::local_time();
   cfg_.print(fout_);
+  fout_ << "## Cross section = " << xsec << " +- " << xsecErr << endl;
+  fout_ << "## Maximum weight during xsec calculation = " << weightMax << endl;
   fout_ << "//-->\n";
   fout_ << "<init>\n";
-  fout_ << boost::format("  0  0  %e  %e  0  0  0  0  3  1\n") % 1 % 2;
-  fout_ << boost::format("  %e  %e  %e  1\n") % 1 % 2 % 3;
+  // Add <init> header in LHE
+  // HEPRUP run common block
+  // Line 1 : IDBMUP(2) EBMUP(2) PDFGUP(2)=0 PDFSUP(2) IDWTUP=3 NPRUP=1
+  //   IDBMUP(2) : Incident beam1 and beam2's PDG ID
+  //   EBMUP(2)  : Incident beam1 and beam2's energy
+  //   PDFGUP(2) : PDF group IDs, for backward compatibility. set to zero.
+  //   PDFSUP(2) : PDF set IDs for beam1 and beam2
+  //   IDWTUP    : How to set event weight. +3 for unweighted, accept all events
+  //   NPRUP     : Number of user subprocess. We will consider only one subprocess
+  fout_ << boost::format(" % 5d % 5d %12.5e %12.5e % 5d % 5d % 5d % 5d % 5d % 5d\n") 
+         % beamId1_ % beamId2_ % beamEnergy % beamEnergy
+         % 0 % 0 % pdf_->getPDFSet() % pdf_->getPDFSet() % 3 % 1;
+  // Line 2+ : XSECUP(NPRUP) XERRUP(NPRUP) XMAXUP(NPRUP) LPRUP(NPRUP)
+  //   XSECUP(NPRUP) : Cross section of this process
+  //   XERRUP(NPRUP) : Cross section error of this process
+  //   XMAXUP(NPRUP) : Maximum weight of this process
+  //   LPRUP(NPRUP)  : Listing of all user process IDs (set to 1 here)
+  fout_ << boost::format(" %12.5e %12.5e %12.5e %5d\n")
+         % xsec % xsecErr % weightMax % 1;
   fout_ << "</init>" << endl;
 
 }
