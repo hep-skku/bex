@@ -1,6 +1,8 @@
 #ifndef AbsModel_H
 #define AbsModel_H
 
+#include <fstream>
+
 #include "include/ConfigReader.h"
 #include "include/PDFInterface.h"
 #include "include/Random.h"
@@ -20,16 +22,24 @@ public:
   double getCrossSectionError();
   double getWeightMax() { return weightMax_; };
 
-  void produce();
+  virtual void beginJob();
+  virtual void endJob();
+  virtual void event();
 
 protected:
   void loadYoshinoDataTable();
 
 protected:
   bool isValid_;
+  std::string name_;
+
+  std::ofstream fout_;
+
+  ConfigReader cfg_;
   Random* rnd_;
   PDFInterface* pdf_;
 
+  int beamId1_, beamId2_;
   int nDim_;
   double beamEnergy_;
   double massMin_, massMax_;

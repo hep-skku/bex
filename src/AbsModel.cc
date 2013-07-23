@@ -1,17 +1,23 @@
 #include "include/AbsModel.h"
-#include <cmath>
+#include "include/Utility.h"
+
 #include <iostream>
 #include <fstream>
+#include <cmath>
+#include <ctime>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
-
-#include "include/Utility.h"
+#include <boost/date_time/local_time/local_time.hpp>
 
 using namespace std;
 
-AbsModel::AbsModel(const ConfigReader& cfg)
+AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
 {
   isValid_ = false;
+  name_ = "bex";
+
+  beamId1_ = beamId2_ = 2212;
 
   beamEnergy_ = cfg.get<double>("beamEnergy", 0, 1e9);
   massMin_ = cfg.get<double>("massMin", 0., beamEnergy_);
@@ -59,6 +65,7 @@ AbsModel::AbsModel(const ConfigReader& cfg)
   s_ = beamEnergy_*beamEnergy_;
 
   isValid_ = true;
+
 }
 
 void AbsModel::loadYoshinoDataTable()
@@ -77,6 +84,37 @@ void AbsModel::loadYoshinoDataTable()
     const double y = mLossTab_[i].second;
     mLossTab_[i] = std::make_pair(x, y);
   }
+}
+
+void AbsModel::beginJob()
+{
+  using namespace boost::posix_time;
+
+  // get cross section
+  const double xsec = getCrossSection();
+  const double xsecErr = getCrossSectionError();
+  const double weightMax = getWeightMax();
+
+  // Open output file
+  fout_.open(cfg_.get<string>("lheFile").c_str());
+
+  fout_ << "<LesHouchesEvents version=\"1.0\">" << endl;
+  fout_ << "<!--//\n";
+  fout_ << boost::format("##  Generated events by %1% on %2%\n\n") % name_ % second_clock::local_time();
+  cfg_.print(fout_);
+  fout_ << "//-->\n";
+  fout_ << "<init>\n";
+  fout_ << boost::format("  0  0  %e  %e  0  0  0  0  3  1\n") % 1 % 2;
+  fout_ << boost::format("  %e  %e  %e  1\n") % 1 % 2 % 3;
+  fout_ << "</init>" << endl;
+
+}
+
+void AbsModel::endJob()
+{
+  // Finalize output file
+  fout_ << "</LesHouchesEvents>" << endl;
+  fout_.close();
 }
 
 AbsModel::~AbsModel()
@@ -131,9 +169,14 @@ void AbsModel::calculateCrossSection()
   xsecErr_ = scale*sqrt(sumW2 - sumW*sumW/nXsecIter_)/nXsecIter_;
 }
 
-void AbsModel::produce()
+void AbsModel::event()
 {
   if ( !isValid_ ) return;
+
+  // Default values of Blackhole property
+  //NVector bh_position, bh_momentum;
+  int bh_charge = 0; // Blackhole charge
+  double qSqr = 0; // Initial CM energy before mass loss, Q^2
 
   PDF pdf1, pdf2;
   while ( true )
@@ -152,7 +195,13 @@ void AbsModel::produce()
     if ( weight > rnd_->uniform(0, weightMax_) ) continue;
 
     // Apply mass loss
+    qSqr = m0;
+
     break;
   }
+
+  fout_ << "<event>\n";
+  fout_ << boost::format(" % 2d") % 0 << endl; //particles_.size()<< endl;
+  fout_ << "</event>" << endl;
 }
 
