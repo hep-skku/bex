@@ -9,11 +9,14 @@ using physics::Pi;
 RSModel::RSModel(const ConfigReader& cfg):
   AbsModel(cfg)
 {
+  name_ += ":RSModel";
+
   if ( nDim_ != 5 )
   {
     cerr << "!! RSModel: We do not support RS Blackhole model at " <<  nDim_ << " dimension\n";
     cerr << "!!          Changing dimension to 5D\n";
     nDim_ = 5;
+    cfg_.set("dimension", nDim_);
   }
 
   kn2_ = 2./3*Pi;
@@ -28,13 +31,14 @@ RSModel::RSModel(const ConfigReader& cfg):
     formFactor_ *= fiop;
   }
 
-  prodWeights_ = cfg.get<std::vector<double> >("prodWeights");
+  prodWeights_ = cfg_.get<std::vector<double> >("prodWeights");
   // wGG = C_gg
   rs_wGG_ = prodWeights_[0];
   // wBG = C_gQ + C_gd
   rs_wBG_ = prodWeights_[2] + prodWeights_[8];
   // wBB = C_QQ + C_Qd + C_dd
   rs_wBB_ = prodWeights_[1] + prodWeights_[7] + prodWeights_[6];
+
 }
 
 double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF& pdf2)
