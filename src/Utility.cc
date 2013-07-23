@@ -35,12 +35,12 @@ void printCrossSection(const double xsec, const double xsecErr)
 
 void printEventNumber(int eventNumber, const int nEvent)
 {
-  const static int fw = log10(nEvent+1)+1;
+  const static int fw = int(log10(nEvent+1)+1);
   const static std::string fmt = (boost::format("+ Producing event: %%%dd") % fw).str();
   ++eventNumber;
   if ( eventNumber <= nEvent )
   {
-    const int x = pow(10, floor(log10(eventNumber)));
+    const int x = int(pow(10, floor(log10(eventNumber))));
     if ( eventNumber % x != 0 ) return;
   }
   cout << boost::format(fmt.c_str()) % eventNumber << endl;
