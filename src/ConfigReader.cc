@@ -57,18 +57,18 @@ bool ConfigReader::hasOption(const std::string name) const
   return data_.find(name) != data_.end();
 }
 
-void ConfigReader::print() const
+void ConfigReader::print(ostream& out) const
 {
   // Print out configurations
-  for ( int i=0, n=42; i<n; ++i ) cout << "#";
-  cout << "\n## ConfigReader:Printing out parameters ##\n";
+  for ( int i=0, n=42; i<n; ++i ) out << "#";
+  out << "\n## ConfigReader:Printing out parameters ##\n";
   for ( std::map<string, string>::const_iterator key = data_.begin();
         key != data_.end(); ++key )
   {
-    cout << boost::format("## %1% %|20t| = %2% %|40t|##\n") % key->first % key->second;
+    out << boost::format("## %1% %|20t| = %2% %|40t|##\n") % key->first % key->second;
   }
-  for ( int i=0, n=42; i<n; ++i ) cout << "#";
-  cout << endl;
+  for ( int i=0, n=42; i<n; ++i ) out << "#";
+  out << endl;
 }
 
 template<>
