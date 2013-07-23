@@ -116,7 +116,7 @@ void AbsModel::beginJob()
   //   PDFSUP(2) : PDF set IDs for beam1 and beam2
   //   IDWTUP    : How to set event weight. +3 for unweighted, accept all events
   //   NPRUP     : Number of user subprocess. We will consider only one subprocess
-  fout_ << boost::format(" % 5d % 5d %12.5e %12.5e % 5d % 5d % 5d % 5d % 5d % 5d\n") 
+  fout_ << boost::format(" %5d %5d %12.5e %12.5e %5d %5d %5d %5d %5d %5d\n")
          % beamId1_ % beamId2_ % beamEnergy % beamEnergy
          % 0 % 0 % pdf_->getPDFSet() % pdf_->getPDFSet() % 3 % 1;
   // Line 2+ : XSECUP(NPRUP) XERRUP(NPRUP) XMAXUP(NPRUP) LPRUP(NPRUP)
