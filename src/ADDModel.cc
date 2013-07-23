@@ -1,6 +1,6 @@
 #include "include/ADDModel.h"
-#include <cmath>
 #include "include/Utility.h"
+#include <cmath>
 
 using namespace std;
 using physics::Pi;
@@ -8,6 +8,8 @@ using physics::Pi;
 ADDModel::ADDModel(const ConfigReader& cfg):
   AbsModel(cfg)
 {
+  name_ += ":ADDModel";
+
   kn_ = pow(pow(2., nDim_-4.)*pow(Pi, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 1./(nDim_-3));
   kn2_ = pow(pow(2., nDim_-4.)*pow(Pi, (nDim_-7.)/2.)*tgamma((nDim_-1.)/2)/(nDim_-2.), 2./(nDim_-3));
   formFactor_ = kn2_*Pi;
