@@ -10,8 +10,10 @@ class PDF
 public:
   PDF();
   double operator()(const int pdgId) const;
+  void getStackPDF(std::vector<double>& retVal) const;
   double getSumPDF() const { return sumPDF_; }
   const static int nParton = 13;
+  static int indexToPdgId(const int index);
 
 private:
   void update(); // Re-calculate cached values

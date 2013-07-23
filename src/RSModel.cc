@@ -57,3 +57,11 @@ double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF
   return weightParton*weightProfile;
 }
 
+void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2)
+{
+  double weights[] = {
+    rs_wGG_*pdf1(21)*pdf2(21),
+    2*rs_wBG_*(pdf1(21)*pdf2(5) + pdf1(5)*pdf2(21)),
+    4*rs_wBB_*pdf1(5)*pdf2(5)
+  };
+}

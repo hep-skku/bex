@@ -23,6 +23,31 @@ const double OmegaDs[] = {
   pow(Pi, 5)/12.
 };
 
+double getMassByPdgId(const int pdgId)
+{
+  const int absPdgId = std::abs(pdgId);
+  switch ( absPdgId )
+  {
+    // values from http://pdg.lbl.gov/2013/mcdata/mass_width_2013.mcd
+    case 2212: return  9.38272046E-01; // proton
+    //case   21: return               0; // gluon
+    //case   22: return               0; // photon
+    case   24: return      8.0385E+01; // W
+    case   23: return     9.11876E+01; // Z
+    case   35: return       1.259E+02; // Higgs
+    case   11: return  5.10998928E-04; // e
+    case   13: return 1.056583715E-01; // mu
+    case   15: return     1.77682E+00; // tau
+    case    1: return         4.8E-03; // d
+    case    2: return         2.3E-03; // u
+    case    3: return         9.5E-02; // s
+    case    4: return       1.275E+00; // c
+    case    5: return       4.180E+00; // b
+    case    6: return      1.7307E+02; // t
+  }
+  return 0;
+}
+
 
 }
 

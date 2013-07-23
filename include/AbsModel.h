@@ -7,6 +7,18 @@
 
 #include <fstream>
 
+struct Particle
+{
+  Particle(const int id, const int status,
+                 const int mother1, const int mother2,
+                 const double px, const double py, const double pz);
+
+  int id_, status_;
+  int mother1_, mother2_, color1_, color2_;
+  double px_, py_, pz_, e_, m_;
+  double vt_, spin_;
+};
+
 class AbsModel
 {
 public:
@@ -21,6 +33,8 @@ public:
   double getCrossSection();
   double getCrossSectionError();
   double getWeightMax() { return weightMax_; };
+
+  virtual void selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2);
 
   virtual void beginJob();
   virtual void endJob();
@@ -39,7 +53,7 @@ protected:
   Random* rnd_;
   PDFInterface* pdf_;
 
-  int beamId1_, beamId2_;
+  int beamIds_[2];
   int nDim_;
   double cmEnergy_;
   double massMin_, massMax_;

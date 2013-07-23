@@ -17,7 +17,7 @@ AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
   isValid_ = false;
   name_ = "bex";
 
-  beamId1_ = beamId2_ = 2212;
+  beamIds_[0] = beamIds_[1] = 2212;
 
   cmEnergy_ = cfg.get<double>("cmEnergy", 0, 1e9);
   massMin_ = cfg.get<double>("massMin", 0., cmEnergy_);
@@ -117,7 +117,7 @@ void AbsModel::beginJob()
   //   IDWTUP    : How to set event weight. +3 for unweighted, accept all events
   //   NPRUP     : Number of user subprocess. We will consider only one subprocess
   fout_ << boost::format(" %5d %5d %12.5e %12.5e %5d %5d %5d %5d %5d %5d\n")
-         % beamId1_ % beamId2_ % beamEnergy % beamEnergy
+         % beamIds_[0] % beamIds_[1] % beamEnergy % beamEnergy
          % 0 % 0 % pdf_->getPDFSet() % pdf_->getPDFSet() % 3 % 1;
   // Line 2+ : XSECUP(NPRUP) XERRUP(NPRUP) XMAXUP(NPRUP) LPRUP(NPRUP)
   //   XSECUP(NPRUP) : Cross section of this process
@@ -193,11 +193,20 @@ void AbsModel::event()
 {
   if ( !isValid_ ) return;
 
+  // vectors to store decay product information
+  std::vector<Particle> decays;
+
+  // Set incoming particles
+  const double beamEnergy = cmEnergy_/2;
+  decays.push_back(Particle(beamIds_[0], -9, 0, 0, 0., 0., +beamEnergy));
+  decays.push_back(Particle(beamIds_[1], -9, 0, 0, 0., 0., -beamEnergy));
+
   // Default values of Blackhole property
   //NVector bh_position, bh_momentum;
   int bh_charge = 0; // Blackhole charge
-  double qSqr = 0; // Initial CM energy before mass loss, Q^2
+  double q2 = 0; // Initial CM energy before mass loss, Q^2
 
+  // Start BH production
   PDF pdf1, pdf2;
   while ( true )
   {
@@ -214,14 +223,80 @@ void AbsModel::event()
     const double weight = calculatePartonWeight(m0, pdf1, pdf2);
     if ( weight > rnd_->uniform(0, weightMax_) ) continue;
 
+    // Now BH satisfies Hoop conjecture condition,
+    // thus we can do initial calculations for this energy chunk
+    q2 = m0*m0;
+    // pick parton flavors (interface considering extension to RS model)
+    Particle parton1(0, -1, 1, 1, 0., 0., +beamEnergy*x1);
+    Particle parton2(0, -1, 2, 2, 0., 0., -beamEnergy*x2);
+    selectParton(pdf1, pdf2, parton1, parton2);
+    decays.push_back(parton1);
+    decays.push_back(parton2);
+
     // Apply mass loss
-    qSqr = m0;
+    double mFrac = 1.0, jFrac = 1.0;
+    while ( true )
+    {
+      // FIXME : Implement M/J loss
+      break;
+    }
+
+    // Initial mass loss by 2 graviton radiation,
+    // thus BH 3-momentum will be conserved
 
     break;
   }
 
+  // Start evaporation
+
+  // Remant decay
+
+  // Put BH to event record
   fout_ << "<event>\n";
-  fout_ << boost::format(" % 2d") % 0 << endl; //particles_.size()<< endl;
+  // Header of user process common block
+  // NUP IDPRUP=1 XWGTUP=1 SCALUP AQEDUP=-1 AQCDUP=-1
+  fout_ << boost::format(" %5d %5d %15.10e %15.10e %15.10e\n") 
+         % decays.size() % 1 % q2 % -1 % -1;
+  for ( int i=0, n=decays.size(); i<n; ++i )
+  {
+    // User process ID, particles list
+    // IDUP ISTUP MOTHUP(2) ICOLUP(2) PUP(5) VTIMUP SPINUP
+    fout_ << boost::format(" %5d %5d %5d %5d %5d %5d %+15.10e %+15.10e %+15.10e %+15.10e %+15.10e %.1f %.1f\n")
+          % decays[i].id_ % decays[i].status_
+          % decays[i].mother1_ % decays[i].mother2_ % decays[i].color1_ % decays[i].color2_
+          % decays[i].px_ % decays[i].py_ % decays[i].pz_ % decays[i].e_ % decays[i].m_
+          % decays[i].vt_ % decays[i].spin_;
+  }
   fout_ << "</event>" << endl;
 }
 
+void AbsModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2)
+{
+  std::vector<double> stackPDF1(PDF::nParton);
+  std::vector<double> stackPDF2(PDF::nParton);
+  pdf1.getStackPDF(stackPDF1);
+  pdf2.getStackPDF(stackPDF2);
+  const int id1 = PDF::indexToPdgId(rnd_->pickFromCDF(stackPDF1));
+  const int id2 = PDF::indexToPdgId(rnd_->pickFromCDF(stackPDF2));
+  parton1 = Particle(id1, -1, 1, 1, 0., 0., parton1.pz_);
+  parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
+}
+
+Particle::Particle(const int id, const int status,
+                   const int mother1, const int mother2,
+                   const double px, const double py, const double pz)
+{
+  id_ = id;
+  status_ = status;
+  mother1_ = mother1;
+  mother2_ = mother2;
+  color1_ = 0; // Colorless as default value
+  color2_ = 0;
+  px_ = px;
+  py_ = py;
+  pz_ = pz;
+  m_ = physics::getMassByPdgId(id);
+  e_ = sqrt(px*px+py*py+pz*pz + m_*m_);
+  vt_ = 0;
+  spin_ = 9;
+}

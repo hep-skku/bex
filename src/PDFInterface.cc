@@ -55,3 +55,19 @@ double PDF::operator()(const int pdgId) const
   return pdfValues_[pdgId+6];
 }
 
+void PDF::getStackPDF(std::vector<double>& retVal) const
+{
+  retVal.resize(nParton);
+  retVal[0] = pdfValues_[0];
+  for ( int i=1; i<nParton; ++i )
+  {
+    retVal[i] = retVal[i-1]+pdfValues_[i];
+  }
+}
+
+int PDF::indexToPdgId(const int index)
+{
+  if ( index < 0 or index > 12 ) throw out_of_range("PDF::indexToPdgId() : Invalid parton index");
+  if ( index == 6 ) return 21;
+  return index-6;
+}

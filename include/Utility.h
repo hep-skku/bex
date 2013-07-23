@@ -11,6 +11,8 @@ extern const double GevToPbarn; // = 3.894e8; pbarn*GeV2;
 extern const double Pi; // Usual pi
 extern const double OmegaDs[]; // Surface area of unit sphere in D-1 dimension
 
+double getMassByPdgId(const int pdgId);
+
 }
 
 void printCrossSection(const double xsec, const double xsecErr);
