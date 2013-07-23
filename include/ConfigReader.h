@@ -2,6 +2,7 @@
 #define ConfigReader_H
 
 #include <vector>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <map>
@@ -16,7 +17,7 @@ public:
 
   void processInputCommand(const std::string line);
 
-  void print() const;
+  void print(std::ostream& out = std::cout) const;
   bool hasOption(const std::string name) const;
   // Case insensitive map, from http://stackoverflow.com/questions/1801892/making-mapfind-operation-case-insensitive
   struct ci_less : std::binary_function<std::string, std::string, bool>
@@ -66,6 +67,13 @@ public:
 
   // Alternative getter, choose from menu items
   int get(const std::string name, const MenuType& itemMap) const;
+
+  // Generic setter with value type
+  template<typename T>
+  void set(const std::string name, const T& value)
+  {
+    data_[name] = (boost::format("%1%") % value).str();
+  }
 
 private:
   DataMap data_;
