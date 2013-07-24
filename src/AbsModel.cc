@@ -1,4 +1,5 @@
 #include "include/AbsModel.h"
+#include "include/NVector.h"
 #include "include/Utility.h"
 
 #include <iostream>
@@ -202,7 +203,7 @@ void AbsModel::event()
   decays.push_back(Particle(beamIds_[1], -9, 0, 0, 0., 0., -beamEnergy));
 
   // Default values of Blackhole property
-  //NVector bh_position, bh_momentum;
+  NVector bh_position, bh_momentum;
   int bh_charge = 0; // Blackhole charge
   double q2 = 0; // Initial CM energy before mass loss, Q^2
 

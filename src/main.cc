@@ -2,7 +2,6 @@
 #include "include/ADDModel.h"
 #include "include/RSModel.h"
 #include "include/Utility.h"
-#include "include/Blackhole.h"
 
 #include <boost/format.hpp>
 

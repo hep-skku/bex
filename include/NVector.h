@@ -1,5 +1,5 @@
-#ifndef Blackhole_H
-#define Blackhole_H
+#ifndef NVector_H
+#define NVector_H
 
 class NVector
 {
@@ -10,18 +10,6 @@ public:
 
 private:
   double data_[nDim];
-
-};
-
-class Blackhole
-{
-public:
-  Blackhole();
-  NVector& nMomentum();
-  NVector& nPosition();
-
-private:
-  NVector nMomentum_, nPosition_;
 
 };
 
