@@ -41,7 +41,7 @@ AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
     fin >> maxBValues;
     bMax_ = physics::r0ToRs(nDim_, maxBValues[nDim_-4]);
   }
-  else if ( formFactorType_ = FormFactorType::FIOP )
+  else if ( formFactorType_ == FormFactorType::FIOP )
   {
     bMax_ = 2.*pow(1.+(nDim_-2.)*(nDim_-2.)/4., -1./(nDim_-3.));
   }
