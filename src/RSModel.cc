@@ -17,18 +17,30 @@ RSModel::RSModel(const ConfigReader& cfg):
     cerr << "!!          Changing dimension to 5D\n";
     nDim_ = 5;
     cfg_.set("dimension", nDim_);
-  }
 
-  kn2_ = 2./3*Pi;
-  formFactor_ = kn2_*Pi;
-  if ( formFactorType_ == FormFactorType::YOSHINO )
-  {
-    loadYoshinoDataTable(); // Reload mass loss data table since nDim_ could be altered
-  }
-  else if ( formFactorType_ == FormFactorType::FIOP )
-  {
-    const double fiop = 16./13;
-    formFactor_ *= fiop;
+    kn_ = physics::kn[nDim_-4];
+    kn2_ = kn_*kn_;
+
+    if ( mLossType_ == MassLossType::YOSHINO )
+    {
+      loadYoshinoDataTable(); // Reload mass loss data table since nDim_ is altered
+    }
+
+    if ( formFactorType_ == FormFactorType::YOSHINO )
+    {
+      // Same code in AbsModel.cc
+      std::vector<double> maxBValues;
+      std::ifstream fin("data/yoshino/max_b.data");
+      fin >> maxBValues;
+      bMax_ = physics::r0ToRs(nDim_, maxBValues[nDim_-4]);
+    }
+    else if ( formFactorType_ == FormFactorType::FIOP )
+    {
+      bMax_ = 2.*pow(1.+(nDim_-2.)*(nDim_-2.)/4., -1./(nDim_-3.));
+    }
+    kn_ = physics::kn[nDim_-4];
+    kn2_ = kn_*kn_;
+    formFactor_ = kn2_*physics::Pi*bMax_*bMax_;
   }
 
   prodWeights_ = cfg_.get<std::vector<double> >("prodWeights");

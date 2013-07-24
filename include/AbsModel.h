@@ -25,7 +25,7 @@ public:
   AbsModel(const ConfigReader& cfg);
   virtual ~AbsModel();
 
-  struct FormFactorType { enum X { YOSHINO, FIOP, END }; };
+  struct FormFactorType { enum X { YOSHINO, FIOP, PiR2, END }; };
   struct MassLossType { enum X { YOSHINO, CONST, END }; };
 
   void calculateCrossSection();
@@ -67,8 +67,9 @@ protected:
   // Cached variables for convenience
   int formFactorType_, mLossType_;
   double s_;
-  double formFactor_;
+  double bMax_, formFactor_;
   std::vector<std::pair<double, double> > mLossTab_;
+  double kn_, kn2_;
 };
 
 #endif

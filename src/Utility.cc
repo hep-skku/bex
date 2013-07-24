@@ -22,6 +22,12 @@ const double OmegaDs[] = {
   pow(Pi, 4)/3., pow(Pi, 4)/105.*32,
   pow(Pi, 5)/12.
 };
+const double kn[] = {
+  1./4./Pi                 , sqrt(2./3./Pi)            ,
+  pow(3./4., 1./3.)        , 2.*pow(5., -1./4.)        ,
+  pow(5.*Pi, 1./5.)        , 2.*pow(3./7.*Pi, 1./6.)   ,
+  pow(105./2.*Pi*Pi, 1./7.), 2.*pow(4.*Pi*Pi/3., 1./8.)
+};
 
 double getMassByPdgId(const int pdgId)
 {
@@ -48,6 +54,10 @@ double getMassByPdgId(const int pdgId)
   return 0;
 }
 
+double r0ToRs(const int nDim, const double r0)
+{
+  return r0*pow( (nDim-2.)*OmegaDs[nDim-2]/4./OmegaDs[nDim-3], 1./(nDim-3) );
+}
 
 }
 
@@ -87,6 +97,29 @@ istream& operator>>(istream& in, std::vector<std::pair<double, double> >& data)
     double x, y;
     ss >> x >> y;
     data.push_back(make_pair(x, y));
+  }
+  return in;
+}
+
+istream& operator>>(istream& in, std::vector<double>& data)
+{
+  string content;
+  string line;
+  while ( getline(in, line) )
+  {
+    const size_t commentPos = line.find('#');
+    if ( commentPos != string::npos ) line.erase(commentPos);
+    boost::algorithm::trim(line);
+    if ( line.empty() or line[0] == '#' ) continue;
+    std::replace(line.begin(), line.end(), ',', ' ');
+    content += line + " ";
+  }
+
+  stringstream ss(content);
+  double x;
+  while ( ss >> x )
+  {
+    data.push_back(x);
   }
   return in;
 }

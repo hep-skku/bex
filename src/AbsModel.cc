@@ -26,29 +26,41 @@ AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
   mD_   = cfg.get<double>("mD", 0., 1e9);
   nDim_ = cfg.get<int>("dimension", 4, 11);
 
+  // Routines for FormFactor definition
   ConfigReader::MenuType formFactorMenu;
   formFactorMenu["Yoshino"] = FormFactorType::YOSHINO;
   formFactorMenu["FIOP"] = FormFactorType::FIOP;
+  formFactorMenu["PiR2"] = FormFactorType::PiR2;
   formFactorType_ = cfg.get("formFactor", formFactorMenu);
 
-  if ( formFactorType_ == FormFactorType::YOSHINO and !cfg.hasOption("mLossType") )
+  if ( formFactorType_ == FormFactorType::YOSHINO )
   {
-    mLossType_ = MassLossType::YOSHINO;
+    std::vector<double> maxBValues;
+    std::ifstream fin("data/yoshino/max_b.data");
+    fin >> maxBValues;
+    bMax_ = physics::r0ToRs(nDim_, maxBValues[nDim_-4]);
   }
-  else
+  else if ( formFactorType_ = FormFactorType::FIOP )
   {
-    ConfigReader::MenuType mLossMenu;
-    mLossMenu["Yoshino"] = MassLossType::YOSHINO;
-    mLossMenu["Const"] = MassLossType::CONST;
-    mLossMenu["Fixed"] = MassLossType::CONST;
-    mLossType_ = cfg.get("mLossType", mLossMenu);
+    bMax_ = 2.*pow(1.+(nDim_-2.)*(nDim_-2.)/4., -1./(nDim_-3.));
   }
+  else // simple PiR^2
+  {
+    bMax_ = 1.;
+  }
+
+  ConfigReader::MenuType mLossMenu;
+  mLossMenu["Yoshino"] = MassLossType::YOSHINO;
+  mLossMenu["Const"] = MassLossType::CONST;
+  mLossMenu["Fixed"] = MassLossType::CONST;
+  mLossType_ = cfg.get("mLossType", mLossMenu);
+
   // Build Impact parameter vs mass loss factor tables
   if ( mLossType_ == MassLossType::CONST )
   {
     const double mLossFactor = cfg.get<double>("mLossFactor", 0, 1);
     mLossTab_.push_back(std::make_pair(0., mLossFactor));
-    mLossTab_.push_back(std::make_pair(1., mLossFactor));
+    mLossTab_.push_back(std::make_pair(bMax_, mLossFactor));
   }
   else if ( mLossType_ == MassLossType::YOSHINO )
   {
@@ -63,6 +75,9 @@ AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
   // Calculate constants for speed up
   xsec_ = xsecErr_ = -1;
   s_ = cmEnergy_*cmEnergy_;
+  kn_ = physics::kn[nDim_-4];
+  kn2_ = kn_*kn_;
+  formFactor_ = kn2_*physics::Pi*bMax_*bMax_;
 
   isValid_ = true;
 
@@ -76,11 +91,9 @@ void AbsModel::loadYoshinoDataTable()
 
   // This Yoshino parameters are given in R0 unit.
   // Convert to Rs unit for convenience
-  using physics::OmegaDs;
-  const double r0ToRs = pow( (nDim_-2.)*OmegaDs[nDim_-2]/4./OmegaDs[nDim_-3], 1./(nDim_-3) );
   for ( int i=0, n=mLossTab_.size(); i<n; ++i )
   {
-    const double x = mLossTab_[i].first * r0ToRs;
+    const double x = physics::r0ToRs(nDim_, mLossTab_[i].first);
     const double y = mLossTab_[i].second;
     mLossTab_[i] = std::make_pair(x, y);
   }
@@ -235,9 +248,13 @@ void AbsModel::event()
 
     // Apply mass loss
     double mFrac = 1.0, jFrac = 1.0;
+    const double b = rnd_->ramp(0, bMax_);
+    const double mFracMin = 1;//physics::interpolate(mLossTab_, b);
     while ( true )
     {
       // FIXME : Implement M/J loss
+      mFrac = rnd_->ramp(mFracMin, 1);
+      jFrac = rnd_->ramp(0, 1);
       break;
     }
 
@@ -255,7 +272,7 @@ void AbsModel::event()
   fout_ << "<event>\n";
   // Header of user process common block
   // NUP IDPRUP=1 XWGTUP=1 SCALUP AQEDUP=-1 AQCDUP=-1
-  fout_ << boost::format(" %5d %5d %15.10e %15.10e %15.10e\n") 
+  fout_ << boost::format(" %5d %5d %15.10e %15.10e %15.10e\n")
          % decays.size() % 1 % q2 % -1 % -1;
   for ( int i=0, n=decays.size(); i<n; ++i )
   {

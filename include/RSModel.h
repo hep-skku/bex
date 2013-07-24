@@ -11,8 +11,6 @@ public:
   virtual void selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2);
 
 private:
-  double kn_, kn2_;
-
   std::vector<double> prodWeights_;
   double rs_wGG_, rs_wBG_, rs_wBB_;
 };
