@@ -27,9 +27,9 @@ public:
   {
     const double y = uniform(0, v.back());
     // FIXME: upgrade algorithm to binary search
-    for ( int i=0, n=v.size()-1; i<n; ++i )
+    for ( int i=0, n=v.size(); i<n; ++i )
     {
-      if ( y < v[i] ) return i;
+      if ( y <= v[i] ) return i;
     }
     return v.size();
   }

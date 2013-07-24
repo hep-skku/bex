@@ -10,7 +10,7 @@ class PDF
 public:
   PDF();
   double operator()(const int pdgId) const;
-  void getStackPDF(std::vector<double>& retVal) const;
+  std::vector<double> getStackPDF() const;
   double getSumPDF() const { return sumPDF_; }
   const static int nParton = 13;
   static int indexToPdgId(const int index);

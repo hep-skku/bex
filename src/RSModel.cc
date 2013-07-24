@@ -71,9 +71,63 @@ double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF
 
 void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2)
 {
-  double weights[] = {
-    rs_wGG_*pdf1(21)*pdf2(21),
-    2*rs_wBG_*(pdf1(21)*pdf2(5) + pdf1(5)*pdf2(21)),
-    4*rs_wBB_*pdf1(5)*pdf2(5)
-  };
+  std::vector<double> weights;
+  const double pdf_gg = pdf1(21)*pdf2(21);
+  weights.push_back(prodWeights_[0]*pdf_gg); // BH production via Gluon+Gluon
+
+  const double pdf_gb = pdf1(21)*pdf2(5);
+  const double pdf_bg = pdf1(5)*pdf2(21);
+  weights.push_back(prodWeights_[2]*pdf_gb); // g + B_R
+  weights.push_back(prodWeights_[8]*pdf_gb); // g + b_L
+  weights.push_back(prodWeights_[2]*pdf_bg); // B_R + g
+  weights.push_back(prodWeights_[8]*pdf_bg); // b_L + g
+
+  const double pdf_bb = pdf1(5)*pdf2(5);
+  weights.push_back(prodWeights_[1]*pdf_bb); // B_R + B_R
+  weights.push_back(prodWeights_[7]*pdf_bb); // b_L + B_R
+  weights.push_back(prodWeights_[7]*pdf_bb); // B_R + b_L
+  weights.push_back(prodWeights_[6]*pdf_bb); // b_L + b_L
+
+  // Make weights be cumulative
+  for ( int i=1, n=weights.size(); i<n; ++i )
+  {
+    weights[i] += weights[i-1];
+  }
+
+  // Select one case from this weights CDF
+  const double LEFT = -1, RIGHT = 1;
+  const int index = rnd_->pickFromCDF(weights);
+  int id1, id2;
+  double spin1, spin2;
+  if ( index == 0 )
+  {
+    id1 = id2 = 21;
+    spin1 = spin2 = 9;
+  }
+  else if ( index <= 2 )
+  {
+    id1 = 21;
+    id2 = 5;
+    spin1 = 9;
+    spin2 = index % 2 ? RIGHT : LEFT;
+  }
+  else if ( index <= 4 )
+  {
+    id1 = 5;
+    id2 = 21;
+    spin1 = index % 2 ? RIGHT : LEFT;
+    spin2 = 9;
+  }
+  else
+  {
+    id1 = id2 = 5;
+    spin1 = index % 2 ? RIGHT : LEFT;
+    spin2 = ((index+1)/2) % 2 ? RIGHT : LEFT;
+  }
+
+  parton1 = Particle(id1, -1, 1, 1, 0., 0., parton1.pz_);
+  parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
+  parton1.spin_ = spin1;
+  parton2.spin_ = spin2;
+
 }

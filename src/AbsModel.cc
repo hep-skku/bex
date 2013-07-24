@@ -1,4 +1,5 @@
 #include "include/AbsModel.h"
+#include "include/NVector.h"
 #include "include/Utility.h"
 
 #include <iostream>
@@ -215,7 +216,7 @@ void AbsModel::event()
   decays.push_back(Particle(beamIds_[1], -9, 0, 0, 0., 0., -beamEnergy));
 
   // Default values of Blackhole property
-  //NVector bh_position, bh_momentum;
+  NVector bh_position, bh_momentum;
   int bh_charge = 0; // Blackhole charge
   double q2 = 0; // Initial CM energy before mass loss, Q^2
 
@@ -289,10 +290,8 @@ void AbsModel::event()
 
 void AbsModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2)
 {
-  std::vector<double> stackPDF1(PDF::nParton);
-  std::vector<double> stackPDF2(PDF::nParton);
-  pdf1.getStackPDF(stackPDF1);
-  pdf2.getStackPDF(stackPDF2);
+  std::vector<double> stackPDF1 = pdf1.getStackPDF();
+  std::vector<double> stackPDF2 = pdf2.getStackPDF();
   const int id1 = PDF::indexToPdgId(rnd_->pickFromCDF(stackPDF1));
   const int id2 = PDF::indexToPdgId(rnd_->pickFromCDF(stackPDF2));
   parton1 = Particle(id1, -1, 1, 1, 0., 0., parton1.pz_);

@@ -55,14 +55,15 @@ double PDF::operator()(const int pdgId) const
   return pdfValues_[pdgId+6];
 }
 
-void PDF::getStackPDF(std::vector<double>& retVal) const
+std::vector<double> PDF::getStackPDF() const
 {
-  retVal.resize(nParton);
+  std::vector<double> retVal(nParton);
   retVal[0] = pdfValues_[0];
   for ( int i=1; i<nParton; ++i )
   {
     retVal[i] = retVal[i-1]+pdfValues_[i];
   }
+  return retVal;
 }
 
 int PDF::indexToPdgId(const int index)

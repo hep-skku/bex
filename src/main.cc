@@ -2,7 +2,6 @@
 #include "include/ADDModel.h"
 #include "include/RSModel.h"
 #include "include/Utility.h"
-#include "include/Blackhole.h"
 
 #include <boost/format.hpp>
 
@@ -17,7 +16,7 @@ int main(int argc, char* argv[])
   ConfigReader cfg(argv[1], argc-2, argv+2);
   cfg.print();
 
-  const int nEvent = cfg.get<int>("nEvent");
+  const int nEvent = cfg.get<int>("nEvent", 0, 100000);
 
   AbsModel* model = 0;
   const string modelName = cfg.get<string>("model");
