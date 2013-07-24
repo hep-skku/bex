@@ -14,7 +14,7 @@ CC=g++
 endif
 
 EXE=bex
-CCFLAGS=$(addprefix -I,$(INCLUDES))
+CCFLAGS=-Wall $(addprefix -I,$(INCLUDES))
 LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm
 
 ## Actions
