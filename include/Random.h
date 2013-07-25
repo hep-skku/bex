@@ -25,13 +25,23 @@ public:
   template<typename VectorType>
   int pickFromCDF(const VectorType& v)
   {
-    const double y = uniform(0, v.back());
-    // FIXME: upgrade algorithm to binary search
-    for ( int i=0, n=v.size(); i<n; ++i )
+    const double x = uniform(0, v.back());
+
+    // Do binary search
+    unsigned int lo = 0, hi=v.size()-1;
+    // Special case when hitting upper bound, x == v[hi]
+    // This case can appear depending on implementation of generator
+    if ( x == v[hi] ) return hi;
+    while ( true )
     {
-      if ( y <= v[i] ) return i;
+      const unsigned int curr = (hi+lo)/2;
+      const double currX = v[curr];
+      if ( x < currX ) hi = curr;
+      else if ( currX <= x ) lo = curr;
+      if ( hi - lo <= 1 ) break;
     }
-    return v.size();
+
+    return lo;
   }
 
 private:
