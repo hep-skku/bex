@@ -52,20 +52,23 @@ AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
 
   ConfigReader::MenuType mLossMenu;
   mLossMenu["Yoshino"] = MassLossType::YOSHINO;
-  mLossMenu["Const"] = MassLossType::CONST;
-  mLossMenu["Fixed"] = MassLossType::CONST;
+  mLossMenu["Uniform"] = MassLossType::UNIFORM;
+  mLossMenu["Linear"]  = MassLossType::LINEAR;
   mLossType_ = cfg.get("mLossType", mLossMenu);
 
   // Build Impact parameter vs mass loss factor tables
-  if ( mLossType_ == MassLossType::CONST )
+  switch ( mLossType_ )
   {
+  case MassLossType::YOSHINO:
+    loadYoshinoDataTable();
+    break;
+  case MassLossType::LINEAR:
+  case MassLossType::UNIFORM:
+  default:
     const double mLossFactor = cfg.get<double>("mLossFactor", 0, 1);
     mLossTab_.push_back(std::make_pair(0., mLossFactor));
     mLossTab_.push_back(std::make_pair(bMax_, mLossFactor));
-  }
-  else if ( mLossType_ == MassLossType::YOSHINO )
-  {
-    loadYoshinoDataTable();
+    break;
   }
 
   rnd_ = new Random(cfg.get<int>("seed"));
@@ -189,7 +192,8 @@ void AbsModel::calculateCrossSection()
     pdf_->loadPDF(x1, m0, pdf1);
     pdf_->loadPDF(x2, m0, pdf2);
 
-    const double weight = calculatePartonWeight(m0, pdf1, pdf2);
+    double weight = calculatePartonWeight(m0, pdf1, pdf2);
+    // FIXME :: Calculate weight after M/J loss
 
     if ( weightMax_ < weight ) weightMax_ = weight;
     sumW += weight;
@@ -250,12 +254,35 @@ void AbsModel::event()
     // Apply mass loss
     double mFrac = 1.0, jFrac = 1.0;
     const double b = rnd_->ramp(0, bMax_);
-    const double mFracMin = 1;//physics::interpolate(mLossTab_, b);
+    const double mFracMin = interpolate(mLossTab_, b);
+    // There is upper bound of angular momentum for 4D and 5D
+    const double jFracMax = 1;
     while ( true )
     {
       // FIXME : Implement M/J loss
-      mFrac = rnd_->ramp(mFracMin, 1);
-      jFrac = rnd_->ramp(0, 1);
+      // Generate mass fraction after balding phase
+      switch ( mLossType_ )
+      {
+      case MassLossType::LINEAR:
+        mFrac = rnd_->ramp(mFracMin, 1);
+        break;
+      case MassLossType::UNIFORM:
+      case MassLossType::YOSHINO:
+        mFrac = rnd_->ramp(mFracMin, 1);
+        break;
+      }
+
+      // Retry if final mass is below minimum mass range
+      if ( mFrac*m0 < massMin_ ) continue;
+      // Generate angular momentum fraction after balding phase
+      jFrac = rnd_->ramp(0, jFracMax);
+
+      // Irreducible mass condition in the Yoshino-Rychkov
+      if ( mLossType_ == MassLossType::YOSHINO )
+      {
+  //FIXME: here
+      }
+
       break;
     }
 
