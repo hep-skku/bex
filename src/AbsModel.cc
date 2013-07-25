@@ -118,10 +118,10 @@ void AbsModel::beginJob()
 
   fout_ << "<LesHouchesEvents version=\"1.0\">" << endl;
   fout_ << "<!--//\n";
-  fout_ << boost::format("## Started %1% on %2%\n\n") % name_ % second_clock::local_time();
+  fout_ << boost::format("** Started %1% on %2%\n\n") % name_ % second_clock::local_time();
   cfg_.print(fout_);
-  fout_ << "## Cross section = " << xsec << " +- " << xsecErr << endl;
-  fout_ << "## Maximum weight during xsec calculation = " << weightMax << endl;
+  fout_ << "** Cross section = " << xsec << " +- " << xsecErr << endl;
+  fout_ << "** Maximum weight during xsec calculation = " << weightMax << endl;
   fout_ << "//-->\n";
   fout_ << "<init>\n";
   // Add <init> header in LHE
@@ -175,6 +175,8 @@ double AbsModel::getCrossSectionError()
 void AbsModel::calculateCrossSection()
 {
   if ( !isValid_ ) return;
+
+  cfg_.print();
 
   double sumW = 0, sumW2 = 0;
   PDF pdf1, pdf2;
@@ -259,7 +261,6 @@ void AbsModel::event()
     const double jFracMax = 1;
     while ( true )
     {
-      // FIXME : Implement M/J loss
       // Generate mass fraction after balding phase
       switch ( mLossType_ )
       {

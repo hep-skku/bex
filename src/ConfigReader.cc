@@ -61,14 +61,14 @@ bool ConfigReader::hasOption(const std::string name) const
 void ConfigReader::print(ostream& out) const
 {
   // Print out configurations
-  for ( int i=0, n=42; i<n; ++i ) out << "#";
-  out << "\n## ConfigReader:Printing out parameters ##\n";
+  for ( int i=0, n=44; i<n; ++i ) out << "*";
+  out << "\n** ConfigReader:Printing out parameters   **\n";
   for ( std::map<string, string>::const_iterator key = data_.begin();
         key != data_.end(); ++key )
   {
-    out << boost::format("## %1% %|20t| = %2% %|40t|##\n") % key->first % key->second;
+    out << boost::format("** %1% %|20t| = %2% %|42t|**\n") % key->first % key->second;
   }
-  for ( int i=0, n=42; i<n; ++i ) out << "#";
+  for ( int i=0, n=44; i<n; ++i ) out << "*";
   out << endl;
 }
 

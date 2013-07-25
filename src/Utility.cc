@@ -99,10 +99,10 @@ double interpolate(const std::vector<std::pair<double, double> >& data, double x
 
 void printCrossSection(const double xsec, const double xsecErr)
 {
-  boost::format fmt("## Cross section = %-.3f +- %-.3f ##");
-  if ( xsec > 1e3 ) cout << fmt % (xsec/1e3) % (xsecErr/1e3) << " (nb) ##\n";
-  else if ( xsec > 1e-1 ) cout << fmt % xsec % xsecErr << " (pb) ##\n";
-  else cout << fmt % (xsec*1e3) % (xsecErr*1e3) << " (fb) ##\n";
+  boost::format fmt("** Cross section = %-.3f +- %-.3f");
+  if ( xsec > 1e3 ) cout << fmt % (xsec/1e3) % (xsecErr/1e3) << " (nb)    **\n";
+  else if ( xsec > 1e-1 ) cout << fmt % xsec % xsecErr << " (pb)    **\n";
+  else cout << fmt % (xsec*1e3) % (xsecErr*1e3) << " (fb)    **\n";
 }
 
 void printEventNumber(int eventNumber, const int nEvent)
