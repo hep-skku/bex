@@ -5,7 +5,7 @@ using namespace std;
 
 NVector::NVector()
 {
-  for ( int i=0; i<nDim; ++i )
+  for ( unsigned int i=0; i<nDim; ++i )
   {
     data_[i] = 0.;
   }
@@ -24,7 +24,7 @@ double NVector::mD2()
 double NVector::rD2()
 {
   double retVal = 0;
-  for ( int i=1; i<nDim; ++i )
+  for ( unsigned int i=1; i<nDim; ++i )
   {
     retVal += data_[i]*data_[i];
   }
@@ -33,7 +33,7 @@ double NVector::rD2()
 
 NVector& NVector::operator=(const NVector& op)
 {
-  for ( int i=0; i<nDim; ++i )
+  for ( unsigned int i=0; i<nDim; ++i )
   {
     data_[i] = op.data_[i];
   }
@@ -54,7 +54,7 @@ NVector operator-(NVector op1, const NVector& op2)
 
 NVector& operator+=(NVector& op1, const NVector& op2)
 {
-  for ( int i=0; i<op2.nDim; ++i )
+  for ( unsigned int i=0; i<op2.nDim; ++i )
   {
     op1.data_[i] += op2.data_[i];
   }
@@ -63,7 +63,7 @@ NVector& operator+=(NVector& op1, const NVector& op2)
 
 NVector& operator-=(NVector& op1, const NVector& op2)
 {
-  for ( int i=0; i<op2.nDim; ++i )
+  for ( unsigned int i=0; i<op2.nDim; ++i )
   {
     op1.data_[i] -= op2.data_[i];
   }
@@ -72,7 +72,7 @@ NVector& operator-=(NVector& op1, const NVector& op2)
 
 NVector& operator*=(NVector& op, const double scale)
 {
-  for ( int i=0; i<op.nDim; ++i )
+  for ( unsigned int i=0; i<op.nDim; ++i )
   {
     op.data_[i] *= scale;
   }
