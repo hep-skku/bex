@@ -60,6 +60,42 @@ double r0ToRs(const int nDim, const double r0)
 }
 
 }
+// namespace physics
+
+// Linear interpolation. Input data have to be sorted
+double interpolate(const std::vector<std::pair<double, double> >& data, double x)
+{
+  // Binary search on 1st item of pair
+  unsigned int lo = 0, hi = data.size()-1;
+  if ( hi < 1 ) throw runtime_error("interpolate: need at least 2 data points");
+  //Check boundedness
+  double xLo = data[lo].first;
+  double xHi = data[hi].first;
+  if ( x == xLo ) return data[0].second;
+  else if ( x == xHi ) return data.back().second;
+  else if ( x < xLo ) throw std::underflow_error((boost::format("interpolate: %1% < LB(%2%)") % x % xLo).str());
+  else if ( x > xHi ) throw std::overflow_error( (boost::format("interpolate: %1% > UB(%2%)") % x % xHi).str());
+
+  while ( true )
+  {
+    const unsigned int curr = (hi+lo)/2;
+    const double currX = data[curr].first;
+    if ( x < currX ) hi = curr;
+    else if ( currX <= x ) lo = curr;
+    if ( hi - lo <= 1 ) break;
+  }
+  xLo = data[lo].first;
+  xHi = data[hi].first;
+  // Now xLo <= x < xHi
+
+  // Do linear interpolation
+  const double yLo = data[lo].second;
+  const double yHi = data[hi].second;
+  const double frac = (x-xLo)/(xHi-xLo);
+  const double y = frac*(yHi-yLo) + yLo;
+
+  return y;
+}
 
 void printCrossSection(const double xsec, const double xsecErr)
 {

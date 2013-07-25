@@ -2,6 +2,7 @@
 #define Utility_H
 
 #include <iostream>
+#include <utility>
 #include <vector>
 
 namespace physics
@@ -17,6 +18,7 @@ double r0ToRs(const int nDim, const double r0);
 
 }
 
+double interpolate(const std::vector<std::pair<double, double> >& data, const double x);
 void printCrossSection(const double xsec, const double xsecErr);
 void printEventNumber(const int eventNumber, const int nEvent);
 std::istream& operator>>(std::istream& in, std::vector<std::pair<double, double> >& data);
