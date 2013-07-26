@@ -42,6 +42,8 @@ public:
 
 protected:
   void loadYoshinoDataTable();
+  double computeRs(const double m0);
+  double computeMirr(const double m0, const double mFrac, const double jFrac);
 
 protected:
   bool isValid_;

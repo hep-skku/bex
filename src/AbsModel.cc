@@ -246,6 +246,7 @@ void AbsModel::event()
     // Now BH satisfies Hoop conjecture condition,
     // thus we can do initial calculations for this energy chunk
     q2 = m0*m0;
+    const double rs0 = computeRs(m0);
     // pick parton flavors (interface considering extension to RS model)
     Particle parton1(0, -1, 1, 1, 0., 0., +beamEnergy*x1);
     Particle parton2(0, -1, 2, 2, 0., 0., -beamEnergy*x2);
@@ -257,8 +258,16 @@ void AbsModel::event()
     double mFrac = 1.0, jFrac = 1.0;
     const double b = rnd_->ramp(0, bMax_);
     const double mFracMin = interpolate(mLossTab_, b);
-    // There is upper bound of angular momentum for 4D and 5D
     const double jFracMax = 1;
+    // There is upper bound of angular momentum for 4D and 5D. say, j' <= jMax
+    //   Angular momentum of two particles at CM frame : j0 = 1/2 * b * m0
+    //   Angular momentum after balding phase j' = jFrac*j0
+    //   thus jFrac <= jMax/j0 = jMax/(1/2*b*m0) = 2jMax/b/m0
+    //   For 4D: J <= 1/2*M*r_h -> jFrac <= r_h*(M/m0)/b FIXME: M/m0 = 1 or mFrac?
+    if ( nDim_ == 4 ) const_cast<double&>(jFracMax) = 0.5*rs0/b;
+    //   For 5D: J <= 1/2*M*r_h -> jFrac <= 1/3*r_h*(M/m0)/b
+    else if ( nDim_ == 5 ) const_cast<double&>(jFracMax) = 1./3*rs0/b;
+
     while ( true )
     {
       // Generate mass fraction after balding phase
@@ -278,10 +287,13 @@ void AbsModel::event()
       // Generate angular momentum fraction after balding phase
       jFrac = rnd_->ramp(0, jFracMax);
 
-      // Irreducible mass condition in the Yoshino-Rychkov
+      // BH should obey area theorem and cosmic censorship condition
+      // according to the Yoshino-Rychkov, irreducible mass have to be
+      // greater than minimum mass
       if ( mLossType_ == MassLossType::YOSHINO )
       {
-  //FIXME: here
+        const double mIrr = computeMirr(m0, mFrac, jFrac);
+        if ( mIrr < massMin_ ) continue;
       }
 
       break;
@@ -324,6 +336,16 @@ void AbsModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1,
   const int id2 = PDF::indexToPdgId(rnd_->pickFromCDF(stackPDF2));
   parton1 = Particle(id1, -1, 1, 1, 0., 0., parton1.pz_);
   parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
+}
+
+double AbsModel::computeMirr(const double m0, const double mFrac, const double jFrac)
+{
+  return m0;
+}
+
+double AbsModel::computeRs(const double m0)
+{
+  return kn_*pow(m0/mD_, 1./(nDim_-3.))/mD_;
 }
 
 Particle::Particle(const int id, const int status,
