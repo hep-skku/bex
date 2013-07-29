@@ -12,6 +12,10 @@ public:
 
   const static unsigned int nDim = 11;
 
+  // Setters
+  void set(const double t = 0, const double x = 0, const double y = 0, const double z = 0);
+  void set(const int i, const double p);
+
   // Generic D dimensional variables
   double mD2(); // D dimensional mass-squared
   double mD() { return std::sqrt(mD2()); } // D dimensional mass
