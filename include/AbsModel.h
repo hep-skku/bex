@@ -40,6 +40,8 @@ public:
   virtual void endJob();
   virtual void event();
 
+  typedef std::vector<std::pair<double, double> > Pairs;
+
 protected:
   void loadYoshinoDataTable();
   double computeRs(const double m0);
@@ -60,6 +62,7 @@ protected:
   double cmEnergy_;
   double massMin_, massMax_;
   double mD_;
+  int formFactorType_, mLossType_;
 
   double weightMax_;
   double xsec_, xsecErr_;
@@ -67,10 +70,9 @@ protected:
   const static int nXsecIter_ = 100000;
 
   // Cached variables for convenience
-  int formFactorType_, mLossType_;
   double s_;
   double bMax_, formFactor_;
-  std::vector<std::pair<double, double> > mLossTab_;
+  Pairs mLossTab_;
   double kn_, kn2_;
 };
 
