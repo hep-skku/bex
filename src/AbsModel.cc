@@ -266,9 +266,10 @@ void AbsModel::event()
   decays.push_back(Particle(beamId2_, -9, 0, 0, 0., 0., -beamEnergy));
 
   // Default values of Blackhole property
-  NVector bh_position, bh_momentum;
+  double bh_mass = 0, bh_spin = 0;
+  NVector bh_momentum;
   int bh_charge = 0; // Blackhole charge
-  double q2 = 0; // Initial CM energy before mass loss, Q^2
+  double qsqr = 0; // Initial CM energy before mass loss, Q^2
 
   // Start BH production
   PDF pdf1, pdf2;
@@ -289,7 +290,7 @@ void AbsModel::event()
 
     // Now BH satisfies Hoop conjecture condition,
     // thus we can do initial calculations for this energy chunk
-    q2 = m0*m0;
+    qsqr = m0*m0;
     //const double rs0 = computeRs(m0);
     // pick parton flavors (interface considering extension to RS model)
     Particle parton1(0, -1, 1, 1, 0., 0., +beamEnergy*x1);
@@ -349,13 +350,26 @@ void AbsModel::event()
       break;
     }
 
-    // Initial mass loss by 2 graviton radiation,
+    // Initial mass loss by 2 graviton radiation along +- z direction,
     // thus BH 3-momentum will be conserved
+    // NOTE : This assumes isotropic gravitational radiation
+    const double graviton_e = (1-mFrac)*m0/2;
+    decays.push_back(Particle(39, 1, 3, 4, 0., 0., +graviton_e));
+    decays.push_back(Particle(39, 1, 3, 4, 0., 0., -graviton_e));
+
+    // Build initial BH
+    bh_mass = mFrac*m0;
+    const double bh_pz = parton1.pz_+parton2.pz_;
+    bh_momentum.set(std::sqrt(bh_mass*bh_mass+bh_pz*bh_pz), 0, 0, bh_pz);
 
     break;
   }
 
-  // Start evaporation
+  // Start evaporation by hawking radiation
+  while ( bh_mass > mD_ and bh_mass > massMin_ )
+  {
+    bh_mass = bh_momentum.mass();
+  }
 
   // Remant decay
 
@@ -364,7 +378,7 @@ void AbsModel::event()
   // Header of user process common block
   // NUP IDPRUP=1 XWGTUP=1 SCALUP AQEDUP=-1 AQCDUP=-1
   fout_ << boost::format(" %5d %5d %15.10e %15.10e %15.10e\n")
-         % decays.size() % 1 % q2 % -1 % -1;
+         % decays.size() % 1 % qsqr % -1 % -1;
   for ( int i=0, n=decays.size(); i<n; ++i )
   {
     // User process ID, particles list
