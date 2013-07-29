@@ -208,7 +208,38 @@ void AbsModel::calculateCrossSection()
     pdf_->loadPDF(x2, m0, pdf2);
 
     double weight = calculatePartonWeight(m0, pdf1, pdf2);
-    // FIXME :: Calculate weight after M/J loss
+
+    // Suppression by mass and angular momentum loss
+    double mFrac = 1.0;
+    while ( true )
+    {
+      const double b0 = rnd_->ramp(0, bMax_);
+      const double mFracMin = interpolate(mLossTab_, b0);
+
+      // Generate mass fraction after balding phase
+      if ( mLossType_ == MassLossType::UNIFORM )
+      {
+        mFrac = rnd_->uniform(mFracMin, 1);
+      }
+      else if ( mLossType_ == MassLossType::LINEAR or mLossType_ == MassLossType::YOSHINO )
+      {
+        mFrac = rnd_->ramp(mFracMin, 1);
+      }
+
+      if ( jLossType_ == MassLossType::YOSHINO )
+      {
+        // Generate angular momentum fraction after balding phase
+        const double jFrac = rnd_->ramp(0, 1);
+        // BH should obey area theorem and cosmic censorship condition
+        // according to the Yoshino-Rychkov, irreducible mass have to be
+        // greater than minimum mass
+        const double mIrr = computeMirr(mFrac, jFrac, b0);
+        if ( mIrr < mFracMin ) continue;
+      }
+
+      break;
+    }
+    if ( mFrac*m0 < massMin_ ) weight = 0;
 
     if ( weightMax_ < weight ) weightMax_ = weight;
     sumW += weight;
@@ -270,9 +301,8 @@ void AbsModel::event()
 
     // Apply mass loss
     double mFrac = 1.0, jFrac = 1.0;
-    const double b = rnd_->ramp(0, bMax_);
-    const double mFracMin = interpolate(mLossTab_, b);
-    const double jFracMax = jLossType_ == MassLossType::YOSHINO ? 1.0 : jLossFactor_;
+    const double b0 = rnd_->ramp(0, bMax_);
+    const double mFracMin = interpolate(mLossTab_, b0);
     while ( true )
     {
       // Generate mass fraction after balding phase
@@ -287,6 +317,16 @@ void AbsModel::event()
 
       // Retry if final mass is below minimum mass range
       if ( mFrac*m0 < massMin_ ) continue;
+
+      // There's upper bound of angular momentum for low dimensional cases
+      // Adjust jFracMax for low dimensional cases
+      double jFracMax = jLossFactor_;
+      if ( jLossType_ != MassLossType::YOSHINO )
+      {
+        if ( nDim_ == 4 ) jFracMax = min(mFrac*mFrac/b0, jLossFactor_);
+        else if ( nDim_ == 5 ) jFracMax = min(pow(mFrac, 3./2.)/b0, jLossFactor_);
+      }
+
       // Generate angular momentum fraction after balding phase
       if ( jLossType_ == MassLossType::UNIFORM )
       {
@@ -302,7 +342,7 @@ void AbsModel::event()
       // greater than minimum mass
       if ( jLossType_ == MassLossType::YOSHINO )
       {
-        const double mIrr = computeMirr(mFrac, jFrac, b);
+        const double mIrr = computeMirr(mFrac, jFrac, b0);
         if ( mIrr < mFracMin ) continue;
       }
 
