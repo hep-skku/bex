@@ -13,6 +13,7 @@ extern const double Pi; // Usual pi
 extern const double OmegaDs[]; // Surface area of unit sphere in D-1 dimension
 extern const double kn[]; // overall common factors k_n in BH xsec calculation
 
+int get3ChargeByPdgId(const int pdgId);
 double getMassByPdgId(const int pdgId);
 double r0ToRs(const int nDim, const double r0);
 

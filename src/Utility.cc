@@ -29,6 +29,24 @@ const double kn[] = {
   pow(105./2.*Pi*Pi, 1./7.), 2.*pow(4.*Pi*Pi/3., 1./8.)
 };
 
+int get3ChargeByPdgId(const int pdgId)
+{
+  const int absPdgId = std::abs(pdgId);
+  if ( absPdgId == 0 /* Undefined particle */
+    or (absPdgId >= 21 and absPdgId <= 23 ) /* Neutral gauge bosons */
+    or absPdgId == 12 or absPdgId == 14 or absPdgId == 16 /* Neutrinos */ ) return 0;
+  const int sign = pdgId/absPdgId;
+  if ( absPdgId == 11 or absPdgId == 13 or absPdgId == 15 ) return -3*sign; // Leptons
+  else if ( absPdgId <= 6 )
+  {
+    if ( absPdgId % 2 == 1 ) return -sign; // Down type quarks : -1/3 (and +1/3 for antiquarks)
+    else return sign*2; // Up type quarks : +2/3 (and -2/3 for antiquarks)
+  }
+  if ( absPdgId == 35 ) return 0; // Higgs
+
+  return 0;
+}
+
 double getMassByPdgId(const int pdgId)
 {
   const int absPdgId = std::abs(pdgId);
