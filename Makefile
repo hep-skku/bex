@@ -18,7 +18,7 @@ CCFLAGS=-Wall $(addprefix -I,$(INCLUDES))
 LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm
 
 ## Actions
-all: $(EXE)
+all: $(EXE) SCRIPTS
 
 SRCS=$(filter-out main.cc PDFInterface.cc,$(notdir $(wildcard src/*.cc)))
 OBJS=$(addprefix tmp/,$(SRCS:.cc=.o))
@@ -32,8 +32,14 @@ tmp/PDFInterface.o:
 $(EXE): $(OBJS) tmp/PDFInterface.o src/main.cc
 	$(CC) $(CCFLAGS) $(LDFLAGS) -o bin/$(EXE) src/main.cc $(OBJS) tmp/PDFInterface.o
 
+SCRIPTS:
+	@echo "#!/bin/bash" > bin/run.sh
+	@echo 'export LD_LIBRARY_PATH=$${LD_LIBRARY_PATH}:'$(LHAPDF)/lib >> bin/run.sh
+	@echo bin/$(EXE) '$$@' >> bin/run.sh
+	@chmod +x bin/run.sh
+
 clean:
-	-rm -f bin/$(EXE)
+	-rm -f bin/$(EXE) bin/run.sh
 	-rm -f tmp/*
 
 tmp/PDFInterface.o: include/PDFInterface.h src/PDFInterface.cc
