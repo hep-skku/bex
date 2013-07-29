@@ -19,19 +19,19 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
 
   beamId1_ = beamId2_ = 2212;
 
-  cmEnergy_ = cfg.get<double>("cmEnergy", 0, 1e9);
-  massMin_ = cfg.get<double>("massMin", 0., cmEnergy_);
-  massMax_ = cfg.get<double>("massMax", massMin_, cmEnergy_);
-  massMin_ = cfg.get<double>("massMin", 0., massMax_); // Check once again to check reversed input
-  mD_   = cfg.get<double>("mD", 0., 1e9);
-  nDim_ = cfg.get<int>("dimension", 4, 11);
+  cmEnergy_ = cfg_.get<double>("cmEnergy", 0, 1e9);
+  massMin_ = cfg_.get<double>("massMin", 0., cmEnergy_);
+  massMax_ = cfg_.get<double>("massMax", massMin_, cmEnergy_);
+  massMin_ = cfg_.get<double>("massMin", 0., massMax_); // Check once again to check reversed input
+  mD_   = cfg_.get<double>("mD", 0., 1e9);
+  nDim_ = cfg_.get<int>("dimension", 4, 11);
 
   // Routines for FormFactor definition
   ConfigReader::MenuType formFactorMenu;
   formFactorMenu["Yoshino"] = FormFactorType::YOSHINO;
   formFactorMenu["FIOP"] = FormFactorType::FIOP;
   formFactorMenu["PiR2"] = FormFactorType::PiR2;
-  formFactorType_ = cfg.get("formFactor", formFactorMenu);
+  formFactorType_ = cfg_.get("formFactor", formFactorMenu);
 
   if ( formFactorType_ == FormFactorType::YOSHINO )
   {
@@ -54,7 +54,9 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
   mLossMenu["Yoshino"] = MassLossType::YOSHINO;
   mLossMenu["Uniform"] = MassLossType::UNIFORM;
   mLossMenu["Linear" ] = MassLossType::LINEAR ;
-  mLossType_ = cfg.get("mLossType", mLossMenu);
+  mLossMenu["Const"  ] = MassLossType::CONST  ;
+  mLossMenu["None"   ] = MassLossType::NONE   ;
+  mLossType_ = cfg_.get("mLossType", mLossMenu);
 
   // Build Impact parameter vs mass loss factor tables
   if ( mLossType_ == MassLossType::YOSHINO )
@@ -63,13 +65,14 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
   }
   else
   {
-    const double mLossFactor = cfg.get<double>("mLossFactor", 0, 1);
+    if ( mLossType_ == MassLossType::NONE ) cfg_.set("mLossFactor", 1);
+    const double mLossFactor = cfg_.get<double>("mLossFactor", 0, 1);
     mLossTab_.push_back(std::make_pair(0., mLossFactor));
     mLossTab_.push_back(std::make_pair(bMax_, mLossFactor));
   }
 
   // Angular momentum loss
-  if ( mLossType_ == MassLossType::YOSHINO and !cfg.hasOption("jLossType") )
+  if ( mLossType_ == MassLossType::YOSHINO and !cfg_.hasOption("jLossType") )
   {
     jLossType_ = MassLossType::YOSHINO;
   }
@@ -79,13 +82,16 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
     jLossMenu["Yoshino"] = MassLossType::YOSHINO;
     jLossMenu["Uniform"] = MassLossType::UNIFORM;
     jLossMenu["Linear" ] = MassLossType::LINEAR ;
-    jLossType_ = cfg.get("jLossType", jLossMenu);
+    jLossMenu["Const"  ] = MassLossType::CONST  ;
+    jLossMenu["None"   ] = MassLossType::NONE   ;
+    jLossType_ = cfg_.get("jLossType", jLossMenu);
+    if ( jLossType_ == MassLossType::NONE ) cfg_.set("jLossFactor", 1);
     if ( jLossType_ == MassLossType::YOSHINO ) jLossFactor_ = 1.0;
-    else jLossFactor_ = cfg.get<double>("jLossFactor");
+    else jLossFactor_ = cfg_.get<double>("jLossFactor");
   }
 
-  rnd_ = new Random(cfg.get<int>("seed"));
-  pdf_ = new PDFInterface(cfg.get<int>("PDFSet"));
+  rnd_ = new Random(cfg_.get<int>("seed"));
+  pdf_ = new PDFInterface(cfg_.get<int>("PDFSet"));
 
   weightMax_ = 0;
 
@@ -225,6 +231,10 @@ void AbsModel::calculateCrossSection()
       {
         mFrac = rnd_->ramp(mFracMin, 1);
       }
+      else if ( mLossType_ == MassLossType::CONST or mLossType_ == MassLossType::NONE )
+      {
+        mFrac = mFracMin;
+      }
 
       if ( jLossType_ == MassLossType::YOSHINO )
       {
@@ -315,6 +325,10 @@ void AbsModel::event()
       {
         mFrac = rnd_->ramp(mFracMin, 1);
       }
+      else if ( mLossType_ == MassLossType::CONST or mLossType_ == MassLossType::NONE )
+      {
+        mFrac = mFracMin;
+      }
 
       // Retry if final mass is below minimum mass range
       if ( mFrac*m0 < massMin_ ) continue;
@@ -322,7 +336,7 @@ void AbsModel::event()
       // There's upper bound of angular momentum for low dimensional cases
       // Adjust jFracMax for low dimensional cases
       double jFracMax = jLossFactor_;
-      if ( jLossType_ != MassLossType::YOSHINO )
+      if ( jLossType_ == MassLossType::LINEAR or jLossType_ == MassLossType::UNIFORM )
       {
         if ( nDim_ == 4 ) jFracMax = min(mFrac*mFrac/b0, jLossFactor_);
         else if ( nDim_ == 5 ) jFracMax = min(pow(mFrac, 3./2.)/b0, jLossFactor_);
@@ -336,6 +350,10 @@ void AbsModel::event()
       else if ( jLossType_ == MassLossType::LINEAR or jLossType_ == MassLossType::YOSHINO )
       {
         jFrac = rnd_->ramp(0, jFracMax);
+      }
+      else if ( jLossType_ == MassLossType::CONST or jLossType_ == MassLossType::NONE )
+      {
+        jFrac = jFracMax;
       }
 
       // BH should obey area theorem and cosmic censorship condition
