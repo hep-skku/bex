@@ -17,6 +17,12 @@ EXE=bex
 CCFLAGS=-Wall $(addprefix -I,$(INCLUDES))
 LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm
 
+## Detect ROOT for debugging
+ifdef ROOTSYS
+CCFLAGS:=$(CCFLAGS) $(shell root-config --cflags) -DDEBUGROOT
+LDFLAGS:=$(LDFLAGS) $(shell root-config --ldflags --libs) -DDEBUGROOT
+endif
+
 ## Actions
 all: $(EXE) SCRIPTS
 

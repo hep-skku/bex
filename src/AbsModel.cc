@@ -11,6 +11,11 @@
 #include <boost/format.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 
+#ifdef DEBUGROOT
+#include "TH2F.h"
+extern TH2F* _hMJLoss, * _hMJLossNoWeight, * _hMJLossUnWeight;
+#endif
+
 using namespace std;
 
 AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
@@ -75,6 +80,7 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
   if ( mLossType_ == MassLossType::YOSHINO and !cfg_.hasOption("jLossType") )
   {
     jLossType_ = MassLossType::YOSHINO;
+    jLossFactor_ = 1.0;
   }
   else
   {
@@ -85,8 +91,8 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
     jLossMenu["Const"  ] = MassLossType::CONST  ;
     jLossMenu["None"   ] = MassLossType::NONE   ;
     jLossType_ = cfg_.get("jLossType", jLossMenu);
-    if ( jLossType_ == MassLossType::NONE ) cfg_.set("jLossFactor", 1);
-    if ( jLossType_ == MassLossType::YOSHINO ) jLossFactor_ = 1.0;
+    if ( jLossType_ == MassLossType::NONE ) jLossFactor_ = 1.0;
+    else if ( jLossType_ == MassLossType::YOSHINO ) jLossFactor_ = 1.0;
     else jLossFactor_ = cfg_.get<double>("jLossFactor");
   }
 
@@ -197,6 +203,9 @@ void AbsModel::calculateCrossSection()
 
   cfg_.print();
 
+#ifdef DEBUGROOT
+  double jFracV = 1.0;
+#endif
   double sumW = 0, sumW2 = 0;
   PDF pdf1, pdf2;
   for ( int i=0; i<nXsecIter_; ++i )
@@ -245,11 +254,19 @@ void AbsModel::calculateCrossSection()
         // greater than minimum mass
         const double mIrr = computeMirr(mFrac, jFrac, b0);
         if ( mIrr < mFracMin ) continue;
+#ifdef DEBUGROOT
+        jFracV = jFrac;
+#endif
       }
 
       break;
     }
     if ( mFrac*m0 < massMin_ ) weight = 0;
+
+#ifdef DEBUGROOT
+    _hMJLoss->Fill(mFrac, jFracV, weight);
+    _hMJLossNoWeight->Fill(mFrac, jFracV);
+#endif
 
     if ( weightMax_ < weight ) weightMax_ = weight;
     sumW += weight;
@@ -367,6 +384,9 @@ void AbsModel::event()
 
       break;
     }
+#ifdef DEBUGROOT
+    _hMJLossUnWeight->Fill(mFrac, jFrac);
+#endif
 
     // Initial mass loss by 2 graviton radiation along +- z direction,
     // thus BH 3-momentum will be conserved
@@ -384,10 +404,10 @@ void AbsModel::event()
   }
 
   // Start evaporation by hawking radiation
-  while ( bh_mass > mD_ and bh_mass > massMin_ )
-  {
-    bh_mass = bh_momentum.mass();
-  }
+//  while ( bh_mass > mD_ and bh_mass > massMin_ )
+//  {
+//    bh_mass = bh_momentum.mass();
+//  }
 
   // Remant decay
 
@@ -424,7 +444,7 @@ double AbsModel::computeMirr(const double mFrac, const double jFrac, const doubl
 {
   // Implementation from CHMJLSPA() in charybdis2-1.0.3.F
 
-  // Find horizon radius rh with satisfying the condition, 
+  // Find horizon radius rh with satisfying the condition,
   //     rh^2 + ( (D-2)J/2/M )^2 = rh^(5-D) * rs^(D-3)
   // or, rh^(D-3) + k*rh^(D-5) - rs = 0
   // Here rh = (horizon radius of Kerr BH), rs = (schwartzschild radius)
