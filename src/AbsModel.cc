@@ -50,25 +50,39 @@ AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
     bMax_ = 1.;
   }
 
+  // Mass loss types
   ConfigReader::MenuType mLossMenu;
   mLossMenu["Yoshino"] = MassLossType::YOSHINO;
   mLossMenu["Uniform"] = MassLossType::UNIFORM;
-  mLossMenu["Linear"]  = MassLossType::LINEAR;
+  mLossMenu["Linear" ] = MassLossType::LINEAR ;
   mLossType_ = cfg.get("mLossType", mLossMenu);
 
   // Build Impact parameter vs mass loss factor tables
-  switch ( mLossType_ )
+  if ( mLossType_ == MassLossType::YOSHINO )
   {
-  case MassLossType::YOSHINO:
     loadYoshinoDataTable();
-    break;
-  case MassLossType::LINEAR:
-  case MassLossType::UNIFORM:
-  default:
+  }
+  else
+  {
     const double mLossFactor = cfg.get<double>("mLossFactor", 0, 1);
     mLossTab_.push_back(std::make_pair(0., mLossFactor));
     mLossTab_.push_back(std::make_pair(bMax_, mLossFactor));
-    break;
+  }
+
+  // Angular momentum loss
+  if ( mLossType_ == MassLossType::YOSHINO and !cfg.hasOption("jLossType") )
+  {
+    jLossType_ = MassLossType::YOSHINO;
+  }
+  else
+  {
+    ConfigReader::MenuType jLossMenu;
+    jLossMenu["Yoshino"] = MassLossType::YOSHINO;
+    jLossMenu["Uniform"] = MassLossType::UNIFORM;
+    jLossMenu["Linear" ] = MassLossType::LINEAR ;
+    jLossType_ = cfg.get("jLossType", jLossMenu);
+    if ( jLossType_ == MassLossType::YOSHINO ) jLossFactor_ = 1.0;
+    else jLossFactor_ = cfg.get<double>("jLossFactor");
   }
 
   rnd_ = new Random(cfg.get<int>("seed"));
@@ -246,7 +260,7 @@ void AbsModel::event()
     // Now BH satisfies Hoop conjecture condition,
     // thus we can do initial calculations for this energy chunk
     q2 = m0*m0;
-    const double rs0 = computeRs(m0);
+    //const double rs0 = computeRs(m0);
     // pick parton flavors (interface considering extension to RS model)
     Particle parton1(0, -1, 1, 1, 0., 0., +beamEnergy*x1);
     Particle parton2(0, -1, 2, 2, 0., 0., -beamEnergy*x2);
@@ -259,42 +273,38 @@ void AbsModel::event()
     double mFrac = 1.0, jFrac = 1.0;
     const double b = rnd_->ramp(0, bMax_);
     const double mFracMin = interpolate(mLossTab_, b);
-    double jFracMax = 1;
-    // There is upper bound of angular momentum for 4D and 5D. say, j' <= jMax
-    //   Angular momentum of two particles at CM frame : j0 = 1/2 * b * m0
-    //   Angular momentum after balding phase j' = jFrac*j0
-    //   thus jFrac <= jMax/j0 = jMax/(1/2*b*m0) = 2jMax/b/m0
-    //   For 4D: J <= 1/2*M*r_h -> jFrac <= r_h*(M/m0)/b FIXME: M/m0 = 1 or mFrac?
-    if ( nDim_ == 4 ) jFracMax = 0.5*rs0/b;
-    //   For 5D: J <= 1/2*M*r_h -> jFrac <= 1/3*r_h*(M/m0)/b
-    else if ( nDim_ == 5 ) jFracMax = 1./3*rs0/b;
-
+    const double jFracMax = jLossType_ == MassLossType::YOSHINO ? 1.0 : jLossFactor_;
     while ( true )
     {
       // Generate mass fraction after balding phase
-      switch ( mLossType_ )
+      if ( mLossType_ == MassLossType::UNIFORM )
       {
-      case MassLossType::LINEAR:
+        mFrac = rnd_->uniform(mFracMin, 1);
+      }
+      else if ( mLossType_ == MassLossType::LINEAR or mLossType_ == MassLossType::YOSHINO )
+      {
         mFrac = rnd_->ramp(mFracMin, 1);
-        break;
-      case MassLossType::UNIFORM:
-      case MassLossType::YOSHINO:
-        mFrac = rnd_->ramp(mFracMin, 1);
-        break;
       }
 
       // Retry if final mass is below minimum mass range
       if ( mFrac*m0 < massMin_ ) continue;
       // Generate angular momentum fraction after balding phase
-      jFrac = rnd_->ramp(0, jFracMax);
+      if ( jLossType_ == MassLossType::UNIFORM )
+      {
+        jFrac = rnd_->uniform(0, jFracMax);
+      }
+      else if ( jLossType_ == MassLossType::LINEAR or jLossType_ == MassLossType::YOSHINO )
+      {
+        jFrac = rnd_->ramp(0, jFracMax);
+      }
 
       // BH should obey area theorem and cosmic censorship condition
       // according to the Yoshino-Rychkov, irreducible mass have to be
       // greater than minimum mass
-      if ( mLossType_ == MassLossType::YOSHINO )
+      if ( jLossType_ == MassLossType::YOSHINO )
       {
-        const double mIrr = computeMirr(m0, mFrac, jFrac);
-        if ( mIrr < massMin_ ) continue;
+        const double mIrr = computeMirr(mFrac, jFrac, b);
+        if ( mIrr < mFracMin ) continue;
       }
 
       break;
@@ -339,12 +349,68 @@ void AbsModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1,
   parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
 }
 
-double AbsModel::computeMirr(const double m0, const double mFrac, const double jFrac)
+double AbsModel::computeMirr(const double mFrac, const double jFrac, const double b0) const
 {
-  return m0;
+  // Implementation from CHMJLSPA() in charybdis2-1.0.3.F
+
+  // Find horizon radius rh with satisfying the condition, 
+  //     rh^2 + ( (D-2)J/2/M )^2 = rh^(5-D) * rs^(D-3)
+  // or, rh^(D-3) + k*rh^(D-5) - rs = 0
+  // Here rh = (horizon radius of Kerr BH), rs = (schwartzschild radius)
+  //
+  // If we choose rs(m0)=1 unit, we can simplify equation even more,
+  //     rs(M)^(D-3) = rs(mFrac*m0)^(D-3) = mFrac*rs(m0) = mFrac
+  //     sqrt(k) = (D-2)J/2/M = (D-2)jFrac*(m0*b0/2)/2/(mFrac*m0) = (D-2)jFrac/4/mFrac*b0
+  // Then problem becomes finding root of the following equation,
+  //     x^(D-3) + k*x^(D-5) - mFrac = 0
+  const double sqrtk = (nDim_-2.)/4.*jFrac/mFrac*b0;
+  const double k = sqrtk*sqrtk;
+
+  // Solve x^(D-3) + k*x^(D-5) - mFrac = 0
+  double x;
+  if ( nDim_ == 5 ) // 5D case : We can directly solve equation
+  {
+    const double det = mFrac - k;
+    if ( det < 0 ) return -1;
+
+    x = sqrt(det);
+  }
+  else if ( nDim_ >= 6 )
+  {
+    // In general, solution have to be found numerically
+    // We will use Newton-Raphson method with 100 iterations
+    x = 1;
+    double dx = 0;
+    for ( int i=0; i<100; ++i )
+    {
+      const double f      = pow(x, nDim_-3.) + k*pow(x, nDim_-5.) - mFrac;
+      const double fprime = (nDim_-3.)*pow(x, nDim_-4.) + k*(nDim_-5.)*pow(x, nDim_-6.);
+      dx = f/fprime;
+      x -= dx;
+    }
+    // Check convergence
+    if ( std::abs(dx) > 1e-4*std::abs(x) ) return -1;
+
+    // Horizon radius must be positive definite
+    if ( x < 0 ) x = 0;
+  }
+  else // 4D case : We can directly solve equation
+  {
+    // Equation is : x + k/x - mFrac = 0
+    // Then the solution is: x = mFrac/2 +- sqrt( mFrac^2/4 - k )
+    // where x > 0, 0 < mFrac <= 1, k >= 0
+    const double det = mFrac*mFrac/4. - k;
+    if ( det < 0 ) return -1;
+
+    x = mFrac/2. + sqrt(det);
+  }
+
+  // Finallly, apply inverse function of rs^(D-2)[Mirr] = rs^(D-3)rh
+  const double mirr = pow(x*mFrac, (nDim_-3.)/(nDim_-2.));
+  return mirr;
 }
 
-double AbsModel::computeRs(const double m0)
+double AbsModel::computeRs(const double m0) const
 {
   return kn_*pow(m0/mD_, 1./(nDim_-3.))/mD_;
 }

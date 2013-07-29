@@ -44,8 +44,8 @@ public:
 
 protected:
   void loadYoshinoDataTable();
-  double computeRs(const double m0);
-  double computeMirr(const double m0, const double mFrac, const double jFrac);
+  double computeRs(const double m0) const;
+  double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
 protected:
   bool isValid_;
@@ -62,7 +62,8 @@ protected:
   double cmEnergy_;
   double massMin_, massMax_;
   double mD_;
-  int formFactorType_, mLossType_;
+  int formFactorType_, mLossType_, jLossType_;
+  double jLossFactor_;
 
   double weightMax_;
   double xsec_, xsecErr_;
