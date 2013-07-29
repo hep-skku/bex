@@ -3,5 +3,6 @@
 *.d
 *.swp
 *.bak
-bin/bex
+bin/*
+tmp
 test/*.xml
