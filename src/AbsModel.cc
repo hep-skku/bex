@@ -13,12 +13,11 @@
 
 using namespace std;
 
-AbsModel::AbsModel(const ConfigReader& cfg):cfg_(cfg)
+AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
 {
   isValid_ = false;
-  name_ = "bex";
 
-  beamIds_[0] = beamIds_[1] = 2212;
+  beamId1_ = beamId2_ = 2212;
 
   cmEnergy_ = cfg.get<double>("cmEnergy", 0, 1e9);
   massMin_ = cfg.get<double>("massMin", 0., cmEnergy_);
@@ -148,7 +147,7 @@ void AbsModel::beginJob()
   //   IDWTUP    : How to set event weight. +3 for unweighted, accept all events
   //   NPRUP     : Number of user subprocess. We will consider only one subprocess
   fout_ << boost::format(" %5d %5d %12.5e %12.5e %5d %5d %5d %5d %5d %5d\n")
-         % beamIds_[0] % beamIds_[1] % beamEnergy % beamEnergy
+         % beamId1_ % beamId2_ % beamEnergy % beamEnergy
          % 0 % 0 % pdf_->getPDFSet() % pdf_->getPDFSet() % 3 % 1;
   // Line 2+ : XSECUP(NPRUP) XERRUP(NPRUP) XMAXUP(NPRUP) LPRUP(NPRUP)
   //   XSECUP(NPRUP) : Cross section of this process
@@ -232,8 +231,8 @@ void AbsModel::event()
 
   // Set incoming particles
   const double beamEnergy = cmEnergy_/2;
-  decays.push_back(Particle(beamIds_[0], -9, 0, 0, 0., 0., +beamEnergy));
-  decays.push_back(Particle(beamIds_[1], -9, 0, 0, 0., 0., -beamEnergy));
+  decays.push_back(Particle(beamId1_, -9, 0, 0, 0., 0., +beamEnergy));
+  decays.push_back(Particle(beamId2_, -9, 0, 0, 0., 0., -beamEnergy));
 
   // Default values of Blackhole property
   NVector bh_position, bh_momentum;

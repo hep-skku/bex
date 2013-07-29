@@ -57,7 +57,7 @@ protected:
   Random* rnd_;
   PDFInterface* pdf_;
 
-  int beamIds_[2];
+  int beamId1_, beamId2_;
   int nDim_;
   double cmEnergy_;
   double massMin_, massMax_;
