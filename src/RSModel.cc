@@ -131,3 +131,10 @@ void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, 
   parton2.spin_ = spin2;
 
 }
+
+bool RSModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position,
+                           const int bh_charge, const double bh_spin,
+                           int& dau_id, double& dau_energy)
+{
+  return false;
+}

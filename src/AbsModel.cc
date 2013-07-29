@@ -294,7 +294,7 @@ void AbsModel::event()
 
   // Default values of Blackhole property
   double bh_mass = 0, bh_spin = 0;
-  NVector bh_momentum;
+  NVector bh_momentum, bh_position;
   int bh_charge = 0; // Blackhole charge
   double qsqr = 0; // Initial CM energy before mass loss, Q^2
 
@@ -404,10 +404,12 @@ void AbsModel::event()
   }
 
   // Start evaporation by hawking radiation
-//  while ( bh_mass > mD_ and bh_mass > massMin_ )
-//  {
-//    bh_mass = bh_momentum.mass();
-//  }
+  while ( true )
+  {
+    int dau_id;
+    double dau_energy;
+    if ( !selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, dau_id, dau_energy) ) break;
+  }
 
   // Remant decay
 
