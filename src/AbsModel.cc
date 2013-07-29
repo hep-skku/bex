@@ -253,20 +253,21 @@ void AbsModel::event()
     selectParton(pdf1, pdf2, parton1, parton2);
     decays.push_back(parton1);
     decays.push_back(parton2);
+    bh_charge = physics::get3ChargeByPdgId(parton1.id_) + physics::get3ChargeByPdgId(parton2.id_);
 
     // Apply mass loss
     double mFrac = 1.0, jFrac = 1.0;
     const double b = rnd_->ramp(0, bMax_);
     const double mFracMin = interpolate(mLossTab_, b);
-    const double jFracMax = 1;
+    double jFracMax = 1;
     // There is upper bound of angular momentum for 4D and 5D. say, j' <= jMax
     //   Angular momentum of two particles at CM frame : j0 = 1/2 * b * m0
     //   Angular momentum after balding phase j' = jFrac*j0
     //   thus jFrac <= jMax/j0 = jMax/(1/2*b*m0) = 2jMax/b/m0
     //   For 4D: J <= 1/2*M*r_h -> jFrac <= r_h*(M/m0)/b FIXME: M/m0 = 1 or mFrac?
-    if ( nDim_ == 4 ) const_cast<double&>(jFracMax) = 0.5*rs0/b;
+    if ( nDim_ == 4 ) jFracMax = 0.5*rs0/b;
     //   For 5D: J <= 1/2*M*r_h -> jFrac <= 1/3*r_h*(M/m0)/b
-    else if ( nDim_ == 5 ) const_cast<double&>(jFracMax) = 1./3*rs0/b;
+    else if ( nDim_ == 5 ) jFracMax = 1./3*rs0/b;
 
     while ( true )
     {
