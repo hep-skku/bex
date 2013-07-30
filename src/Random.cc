@@ -26,6 +26,22 @@ double Random::ramp(const double min, const double max)
   return shift(sqrt(rand()), min, max);
 }
 
+void Random::sphere(const double r, double& x, double& y, double& z)
+{
+  double rr = 1e9;
+  while ( rr <= 1 and rr > 0.01 )
+  {
+    x = rand();
+    y = rand();
+    z = rand();
+    rr = x*x + y*y + z*z;
+  }
+  const double scale = r/sqrt(rr);
+  x *= scale;
+  y *= scale;
+  z *= scale;
+}
+
 int Random::pick(const int min, const int max)
 {
   return int(rand()*(max+1-min));

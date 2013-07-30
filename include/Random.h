@@ -13,6 +13,8 @@ public:
   double uniform(const double min, const double max);
   // Linear ramp distribution
   double ramp(const double min, const double max);
+  // Sphere with radius r
+  void sphere(const double r, double& x, double& y, double& z);
   // Pick an integer from range [min, max]
   int pick(const int min, const int max);
   // Pick one from list
