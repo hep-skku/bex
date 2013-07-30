@@ -3,6 +3,7 @@
 *.d
 *.swp
 *.bak
+*.root
 bin/*
 tmp
 test/*.xml
