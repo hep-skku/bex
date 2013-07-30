@@ -406,9 +406,10 @@ void AbsModel::event()
   // Start evaporation by hawking radiation
   while ( true )
   {
-    int dau_id;
-    double dau_energy;
-    if ( !selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, dau_id, dau_energy) ) break;
+    // Select daughter particle
+    Particle daughter(0, 1, 3, 4, 0., 0., 0.); // A dummy particle
+    if ( !selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, daughter) ) break;
+
   }
 
   // Remant decay
@@ -525,4 +526,24 @@ Particle::Particle(const int id, const int status,
   e_ = sqrt(px*px+py*py+pz*pz + m_*m_);
   vt_ = 0;
   spin_ = 9;
+}
+
+Particle::Particle(const int id, const int status,
+                  const int mother1, const int mother2,
+                  const double energy)
+{
+  id_ = id;
+  status_ = status;
+  mother1_ = mother1;
+  mother2_ = mother2;
+  color1_ = 0; // Colorless as default value
+  color2_ = 0;
+  px_ = 0;
+  py_ = 0;
+  m_ = physics::getMassByPdgId(id);
+  e_ = energy;
+  pz_ = max(0., sqrt(energy*energy - m_*m_));
+  vt_ = 0;
+  spin_ = 9;
+
 }

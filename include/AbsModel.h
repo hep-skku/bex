@@ -11,8 +11,11 @@
 struct Particle
 {
   Particle(const int id, const int status,
-                 const int mother1, const int mother2,
-                 const double px, const double py, const double pz);
+           const int mother1, const int mother2,
+           const double px, const double py, const double pz);
+  Particle(const int id, const int status,
+           const int mother1, const int mother2,
+           const double energy);
 
   int id_, status_;
   int mother1_, mother2_, color1_, color2_;
@@ -38,7 +41,7 @@ public:
   virtual void selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2);
   virtual bool selectDecay(const NVector& bh_momentum, const NVector& bh_position,
                            const int bh_charge, const double bh_spin,
-                           int& dau_id, double& dau_energy) = 0;
+                           Particle& daughter) = 0;
 
   virtual void beginJob();
   virtual void endJob();
