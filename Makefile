@@ -1,16 +1,18 @@
 # Makefile
 
 ## Define paths to the libraries
-LHAPDF=$(HOME)/sw/slc5_x86_64_gcc412/lhapdf
-PYTHIA8=$(HOME)/sw/slc5_x86_64_gcc412/pythia8
-HEPMC=$(HOME)/sw/slc5_x86_64_gcc412/HepMC
+LHAPDF=$(SWPATH)/lhapdf
+PYTHIA8=$(SWPATH)/pythia8
+HEPMC=$(SWPATH)/HepMC
 
 ## Compiler options
 ## Detect OSX
 ifeq ($(shell uname),Darwin)
 CC=clang++
+SWPATH=$(HOME)/sw/osx_x86_64_gcc421
 else
 CC=g++
+SWPATH=$(HOME)/sw/slc5_x86_64_gcc412
 endif
 INCLUDES=. /opt/local/include
 
