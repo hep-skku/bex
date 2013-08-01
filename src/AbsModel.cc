@@ -409,6 +409,9 @@ void AbsModel::event()
     Particle daughter(0, 1, 3, 4, 0., 0., 0.); // A dummy particle
     if ( !selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, daughter) ) break;
 
+    // Particle is selected. Add it into the daughter particle collection
+    decays.push_back(daughter);
+
   }
 
   // Remant decay
@@ -440,6 +443,15 @@ void AbsModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1,
   const int id2 = PDF::indexToPdgId(rnd_->pickFromCDF(stackPDF2));
   parton1 = Particle(id1, -1, 1, 1, 0., 0., parton1.pz_);
   parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
+}
+
+bool AbsModel::selectDecay(const const NVector& bh_momentum, const NVector& bh_position,
+                           const int bh_charge, const double bh_spin,
+                           Particle& daughter)
+{
+  const double bh_mass = bh_momentum.mD();
+
+  return false;
 }
 
 double AbsModel::computeMirr(const double mFrac, const double jFrac, const double b0) const
