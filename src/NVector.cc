@@ -29,12 +29,12 @@ void NVector::set(const int i, const double p)
   data_[i] = p;
 }
 
-double NVector::mD2()
+double NVector::mD2() const
 {
   return data_[0]*data_[0] - rD2();
 }
 
-double NVector::rD2()
+double NVector::rD2() const
 {
   double retVal = 0;
   for ( unsigned int i=1; i<nDim; ++i )

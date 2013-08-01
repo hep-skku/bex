@@ -17,29 +17,29 @@ public:
   void set(const int i, const double p);
 
   // Generic D dimensional variables
-  double mD2(); // D dimensional mass-squared
-  double mD() { return std::sqrt(mD2()); } // D dimensional mass
-  double rD2(); // D dimensional momentum/distance squared
-  double rD() { return std::sqrt(rD2()); } // D dimensional momentum/distance
-  double p(const int i) { return data_[i]; } // Accessor for n'th coordinate
+  double mD2() const; // D dimensional mass-squared
+  double mD()  const { return std::sqrt(mD2()); } // D dimensional mass
+  double rD2() const; // D dimensional momentum/distance squared
+  double rD()  const { return std::sqrt(rD2()); } // D dimensional momentum/distance
+  double p (const int i) const { return data_[i]; } // Accessor for n'th coordinate
 
   // Variables in 3+1 D projection
-  double mass() { return m(); }
-  double m() { return std::sqrt(m2()); }
-  double m2() { return data_[0]*data_[0] - p2(); }
-  double p2() { return x()*x() + y()*y() + z()*z(); }
-  double pt2() { return x()*x() + y()*y(); }
-  double pt() { return sqrt(pt2()); }
+  double mass() const { return m(); }
+  double m()    const { return std::sqrt(m2()); }
+  double m2()   const { return data_[0]*data_[0] - p2(); }
+  double p2()   const { return x()*x() + y()*y() + z()*z(); }
+  double pt2()  const { return x()*x() + y()*y(); }
+  double pt()   const { return sqrt(pt2()); }
 
-  double t() { return data_[0]; }
-  double x() { return data_[1]; }
-  double y() { return data_[2]; }
-  double z() { return data_[3]; }
+  double t() const { return data_[0]; }
+  double x() const { return data_[1]; }
+  double y() const { return data_[2]; }
+  double z() const { return data_[3]; }
 
-  double e()  { return e(); }
-  double px() { return x(); }
-  double py() { return y(); }
-  double pz() { return z(); }
+  double e()  const { return e(); }
+  double px() const { return x(); }
+  double py() const { return y(); }
+  double pz() const { return z(); }
 
   friend NVector& operator+=(NVector& op1, const NVector& op2);
   friend NVector& operator-=(NVector& op1, const NVector& op2);
