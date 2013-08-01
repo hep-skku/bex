@@ -226,11 +226,10 @@ void AbsModel::calculateCrossSection()
 
     // Suppression by mass and angular momentum loss
     double mFrac = 1.0;
+    const double b0 = rnd_->ramp(0, bMax_);
+    const double mFracMin = interpolate(mLossTab_, b0);
     while ( true )
     {
-      const double b0 = rnd_->ramp(0, bMax_);
-      const double mFracMin = interpolate(mLossTab_, b0);
-
       // Generate mass fraction after balding phase
       if ( mLossType_ == MassLossType::UNIFORM )
       {
