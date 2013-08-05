@@ -445,7 +445,7 @@ void AbsModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1,
   parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
 }
 
-bool AbsModel::selectDecay(const const NVector& bh_momentum, const NVector& bh_position,
+bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position,
                            const int bh_charge, const double bh_spin,
                            Particle& daughter)
 {
