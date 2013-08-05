@@ -520,6 +520,11 @@ double AbsModel::computeRs(const double m0) const
   return kn_*pow(m0/mD_, 1./(nDim_-3.))/mD_;
 }
 
+double AbsModel::computeTemperature(const double m0, const double j0, const double q0) const
+{
+  return 0;
+}
+
 Particle::Particle(const int id, const int status,
                    const int mother1, const int mother2,
                    const double px, const double py, const double pz)

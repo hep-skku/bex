@@ -56,6 +56,7 @@ protected:
   void loadYoshinoDataTable();
   double computeRs(const double m0) const;
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
+  double computeTemperature(const double m0, const double j0, const double q0) const;
 
 protected:
   bool isValid_;
