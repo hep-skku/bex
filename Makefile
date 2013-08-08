@@ -15,6 +15,7 @@ INCLUDES=. /opt/local/include
 LHAPDF=$(SWPATH)/lhapdf
 PYTHIA8=$(SWPATH)/pythia8
 HEPMC=$(SWPATH)/HepMC
+MYPATH=$(shell pwd)
 
 EXE=bex
 CCFLAGS=-Wall $(addprefix -I,$(INCLUDES))
@@ -51,13 +52,13 @@ SCRIPTS:
 	@# bex run script
 	@echo "#!/bin/bash" > bin/run.sh
 	@echo 'export LD_LIBRARY_PATH=$${LD_LIBRARY_PATH}:'$(LHAPDF)/lib >> bin/run.sh
-	@echo bin/$(EXE) '$$@' >> bin/run.sh
+	@echo $(MYPATH)/bin/$(EXE) '$$@' >> bin/run.sh
 	@chmod +x bin/run.sh
 	@# pythiaHadronizer run script
 	@echo "#!/bin/bash" > bin/runHadronizer.sh
 	@echo 'export LD_LIBRARY_PATH=$${LD_LIBRARY_PATH}:'$(LHAPDF)/lib:$(HEPMC)/lib:$(PYTHIA8)/lib >> bin/runHadronizer.sh
 	@echo export PYTHIA8DATA=${PYTHIA8}/xmldoc >> bin/runHadronizer.sh
-	@echo bin/hadronizer '$$@' >> bin/runHadronizer.sh
+	@echo $(MYPATH)/bin/hadronizer '$$@' >> bin/runHadronizer.sh
 	@chmod +x bin/runHadronizer.sh
 
 clean:
