@@ -1,10 +1,5 @@
 # Makefile
 
-## Define paths to the libraries
-LHAPDF=$(SWPATH)/lhapdf
-PYTHIA8=$(SWPATH)/pythia8
-HEPMC=$(SWPATH)/HepMC
-
 ## Compiler options
 ## Detect OSX
 ifeq ($(shell uname),Darwin)
@@ -15,6 +10,11 @@ CC=g++
 SWPATH=$(HOME)/sw/slc5_x86_64_gcc412
 endif
 INCLUDES=. /opt/local/include
+
+## Define paths to the libraries
+LHAPDF=$(SWPATH)/lhapdf
+PYTHIA8=$(SWPATH)/pythia8
+HEPMC=$(SWPATH)/HepMC
 
 EXE=bex
 CCFLAGS=-Wall $(addprefix -I,$(INCLUDES))
@@ -56,6 +56,7 @@ SCRIPTS:
 	@# pythiaHadronizer run script
 	@echo "#!/bin/bash" > bin/runHadronizer.sh
 	@echo 'export LD_LIBRARY_PATH=$${LD_LIBRARY_PATH}:'$(LHAPDF)/lib:$(HEPMC)/lib:$(PYTHIA8)/lib >> bin/runHadronizer.sh
+	@echo export PYTHIA8DATA=${PYTHIA8}/xmldoc >> bin/runHadronizer.sh
 	@echo bin/hadronizer '$$@' >> bin/runHadronizer.sh
 	@chmod +x bin/runHadronizer.sh
 
