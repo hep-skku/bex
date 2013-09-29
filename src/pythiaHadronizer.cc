@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
   for ( int i=0; ; ++i )
   {
     if ( !pythia.next() and pythia.info.atEndOfFile() ) break;
+    cout << "Pythia8 Hadronizer : Event " << i << endl;
 
     HepMC::GenEvent* genEvent = new HepMC::GenEvent();
     hepMC.fill_next_event(pythia, genEvent);
