@@ -21,8 +21,19 @@ TH2F* _hMJLossUnWeight = new TH2F("hMJLossUnWeight", "hMJLossUnWeight", 100, 0.,
 
 using namespace std;
 
+void printUsageAndExit();
+
 int main(int argc, char* argv[])
 {
+  if ( argc < 2 ) printUsageAndExit();
+  for ( int i=0; i<argc; ++i )
+  {
+    if ( strcmp(argv[i], "-h") == 0 or strcmp(argv[i], "--help") == 0 )
+    {
+      printUsageAndExit();
+    }
+  }
+
   ConfigReader cfg(argv[1], argc-2, argv+2);
 
   const int nEvent = cfg.get<int>("nEvent", 0, 100000);
@@ -62,3 +73,12 @@ int main(int argc, char* argv[])
   return 0;
 }
 
+void printUsageAndExit()
+{
+  cout << "bex, A MC generator for Blackhole in EXtra dimension models\n\n";
+  cout << "Usage : bex [-h] configFile [item1=value1 [item2=value2 ...] ] \n\n";
+  cout << "  -h --help : print help message\n\n";
+  cout << "You can override configurations by adding ITEM=VALUE format\n";
+
+  exit(1);
+}
