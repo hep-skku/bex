@@ -450,6 +450,17 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
                            Particle& daughter)
 {
   const double bh_mass = bh_momentum.mD();
+  //const double bh_pos5 = bh_position.p(5); // Position in 5th dimension - not used in ADD model
+  const double rs = computeRs(bh_mass);
+  const double rh = computeRh(bh_mass, bh_spin);
+  if ( rh < 0 )
+  {
+    cerr << "Invalid black hole mass and spin" << endl;
+    return false;
+  }
+  const double astar = (nDim_-2.)/2*bh_spin/bh_mass/rh;
+  const double astar2 = astar*astar;
+  const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
 
   return false;
 }
@@ -520,9 +531,50 @@ double AbsModel::computeRs(const double m0) const
   return kn_*pow(m0/mD_, 1./(nDim_-3.))/mD_;
 }
 
-double AbsModel::computeTemperature(const double m0, const double j0, const double q0) const
+double AbsModel::computeRh(const double m0, const double j0) const
 {
-  return 0;
+  const double rs = computeRs(m0);
+  const double a = (nDim_-2)/2*j0/m0;
+
+  // Horizon radius can be solved in closed form for 4D and 5D 
+  if ( nDim_ == 4 )
+  {
+    const double det = rs*rs - 4*a*a;
+    if ( det < 0 ) return -1;
+
+    return (rs + sqrt(det))/2;
+  }
+  else if ( nDim_ == 5 )
+  {
+    const double det = rs*rs - a*a;
+    if ( det < 0 ) return -1;
+
+    return sqrt(det);
+  }
+  else
+  {
+    // Otherwise, solve it numerically
+    // We will use Newton-Raphson method with 100 iterations
+    double rh = rs;
+    double drh = 1e9;
+    const double p = 1./(nDim_-3);
+    while ( std::abs(drh) > 1e-3*std::abs(rh) )
+    {
+      const double det = rh*rh+a*a;
+      const double f      = rh*pow(det, p) - rs*pow(rh, 2*p);
+      const double fprime = pow(det, p) + 2*p*rh*rh*pow(det, p-1) - 2*p*rs*pow(rh, 2*p-1);
+      drh = f/fprime;
+      rh -= drh;
+    }
+
+    // Horizon radius must be positive definite
+    if ( rh < 0 ) rh = 0;
+
+    return rh;
+  }
+
+  return -1;
+
 }
 
 Particle::Particle(const int id, const int status,
