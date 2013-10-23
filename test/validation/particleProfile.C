@@ -4,20 +4,21 @@
 #include <TMath.h>
 #include <TCanvas.h>
 #include <TLegend.h>
+#include <THStack.h>
 
 const double kL = 11.2;
 const double L = 1;
 const double pi = TMath::Pi();
+const double mD = 1;
 
-double profile_s(double* x, double* p)
+double profile_sca(double* x, double* p)
 {
   const double y = x[0];
-  if ( pow((y-L)/L, 2) < 1e-3 ) return 30;
-  else return 0;
+  if ( pow((y-L)/L, 2) < 1e-3 ) return 10;
   return 0;
 }
 
-double profile_f(double* x, double* p)
+double profile_fer(double* x, double* p)
 {
   const double y = x[0];
   const double sign = p[0];
@@ -27,30 +28,64 @@ double profile_f(double* x, double* p)
   const double norm = sqrt((kL/pi*det)/(exp(kL*det)-1));
 
   return 1./sqrt(L)*norm*exp( 0.5*det*kL/L*y );
-
 }
 
-double profile_v(double* x, double* p)
+double profile_vec(double* x, double* p)
 {
-  //const double y = x[0];
   return 1./sqrt(L);
+}
+
+double profileSqr_sca(double* x, double* p)
+{
+  const double y = x[0];
+  if ( pow((y-L)/L, 2) < 1e-3 ) return 100;
+  return 0;
+}
+
+double profileSqr_fer(double* x, double* p)
+{
+  const double y = x[0];
+  const double sign = p[0];
+  const double nu = p[1];
+
+  const double det = 1+2*nu*sign;
+  const double norm2 = (kL/pi*det)/(exp(kL*det)-1);
+
+  return 1./L*norm2*exp( det*kL/L*y );
+}
+
+double profileSqr_vec(double* x, double* p)
+{
+  return 1/L;
+}
+
+double dfactorFtn_fer(double* x, double* p)
+{
+  const double y = x[0];
+  return exp(3*kL/L*(y-L))*profile_fer(x, p);
+}
+
+double dfactorFtn_vec(double* x, double* p)
+{
+  const double y = x[0];
+  return exp(3*kL/L*(y-L))*profile_vec(x, p);
 }
 
 void particleProfile()
 {
   const double minL = 0, maxL = L;
 
-  TF1* fS = new TF1("fS", profile_s, minL, maxL, 0);
-  TF1* fV = new TF1("fV", profile_v, minL, maxL, 0);
-  TF1* fFQ1 = new TF1("fFQ1", profile_f, minL, maxL, 2);
-  TF1* fFQ2 = new TF1("fFQ2", profile_f, minL, maxL, 2);
-  TF1* fFQ3 = new TF1("fFQ3", profile_f, minL, maxL, 2);
-  TF1* fFu1 = new TF1("fFu1", profile_f, minL, maxL, 2);
-  TF1* fFu2 = new TF1("fFu2", profile_f, minL, maxL, 2);
-  TF1* fFu3 = new TF1("fFu3", profile_f, minL, maxL, 2);
-  TF1* fFd1 = new TF1("fFd1", profile_f, minL, maxL, 2);
-  TF1* fFd2 = new TF1("fFd2", profile_f, minL, maxL, 2);
-  TF1* fFd3 = new TF1("fFd3", profile_f, minL, maxL, 2);
+  TF1* fSca = new TF1("fSca", profile_sca, minL, maxL, 0);
+  TF1* fVec = new TF1("fVec", profile_vec, minL, maxL, 0);
+  TF1* fFQ1 = new TF1("fFQ1", profile_fer, minL, maxL, 2);
+  TF1* fFQ2 = new TF1("fFQ2", profile_fer, minL, maxL, 2);
+  TF1* fFQ3 = new TF1("fFQ3", profile_fer, minL, maxL, 2);
+  TF1* fFu1 = new TF1("fFu1", profile_fer, minL, maxL, 2);
+  TF1* fFu2 = new TF1("fFu2", profile_fer, minL, maxL, 2);
+  TF1* fFu3 = new TF1("fFu3", profile_fer, minL, maxL, 2);
+  TF1* fFd1 = new TF1("fFd1", profile_fer, minL, maxL, 2);
+  TF1* fFd2 = new TF1("fFd2", profile_fer, minL, maxL, 2);
+  TF1* fFd3 = new TF1("fFd3", profile_fer, minL, maxL, 2);
   fFQ1->SetParameters(+1, -0.579);
   fFQ2->SetParameters(+1, -0.517);
   fFQ3->SetParameters(+1, -0.473);
@@ -61,11 +96,178 @@ void particleProfile()
   fFd2->SetParameters(-1, +0.666);
   fFd3->SetParameters(-1, +0.533);
 
+  TF1* fSqrSca = new TF1("fSqrSca", profileSqr_sca, minL, maxL, 0);
+  TF1* fSqrVec = new TF1("fSqrVec", profileSqr_vec, minL, maxL, 0);
+  TF1* fSqrFQ1 = new TF1("fSqrFQ1", profileSqr_fer, minL, maxL, 2);
+  TF1* fSqrFQ2 = new TF1("fSqrFQ2", profileSqr_fer, minL, maxL, 2);
+  TF1* fSqrFQ3 = new TF1("fSqrFQ3", profileSqr_fer, minL, maxL, 2);
+  TF1* fSqrFu1 = new TF1("fSqrFu1", profileSqr_fer, minL, maxL, 2);
+  TF1* fSqrFu2 = new TF1("fSqrFu2", profileSqr_fer, minL, maxL, 2);
+  TF1* fSqrFu3 = new TF1("fSqrFu3", profileSqr_fer, minL, maxL, 2);
+  TF1* fSqrFd1 = new TF1("fSqrFd1", profileSqr_fer, minL, maxL, 2);
+  TF1* fSqrFd2 = new TF1("fSqrFd2", profileSqr_fer, minL, maxL, 2);
+  TF1* fSqrFd3 = new TF1("fSqrFd3", profileSqr_fer, minL, maxL, 2);
+  fSqrFQ1->SetParameters(+1, -0.579);
+  fSqrFQ2->SetParameters(+1, -0.517);
+  fSqrFQ3->SetParameters(+1, -0.473);
+  fSqrFu1->SetParameters(-1, +0.742);
+  fSqrFu2->SetParameters(-1, +0.558);
+  fSqrFu3->SetParameters(-1, -0.339);
+  fSqrFd1->SetParameters(-1, +0.711);
+  fSqrFd2->SetParameters(-1, +0.666);
+  fSqrFd3->SetParameters(-1, +0.533);
+
+  TF1* fDfacVec = new TF1("fDfacVec", dfactorFtn_vec, minL, maxL, 0);
+  TF1* fDfacFQ1 = new TF1("fDfacFQ1", dfactorFtn_fer, minL, maxL, 2);
+  TF1* fDfacFQ2 = new TF1("fDfacFQ2", dfactorFtn_fer, minL, maxL, 2);
+  TF1* fDfacFQ3 = new TF1("fDfacFQ3", dfactorFtn_fer, minL, maxL, 2);
+  TF1* fDfacFu1 = new TF1("fDfacFu1", dfactorFtn_fer, minL, maxL, 2);
+  TF1* fDfacFu2 = new TF1("fDfacFu2", dfactorFtn_fer, minL, maxL, 2);
+  TF1* fDfacFu3 = new TF1("fDfacFu3", dfactorFtn_fer, minL, maxL, 2);
+  TF1* fDfacFd1 = new TF1("fDfacFd1", dfactorFtn_fer, minL, maxL, 2);
+  TF1* fDfacFd2 = new TF1("fDfacFd2", dfactorFtn_fer, minL, maxL, 2);
+  TF1* fDfacFd3 = new TF1("fDfacFd3", dfactorFtn_fer, minL, maxL, 2);
+  fDfacFQ1->SetParameters(+1, -0.579);
+  fDfacFQ2->SetParameters(+1, -0.517);
+  fDfacFQ3->SetParameters(+1, -0.473);
+  fDfacFu1->SetParameters(-1, +0.742);
+  fDfacFu2->SetParameters(-1, +0.558);
+  fDfacFu3->SetParameters(-1, -0.339);
+  fDfacFd1->SetParameters(-1, +0.711);
+  fDfacFd2->SetParameters(-1, +0.666);
+  fDfacFd3->SetParameters(-1, +0.533);
+
+  TH1F* hProfIR = new TH1F("hProfIR", "Profile at IR;;Amplitude at IR brane", 10, 0, 10);
+  hProfIR->GetXaxis()->SetBinLabel( 1, "Vector"); hProfIR->SetBinContent( 1, fVec->Eval(L));
+  hProfIR->GetXaxis()->SetBinLabel( 2, "Q_{1}"); hProfIR->SetBinContent( 2, fFQ1->Eval(L));
+  hProfIR->GetXaxis()->SetBinLabel( 3, "Q_{2}"); hProfIR->SetBinContent( 3, fFQ2->Eval(L));
+  hProfIR->GetXaxis()->SetBinLabel( 4, "Q_{3}"); hProfIR->SetBinContent( 4, fFQ3->Eval(L));
+  hProfIR->GetXaxis()->SetBinLabel( 5, "u_{1}"); hProfIR->SetBinContent( 5, fFu1->Eval(L));
+  hProfIR->GetXaxis()->SetBinLabel( 6, "u_{2}"); hProfIR->SetBinContent( 6, fFu2->Eval(L));
+  hProfIR->GetXaxis()->SetBinLabel( 7, "u_{3}"); hProfIR->SetBinContent( 7, fFu3->Eval(L));
+  hProfIR->GetXaxis()->SetBinLabel( 8, "d_{1}"); hProfIR->SetBinContent( 8, fFd1->Eval(L));
+  hProfIR->GetXaxis()->SetBinLabel( 9, "d_{2}"); hProfIR->SetBinContent( 9, fFd2->Eval(L));
+  hProfIR->GetXaxis()->SetBinLabel(10, "d_{3}"); hProfIR->SetBinContent(10, fFd3->Eval(L));
+
+  const double minDL = 0.8*L;
+  TH1F* hSqrDSca = new TH1F("hSqrDSca", "Scator;BH radius;Relative D factor", 100, minDL, L);
+  TH1F* hSqrDVec = new TH1F("hSqrDVec", "Vector;BH radius;Relative D factor", 100, minDL, L);
+  TH1F* hSqrDFQ3 = new TH1F("hSqrDFQ3", "Q3;BH radius;Relative D factor", 100, minDL, L);
+  TH1F* hSqrDFu3 = new TH1F("hSqrDFu3", "u3;BH radius;Relative D factor", 100, minDL, L);
+  TH1F* hSqrDFd3 = new TH1F("hSqrDFd3", "d3;BH radius;Relative D factor", 100, minDL, L);
+  TH1F* hSqrDFxy = new TH1F("hSqrDFxy", "others;BH radius;Relative D factor", 100, minDL, L);
+  hSqrDSca->SetFillColor(kWhite);
+  hSqrDVec->SetFillColor(kOrange+1);
+  hSqrDFQ3->SetFillColor(kGreen+3);
+  hSqrDFu3->SetFillColor(kAzure+0);
+  hSqrDFd3->SetFillColor(kRed+0);
+  hSqrDFxy->SetFillColor(kYellow);
+
+  TH1F* hRelDSca = new TH1F("hRelDSca", "Scator;BH radius;Relative D factor", 1, 0, L);
+  TH1F* hRelDVec = new TH1F("hRelDVec", "Vector;BH radius;Relative D factor", 1, 0, L);
+  TH1F* hRelDFQ3 = new TH1F("hRelDFQ3", "Q3;BH radius;Relative D factor", 1, 0, L);
+  TH1F* hRelDFu3 = new TH1F("hRelDFu3", "u3;BH radius;Relative D factor", 1, 0, L);
+  TH1F* hRelDFd3 = new TH1F("hRelDFd3", "d3;BH radius;Relative D factor", 1, 0, L);
+  TH1F* hRelDFxy = new TH1F("hRelDFxy", "others;BH radius;Relative D factor", 1, 0, L);
+  hRelDSca->SetFillColor(kWhite);
+  hRelDVec->SetFillColor(kOrange+1);
+  hRelDFQ3->SetFillColor(kGreen+3);
+  hRelDFu3->SetFillColor(kAzure+0);
+  hRelDFd3->SetFillColor(kRed+0);
+  hRelDFxy->SetFillColor(kYellow);
+   
+  for ( int i=1; i<=100; ++i )
+  {
+    const double x = hSqrDVec->GetXaxis()->GetBinCenter(i);
+    const double dSca = 1;
+
+    const double dSqrVec = fSqrVec->Integral(x, L);
+    const double dSqrFQ3 = fSqrFQ3->Integral(x, L);
+    const double dSqrFu3 = fSqrFu3->Integral(x, L);
+    const double dSqrFd3 = fSqrFd3->Integral(x, L);
+    double dSqrFxy = 0;
+    dSqrFxy += fSqrFQ1->Integral(x, L);
+    dSqrFxy += fSqrFu1->Integral(x, L);
+    dSqrFxy += fSqrFd1->Integral(x, L);
+    dSqrFxy += fSqrFQ2->Integral(x, L);
+    dSqrFxy += fSqrFu2->Integral(x, L);
+    dSqrFxy += fSqrFd2->Integral(x, L);
+    const double dSqrSum = dSca+dSqrVec+dSqrFQ3+dSqrFu3+dSqrFd3+dSqrFxy;
+    hSqrDSca->SetBinContent(i, dSca/dSqrSum);
+    hSqrDVec->SetBinContent(i, dSqrVec/dSqrSum);
+    hSqrDFQ3->SetBinContent(i, dSqrFQ3/dSqrSum);
+    hSqrDFu3->SetBinContent(i, dSqrFu3/dSqrSum);
+    hSqrDFd3->SetBinContent(i, dSqrFd3/dSqrSum);
+    hSqrDFxy->SetBinContent(i, dSqrFxy/dSqrSum);
+  }
+
+  for ( int i=1; i<=hRelDVec->GetNbinsX(); ++i )
+  {
+    const double x = hSqrDVec->GetXaxis()->GetBinLowEdge(i);
+    const double dSca = 1;
+
+    const double dVec = pow(fDfacVec->Integral(x, L), 2);
+    const double dFQ3 = pow(fDfacFQ3->Integral(x, L), 2);
+    const double dFu3 = pow(fDfacFu3->Integral(x, L), 2);
+    const double dFd3 = pow(fDfacFd3->Integral(x, L), 2);
+    double dFxy = 0;
+    dFxy += pow(fDfacFQ1->Integral(x, L), 2);
+    dFxy += pow(fDfacFu1->Integral(x, L), 2);
+    dFxy += pow(fDfacFd1->Integral(x, L), 2);
+    dFxy += pow(fDfacFQ2->Integral(x, L), 2);
+    dFxy += pow(fDfacFu2->Integral(x, L), 2);
+    dFxy += pow(fDfacFd2->Integral(x, L), 2);
+    const double dSum = dSca+dVec+dFQ3+dFu3+dFd3+dFxy;
+    hRelDSca->SetBinContent(i, dSca/dSum);
+    hRelDVec->SetBinContent(i, dVec/dSum);
+    hRelDFQ3->SetBinContent(i, dFQ3/dSum);
+    hRelDFu3->SetBinContent(i, dFu3/dSum);
+    hRelDFd3->SetBinContent(i, dFd3/dSum);
+    hRelDFxy->SetBinContent(i, dFxy/dSum);
+
+  }
+
+  THStack* hSqrD = new THStack();
+  hSqrD->SetTitle("Relative D factor;Overlap size;D factor fraction");
+  hSqrD->Add(hSqrDFxy);
+  hSqrD->Add(hSqrDFd3);
+  hSqrD->Add(hSqrDFu3);
+  hSqrD->Add(hSqrDFQ3);
+  hSqrD->Add(hSqrDVec);
+  hSqrD->Add(hSqrDSca);
+  TLegend* legSqrD = new TLegend(0.75, 0.65, 0.95, 0.90);
+  legSqrD->SetFillStyle(0);
+  legSqrD->SetBorderSize(0);
+  legSqrD->AddEntry(hSqrDSca, "Higgs", "F");
+  legSqrD->AddEntry(hSqrDVec, "Vector", "F");
+  legSqrD->AddEntry(hSqrDFQ3, "Q_{3}", "F");
+  legSqrD->AddEntry(hSqrDFu3, "u_{3}", "F");
+  legSqrD->AddEntry(hSqrDFd3, "d_{3}", "F");
+  legSqrD->AddEntry(hSqrDFxy, "Others", "F");
+
+  THStack* hRelD = new THStack();
+  hRelD->SetTitle("Relative D factor;Overlap size;D factor fraction");
+  hRelD->Add(hRelDFxy);
+  hRelD->Add(hRelDFd3);
+  hRelD->Add(hRelDFu3);
+  hRelD->Add(hRelDFQ3);
+  hRelD->Add(hRelDVec);
+  hRelD->Add(hRelDSca);
+  TLegend* legRelD = new TLegend(0.75, 0.65, 0.95, 0.90);
+  legRelD->SetFillStyle(0);
+  legRelD->SetBorderSize(0);
+  legRelD->AddEntry(hRelDSca, "Higgs", "F");
+  legRelD->AddEntry(hRelDVec, "Vector", "F");
+  legRelD->AddEntry(hRelDFQ3, "Q_{3}", "F");
+  legRelD->AddEntry(hRelDFu3, "u_{3}", "F");
+  legRelD->AddEntry(hRelDFd3, "d_{3}", "F");
+  legRelD->AddEntry(hRelDFxy, "Others", "F");
+
   TCanvas* c = new TCanvas("cProfile", "cProfile", 500, 500);
   c->SetLogy();
 
-  fS->SetLineColor(kBlack);
-  fV->SetLineColor(kOrange+1);
+  fSca->SetLineColor(kBlack);
+  fVec->SetLineColor(kOrange+1);
 
   fFQ1->SetLineColor(kGreen+1);
   fFu1->SetLineColor(kAzure+1);
@@ -99,15 +301,14 @@ void particleProfile()
   leg->AddEntry(fFd2, "Quark d_{2}", "l");
   leg->AddEntry(fFd3, "Quark d_{3}", "l");
 
-  leg->AddEntry(fV, "Boson", "l");
-
+  leg->AddEntry(fVec, "Vector", "l");
 
   TH1F* hFrame = new TH1F("hFrame", ";y position;Profile amplitude #chi(y)", 100, minL, maxL);
   hFrame->SetMinimum(1e-2);
   hFrame->SetMaximum(10);
   hFrame->Draw();
 
-  fV->Draw("same");
+  fVec->Draw("same");
   fFQ1->Draw("same");
   fFu1->Draw("same");
   fFd1->Draw("same");
@@ -121,4 +322,20 @@ void particleProfile()
   fFd3->Draw("same");
 
   leg->Draw();
+
+  TCanvas* cProfIR = new TCanvas("cProfIR", "cProfIR", 500, 500);
+  hProfIR->Draw();
+
+  TCanvas* cSqrD = new TCanvas("cSqrD", "cSqrD", 500, 500);
+  hSqrD->Draw();
+  hSqrD->GetYaxis()->SetRangeUser(0,1);
+  hSqrD->GetXaxis()->SetNdivisions(505);
+  legSqrD->Draw();
+
+  TCanvas* cRelD = new TCanvas("cRelD", "cRelD", 500, 500);
+  hRelD->Draw();
+  hRelD->GetYaxis()->SetRangeUser(0,1);
+  hRelD->GetXaxis()->SetNdivisions(505);
+  legRelD->Draw();
+
 }
