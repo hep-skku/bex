@@ -45,11 +45,11 @@ RSModel::RSModel(const ConfigReader& cfg):
 
   prodWeights_ = cfg_.get<std::vector<double> >("prodWeights");
   // wGG = C_gg
-  rs_wGG_ = prodWeights_[0];
+  //rs_wGG_ = prodWeights_[0];
   // wBG = C_gQ + C_gd
-  rs_wBG_ = prodWeights_[2] + prodWeights_[8];
+  //rs_wBG_ = prodWeights_[2] + prodWeights_[8];
   // wBB = C_QQ + C_Qd + C_dd
-  rs_wBB_ = prodWeights_[1] + prodWeights_[7] + prodWeights_[6];
+  //rs_wBB_ = prodWeights_[1] + prodWeights_[7] + prodWeights_[6];
 
 }
 
@@ -61,10 +61,29 @@ double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF
 
   // Consider suppression factor due to profile in extra dimension
   // Assume partons are not polarized; 50% left and 50% right handed
-  double weightProfile = 0;
-  weightProfile += rs_wGG_*pdf1(21)*pdf2(21); // gluon+gluon
-  weightProfile += 2*rs_wBG_*(pdf1(21)*pdf2(5) + pdf1(5)*pdf2(21)); // gluon+bottom (and bbar)
-  weightProfile += 4*rs_wBB_*pdf1(5)*pdf2(5); // bottom+bottom (and bbar)
+  //double weightProfile = 0;
+  //weightProfile += rs_wGG_*pdf1(21)*pdf2(21); // gluon+gluon
+  //weightProfile += 2*rs_wBG_*(pdf1(21)*pdf2(5) + pdf1(5)*pdf2(21)); // gluon+bottom (and bbar)
+  //weightProfile += 4*rs_wBB_*pdf1(5)*pdf2(5); // bottom+bottom (and bbar)
+  double weightProfile = 0.0140845*pdf1(21)*pdf2(21)
+                       + 0.0021186*(pdf1(21)*pdf2(1) + pdf1(1)*pdf2(21))
+                       + 0.0021403*(pdf1(21)*pdf2(2) + pdf1(2)*pdf2(21))
+                       + 0.0103402*(pdf1(21)*pdf2(3) + pdf1(3)*pdf2(21))
+                       + 0.0139810*(pdf1(21)*pdf2(4) + pdf1(4)*pdf2(21))
+                       + 0.0279787*(pdf1(21)*pdf2(5) + pdf1(5)*pdf2(21))
+                       + 0.0003192*pdf1(1)*pdf2(1) + 0.0003258*pdf1(2)*pdf2(2)
+                       + 0.0075920*pdf1(3)*pdf2(3) + 0.0138812*pdf1(4)*pdf2(4)
+                       + 0.0555812*pdf1(5)*pdf2(5)
+                       + 0.0003225*(pdf1(1)*pdf2(2)+pdf1(2)*pdf2(1))
+                       + 0.0015560*(pdf1(1)*pdf2(3)+pdf1(3)*pdf2(1))
+                       + 0.0021043*(pdf1(1)*pdf2(4)+pdf1(4)*pdf2(1))
+                       + 0.0042075*(pdf1(1)*pdf2(5)+pdf1(5)*pdf2(1))
+                       + 0.0015719*(pdf1(2)*pdf2(3)+pdf1(3)*pdf2(2))
+                       + 0.0021258*(pdf1(2)*pdf2(4)+pdf1(4)*pdf2(2))
+                       + 0.0042506*(pdf1(2)*pdf2(5)+pdf1(5)*pdf2(2))
+                       + 0.0102657*(pdf1(3)*pdf2(4)+pdf1(4)*pdf2(3))
+                       + 0.0205396*(pdf1(3)*pdf2(5)+pdf1(5)*pdf2(3))
+                       + 0.0277709*(pdf1(4)*pdf2(5)+pdf1(5)*pdf2(4));
 
   return weightParton*weightProfile;
 }
