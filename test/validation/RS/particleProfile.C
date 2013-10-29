@@ -6,9 +6,9 @@
 #include <TLegend.h>
 #include <THStack.h>
 
-const double kL = 11.2;
-const double L = 1;
 const double pi = TMath::Pi();
+const double kL = 11.3*pi;
+const double L = 1;
 const double mD = 1;
 
 double profile_sca(double* x, double* p)
@@ -71,72 +71,89 @@ double dfactorFtn_vec(double* x, double* p)
   return exp(3*kL/L*(y-L))*profile_vec(x, p);
 }
 
+double cfactorFtn_ff(double* x, double* p)
+{
+  const double y = x[0];
+  const double sign1 = p[0];
+  const double nu1 = p[1];
+  const double sign2 = p[2];
+  const double nu2 = p[3];
+
+  return exp(2*kL/L*(y-L))*profile_fer(x, &p[0])*profile_fer(x, &p[2]);
+}
+
+double cfactorFtn_gg(double* x, double* p)
+{
+  const double y = x[0];
+  return exp(2*kL/L*(y-L))*profile_vec(x, p)*profile_vec(x, p);
+}
+
+double cfactorFtn_gf(double* x, double* p)
+{
+  const double y = x[0];
+  return exp(2*kL/L*(y-L))*profile_vec(x, p)*profile_fer(x, p);
+}
+
 void particleProfile()
 {
   const double minL = 0, maxL = L;
 
+  const unsigned int nFermion = 9;
+  const double fermionPar1[nFermion] = {1, 1, 1, -1, -1, -1, -1, -1, -1};
+  const double fermionPar2[nFermion] = {-0.579, -0.517, -0.473, +0.742, +0.558, -0.339, +0.711, +0.666, +0.533};
+  const char* fermionNames[nFermion] = {"Q1", "Q2", "Q3", "u1", "u2", "u3", "d1", "d2", "d3"};
+
   TF1* fSca = new TF1("fSca", profile_sca, minL, maxL, 0);
   TF1* fVec = new TF1("fVec", profile_vec, minL, maxL, 0);
-  TF1* fFQ1 = new TF1("fFQ1", profile_fer, minL, maxL, 2);
-  TF1* fFQ2 = new TF1("fFQ2", profile_fer, minL, maxL, 2);
-  TF1* fFQ3 = new TF1("fFQ3", profile_fer, minL, maxL, 2);
-  TF1* fFu1 = new TF1("fFu1", profile_fer, minL, maxL, 2);
-  TF1* fFu2 = new TF1("fFu2", profile_fer, minL, maxL, 2);
-  TF1* fFu3 = new TF1("fFu3", profile_fer, minL, maxL, 2);
-  TF1* fFd1 = new TF1("fFd1", profile_fer, minL, maxL, 2);
-  TF1* fFd2 = new TF1("fFd2", profile_fer, minL, maxL, 2);
-  TF1* fFd3 = new TF1("fFd3", profile_fer, minL, maxL, 2);
-  fFQ1->SetParameters(+1, -0.579);
-  fFQ2->SetParameters(+1, -0.517);
-  fFQ3->SetParameters(+1, -0.473);
-  fFu1->SetParameters(-1, +0.742);
-  fFu2->SetParameters(-1, +0.558);
-  fFu3->SetParameters(-1, -0.339);
-  fFd1->SetParameters(-1, +0.711);
-  fFd2->SetParameters(-1, +0.666);
-  fFd3->SetParameters(-1, +0.533);
+  TF1* fFs[nFermion], * fSqrFs[nFermion], * fDfacFs[nFermion];
+  for ( unsigned int i=0; i<nFermion; ++i )
+  {
+    fFs[i] = new TF1(Form("fF%s", fermionNames[i]), profile_fer, minL, maxL, 2);
+    fSqrFs[i] = new TF1(Form("fSqrF%s", fermionNames[i]), profileSqr_fer, minL, maxL, 2);
+    fDfacFs[i] = new TF1(Form("fDfacF%s", fermionNames[i]), dfactorFtn_fer, minL, maxL, 2);
+
+    fFs[i]->SetParameters(fermionPar1[i], fermionPar2[i]);
+    fSqrFs[i]->SetParameters(fermionPar1[i], fermionPar2[i]);
+    fDfacFs[i]->SetParameters(fermionPar1[i], fermionPar2[i]);
+  }
 
   TF1* fSqrSca = new TF1("fSqrSca", profileSqr_sca, minL, maxL, 0);
   TF1* fSqrVec = new TF1("fSqrVec", profileSqr_vec, minL, maxL, 0);
-  TF1* fSqrFQ1 = new TF1("fSqrFQ1", profileSqr_fer, minL, maxL, 2);
-  TF1* fSqrFQ2 = new TF1("fSqrFQ2", profileSqr_fer, minL, maxL, 2);
-  TF1* fSqrFQ3 = new TF1("fSqrFQ3", profileSqr_fer, minL, maxL, 2);
-  TF1* fSqrFu1 = new TF1("fSqrFu1", profileSqr_fer, minL, maxL, 2);
-  TF1* fSqrFu2 = new TF1("fSqrFu2", profileSqr_fer, minL, maxL, 2);
-  TF1* fSqrFu3 = new TF1("fSqrFu3", profileSqr_fer, minL, maxL, 2);
-  TF1* fSqrFd1 = new TF1("fSqrFd1", profileSqr_fer, minL, maxL, 2);
-  TF1* fSqrFd2 = new TF1("fSqrFd2", profileSqr_fer, minL, maxL, 2);
-  TF1* fSqrFd3 = new TF1("fSqrFd3", profileSqr_fer, minL, maxL, 2);
-  fSqrFQ1->SetParameters(+1, -0.579);
-  fSqrFQ2->SetParameters(+1, -0.517);
-  fSqrFQ3->SetParameters(+1, -0.473);
-  fSqrFu1->SetParameters(-1, +0.742);
-  fSqrFu2->SetParameters(-1, +0.558);
-  fSqrFu3->SetParameters(-1, -0.339);
-  fSqrFd1->SetParameters(-1, +0.711);
-  fSqrFd2->SetParameters(-1, +0.666);
-  fSqrFd3->SetParameters(-1, +0.533);
-
   TF1* fDfacVec = new TF1("fDfacVec", dfactorFtn_vec, minL, maxL, 0);
-  TF1* fDfacFQ1 = new TF1("fDfacFQ1", dfactorFtn_fer, minL, maxL, 2);
-  TF1* fDfacFQ2 = new TF1("fDfacFQ2", dfactorFtn_fer, minL, maxL, 2);
-  TF1* fDfacFQ3 = new TF1("fDfacFQ3", dfactorFtn_fer, minL, maxL, 2);
-  TF1* fDfacFu1 = new TF1("fDfacFu1", dfactorFtn_fer, minL, maxL, 2);
-  TF1* fDfacFu2 = new TF1("fDfacFu2", dfactorFtn_fer, minL, maxL, 2);
-  TF1* fDfacFu3 = new TF1("fDfacFu3", dfactorFtn_fer, minL, maxL, 2);
-  TF1* fDfacFd1 = new TF1("fDfacFd1", dfactorFtn_fer, minL, maxL, 2);
-  TF1* fDfacFd2 = new TF1("fDfacFd2", dfactorFtn_fer, minL, maxL, 2);
-  TF1* fDfacFd3 = new TF1("fDfacFd3", dfactorFtn_fer, minL, maxL, 2);
-  fDfacFQ1->SetParameters(+1, -0.579);
-  fDfacFQ2->SetParameters(+1, -0.517);
-  fDfacFQ3->SetParameters(+1, -0.473);
-  fDfacFu1->SetParameters(-1, +0.742);
-  fDfacFu2->SetParameters(-1, +0.558);
-  fDfacFu3->SetParameters(-1, -0.339);
-  fDfacFd1->SetParameters(-1, +0.711);
-  fDfacFd2->SetParameters(-1, +0.666);
-  fDfacFd3->SetParameters(-1, +0.533);
 
+  double cbb = 0, cgb = 0, cll = 0, cgl = 0, cbl = 0;
+  TF1* fCfactorFF = new TF1("fCfactorFF", cfactorFtn_ff, minL, maxL, 4);
+  TF1* fCfactorGF = new TF1("fCfactorGF", cfactorFtn_gf, minL, maxL, 2);
+  TF1* fCfactorGG = new TF1("fCfactorGG", cfactorFtn_gg, minL, maxL, 0);
+  double cgg = fCfactorGG->Integral(minL, maxL);
+  for ( unsigned int i=0; i<nFermion; ++i )
+  {
+    if ( i == 5 ) continue;
+    fCfactorGF->SetParameters(fermionPar1[i], fermionPar2[i]);
+    if ( i == 2 or i == 8 ) cgb += fCfactorGF->Integral(minL, maxL);
+    else cgl += fCfactorGF->Integral(minL, maxL);
+    for ( unsigned int j=0; j<nFermion; ++j )
+    {
+      if ( j == 5 ) continue;
+      fCfactorFF->SetParameters(fermionPar1[i], fermionPar2[i], fermionPar1[j], fermionPar2[j]);
+      const double cxx = fCfactorFF->Integral(minL, maxL);
+
+      if ( (i == 2 or i == 8) and (j == 2 or j == 8) ) cbb += cxx;
+      else if ( (i == 2 or i == 8) or (j == 2 or j == 8) ) cbl += cxx;
+      else cll += cxx;
+      cout << Form("%s%s ", fermionNames[i], fermionNames[j]) << cxx << endl;
+    }
+  }
+  cout << "Cgg = " << cgg << endl;
+  cout << "Cbb = " << cbb << endl;
+  cout << "Cgb = " << cgb << endl;
+  cout << "Cll = " << cll << endl;
+  cout << "Cbl = " << cbl << endl;
+  cout << "Cgl = " << cgl << endl;
+
+  return;
+
+/*
   TH1F* hProfIR = new TH1F("hProfIR", "Profile at IR;;Amplitude at IR brane", 10, 0, 10);
   hProfIR->GetXaxis()->SetBinLabel( 1, "Vector"); hProfIR->SetBinContent( 1, fVec->Eval(L));
   hProfIR->GetXaxis()->SetBinLabel( 2, "Q_{1}"); hProfIR->SetBinContent( 2, fFQ1->Eval(L));
@@ -264,7 +281,7 @@ void particleProfile()
   legRelD->AddEntry(hRelDFxy, "Others", "F");
 
   TCanvas* c = new TCanvas("cProfile", "cProfile", 500, 500);
-  c->SetLogy();
+  //c->SetLogy();
 
   fSca->SetLineColor(kBlack);
   fVec->SetLineColor(kOrange+1);
@@ -285,7 +302,7 @@ void particleProfile()
   fFu3->SetLineWidth(3);
   fFd3->SetLineWidth(3);
 
-  TLegend* leg = new TLegend(0.17, 0.75, 0.60, 0.92);
+  TLegend* leg = new TLegend(0.17, 0.75, 0.70, 0.92);
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
   leg->SetNColumns(3);
@@ -303,9 +320,9 @@ void particleProfile()
 
   leg->AddEntry(fVec, "Vector", "l");
 
-  TH1F* hFrame = new TH1F("hFrame", ";y position;Profile amplitude #chi(y)", 100, minL, maxL);
-  hFrame->SetMinimum(1e-2);
-  hFrame->SetMaximum(10);
+  TH1F* hFrame = new TH1F("hFrame", ";Coordinate in 5th dimension;Profile amplitude #chi(y)", 100, minL, maxL);
+  hFrame->SetMinimum(0);
+  hFrame->SetMaximum(5);
   hFrame->Draw();
 
   fVec->Draw("same");
@@ -338,4 +355,5 @@ void particleProfile()
   hRelD->GetXaxis()->SetNdivisions(505);
   legRelD->Draw();
 
+*/
 }
