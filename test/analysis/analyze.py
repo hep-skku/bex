@@ -20,13 +20,13 @@ hN_vec = TH1F("hN_vec", "Vector;Multiplicity;Events", 20, 0, 20)
 hN_lep = TH1F("hN_lep", "Lepton;Multiplicity;Events", 20, 0, 20)
 hN_oth = TH1F("hN_oth", "Others;Multiplicity;Events", 20, 0, 20)
 
-hPt_top = TH1F("hPt_top", "Top;Transverse momentum p_{T} (GeV/c);Entries per 10GeV/c", 50, 0, 500)
-hPt_bot = TH1F("hPt_bot", "Bottom;Transverse momentum p_{T} (GeV/c);Entries per 10GeV/c", 50, 0, 500)
-hPt_hig = TH1F("hPt_hig", "Higgs;Transverse momentum p_{T} (GeV/c);Entries per 10GeV/c", 50, 0, 500)
-hPt_glu = TH1F("hPt_glu", "Gluon;Transverse momentum p_{T} (GeV/c);Entries per 10GeV/c", 50, 0, 500)
-hPt_vec = TH1F("hPt_vec", "Vector;Transverse momentum p_{T} (GeV/c);Entries per 10GeV/c", 50, 0, 500)
-hPt_lep = TH1F("hPt_lep", "Lepton;Transverse momentum p_{T} (GeV/c);Entries per 10GeV/c", 50, 0, 500)
-hPt_oth = TH1F("hPt_oth", "Others;Transverse momentum p_{T} (GeV/c);Entries per 10GeV/c", 50, 0, 500)
+hPt_top = TH1F("hPt_top", "Top;Transverse momentum p_{T} (GeV/c);Entries per 20GeV/c", 50, 0, 1000)
+hPt_bot = TH1F("hPt_bot", "Bottom;Transverse momentum p_{T} (GeV/c);Entries per 20GeV/c", 50, 0, 1000)
+hPt_hig = TH1F("hPt_hig", "Higgs;Transverse momentum p_{T} (GeV/c);Entries per 20GeV/c", 50, 0, 1000)
+hPt_glu = TH1F("hPt_glu", "Gluon;Transverse momentum p_{T} (GeV/c);Entries per 20GeV/c", 50, 0, 1000)
+hPt_vec = TH1F("hPt_vec", "Vector;Transverse momentum p_{T} (GeV/c);Entries per 20GeV/c", 50, 0, 1000)
+hPt_lep = TH1F("hPt_lep", "Lepton;Transverse momentum p_{T} (GeV/c);Entries per 20GeV/c", 50, 0, 1000)
+hPt_oth = TH1F("hPt_oth", "Others;Transverse momentum p_{T} (GeV/c);Entries per 20GeV/c", 50, 0, 1000)
 
 lhexml = minidom.parse(lheFile)
 print
@@ -45,6 +45,7 @@ for i, eventXml in enumerate(lhexml.getElementsByTagName("event")):
         l = line.strip().split()
 
         id = int(l[0])
+        if id == 39: continue # Skip gravitons
         status = int(l[1])
         if status != 1: continue
 
