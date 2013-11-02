@@ -113,7 +113,11 @@ double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF
     const int id1 = idPair/100;
     const int id2 = idPair%100;
 
-    weightParton += cFactor * pdf1(id1) * pdf2(id2);
+    double pdf = pdf1(id1)*pdf2(id2);
+    if ( id1 != 21 ) pdf += pdf1(-id1)*pdf2(id2);
+    if ( id2 != 21 ) pdf += pdf1(id1)*pdf2(-id2);
+    if ( id1 != 21 and id2 != 21 ) pdf += pdf1(-id1)*pdf2(-id2);
+    weightParton += cFactor * pdf;
   }
 
   return weightBH*weightParton;
@@ -121,63 +125,51 @@ double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF
 
 void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2)
 {
-  std::vector<double> weights;
-  std::vector<int> weightCodes;
-  double sumWeight = 0;
-  weightCodes.push_back(2121);
-  for ( int i=0; i<=5; ++i )
+  std::vector<int> idPairs;
+  // Change id definition little bit for full CDF, include sign
+  std::vector<double> cFactorCDF;
+  cFactorCDF.push_back(0);
+  for ( std::map<int, double>::const_iterator x = cFactors_.begin(); x != cFactors_.end(); ++x )
   {
-    const int partonId1 = i == 0 ? 21 : i;
-    for ( int j=i; j<=5; ++j )
-    {
-      const int partonId2 = j == 0 ? 21 : j;
-      const int partonPairCode = partonId1*100 + partonId2;
-      const double weight = cFactors_[partonPairCode] * pdf1(partonId1) * pdf2(partonId2);
+    const int idPair = x->first;
+    const int id1 = idPair/100;
+    const int id2 = idPair%100;
+    const double cFactor = x->second;
 
-      weightCodes.push_back(partonPairCode);
-      weights.push_back(sumWeight);
-      sumWeight += weight;
+    idPairs.push_back(id1*1000+id2);
+    cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(id1)*pdf2(id2));
+
+    if ( id1 != 21 )
+    {
+      idPairs.push_back((id1+1000)*1000+id2);
+      cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(-id1)*pdf2(id2));
+    }
+    if ( id2 != 21 )
+    {
+      idPairs.push_back(id1*1000+(id2+1000));
+      cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(id1)*pdf2(-id2));
+    }
+    if ( id1 != 21 and id2 != 21 )
+    {
+      // qbar + qbar
+      idPairs.push_back((id1+1000)*1000+(id2+1000));
+      cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(-id1)*pdf2(-id2));
     }
   }
-  const int index = rnd_->pickFromCDF(weights);
-  const int selectedPartonPair = weightCodes[index];
-/*
-  // Select one case from this weights CDF
-  const double LEFT = -1, RIGHT = 1;
-  const int index = rnd_->pickFromCDF(weights);
-  int id1, id2;
-  double spin1, spin2;
-  if ( index == 0 )
-  {
-    id1 = id2 = 21;
-    spin1 = spin2 = 9;
-  }
-  else if ( index <= 2 )
-  {
-    id1 = 21;
-    id2 = 5;
-    spin1 = 9;
-    spin2 = index % 2 ? RIGHT : LEFT;
-  }
-  else if ( index <= 4 )
-  {
-    id1 = 5;
-    id2 = 21;
-    spin1 = index % 2 ? RIGHT : LEFT;
-    spin2 = 9;
-  }
-  else
-  {
-    id1 = id2 = 5;
-    spin1 = index % 2 ? RIGHT : LEFT;
-    spin2 = ((index+1)/2) % 2 ? RIGHT : LEFT;
-  }
+  const int index = rnd_->pickFromCDF(cFactorCDF);
+  const int idPair = idPairs[index];
+  const int id1 = (idPair/1000)%100;
+  const int id2 = (idPair%1000)%100;
+  const int sign1 = (id1 != 21 and idPair/1000 >= 1000) ? -1 : 1;
+  const int sign2 = (id2 != 21 and idPair%1000 >= 1000) ? -1 : 1;
 
-  parton1 = Particle(id1, -1, 1, 1, 0., 0., parton1.pz_);
-  parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
+  const double spin1 = 9., spin2 = 9.;
+
+  parton1 = Particle(id1*sign1, -1, 1, 1, 0., 0., parton1.pz_);
+  parton2 = Particle(id2*sign2, -1, 2, 2, 0., 0., parton2.pz_);
   parton1.spin_ = spin1;
   parton2.spin_ = spin2;
-*/
+
 }
 
 bool RSModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position,
