@@ -10,7 +10,13 @@ RSModel::RSModel(const ConfigReader& cfg):
   AbsModel(cfg)
 {
   name_ += ":RSModel";
+  extraDimSize_ = cfg.get<double>("extraDimSize");
+  // nu-factors to fit Fermion Yukawa structure
+  nuQ_ = cfg.get<std::vector<double> >("nuQ");
+  nuU_ = cfg.get<std::vector<double> >("nuU");
+  nuD_ = cfg.get<std::vector<double> >("nuD");
 
+  // Number of dimension should be 5 in RS model. Reset all parameters to 5D
   if ( nDim_ != 5 )
   {
     cerr << "!! RSModel: We do not support RS Blackhole model at " <<  nDim_ << " dimension\n";
@@ -42,65 +48,100 @@ RSModel::RSModel(const ConfigReader& cfg):
     kn2_ = kn_*kn_;
     formFactor_ = kn2_*physics::Pi*bMax_*bMax_;
   }
+
+  // Calculate C-factors and D-factors from nuFermion parameters
+  const double kL = 11.3*physics::Pi;
+  cFactors_[2121] = (1-exp(-2*kL))/(2*kL); // Gluon+Gluon = 2121
+  for ( int i=0; i<3; ++i )
+  {
+    const int idD1 = i==0 ? 2 : 2*i+1;
+    const int idU1 = i==0 ? 1 : 2*i+2;
+
+    const double nQ1 = 1+2*nuQ_[i];
+    const double nU1 = 1+2*nuU_[i];
+    const double nD1 = 1+2*nuD_[i];
+
+    // C_gq factors
+    const double c_gQ = sqrt(nQ1/kL/(exp(kL*nQ1)-1)) * (exp(kL*nQ1/2)-exp(-2*kL)) * 2 / (4+nQ1);
+    const double c_gU = sqrt(nU1/kL/(exp(kL*nU1)-1)) * (exp(kL*nU1/2)-exp(-2*kL)) * 2 / (4+nU1);
+    const double c_gD = sqrt(nD1/kL/(exp(kL*nD1)-1)) * (exp(kL*nD1/2)-exp(-2*kL)) * 2 / (4+nD1);
+
+    cFactors_[idU1*100+21] = cFactors_[21*100+idU1] = (c_gQ + c_gU)/2;
+    cFactors_[idD1*100+21] = cFactors_[21*100+idD1] = (c_gQ + c_gD)/2;
+
+    for ( int j=0; j<3; ++j )
+    {
+      const int idD2 = j==0 ? 2 : 2*j+1;
+      const int idU2 = j==0 ? 1 : 2*j+2;
+
+      const double nQ2 = 1+2*nuQ_[j];
+      const double nU2 = 1+2*nuU_[j];
+      const double nD2 = 1+2*nuD_[j];
+
+      // C_qq factors
+      const double c_QQ = sqrt( nQ1*nQ2/(exp(kL*nQ1)-1)/(exp(kL*nQ2)-1) ) * 2 * (exp(kL/2*(nQ1+nQ2)) - exp(-2*kL)) / (4+nQ1+nQ2);
+      const double c_QU = sqrt( nQ1*nU2/(exp(kL*nQ1)-1)/(exp(kL*nU2)-1) ) * 2 * (exp(kL/2*(nQ1+nU2)) - exp(-2*kL)) / (4+nQ1+nU2);
+      const double c_QD = sqrt( nQ1*nD2/(exp(kL*nQ1)-1)/(exp(kL*nD2)-1) ) * 2 * (exp(kL/2*(nQ1+nD2)) - exp(-2*kL)) / (4+nQ1+nD2);
+      const double c_UU = sqrt( nU1*nU2/(exp(kL*nU1)-1)/(exp(kL*nU2)-1) ) * 2 * (exp(kL/2*(nU1+nU2)) - exp(-2*kL)) / (4+nU1+nU2);
+      const double c_UD = sqrt( nU1*nD2/(exp(kL*nU1)-1)/(exp(kL*nD2)-1) ) * 2 * (exp(kL/2*(nU1+nD2)) - exp(-2*kL)) / (4+nU1+nD2);
+      const double c_DD = sqrt( nD1*nD2/(exp(kL*nD1)-1)/(exp(kL*nD2)-1) ) * 2 * (exp(kL/2*(nD1+nD2)) - exp(-2*kL)) / (4+nD1+nD2);
+
+      // c_UU = (uL+uL) + (uL+uR) + (uR+uL) + (uR+uR)
+      cFactors_[idU1*100 + idU2] = (c_QQ + 2*c_QU + c_UU)/4;
+      // c_UD = (uL+dL) + (uL+dR) + (uR+dL) + (uR+dR)
+      cFactors_[idU1*100 + idD2] = cFactors_[idU1 + 100*idD2] = (c_QQ + c_QD + c_QU + c_UD)/4;
+      // c_DD = (dL+dL) + (dL+dR) + (dR+dL) + (dR+dR)
+      cFactors_[idD1*100 + idD2] = cFactors_[idD1 + 100*idD2] = (c_QQ + 2*c_QD + c_DD)/4;
+    }
+  }
 }
 
 double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF& pdf2)
 {
   const double rssqr = m/mD_/mD_/mD_; // We will do 5D only
   const double u = m*m/s_;
-  const double weightParton = rssqr*(1./massMax_-1./massMin_)*m*u*log(u);
+  const double weightBH = rssqr*(1./massMax_-1./massMin_)*m*u*log(u);
 
   // Consider suppression factor due to profile in extra dimension
   // Assume partons are not polarized; 50% left and 50% right handed
-  double weightProfile = 0.0140845*pdf1(21)*pdf2(21);
-                       + 0.0021186*(pdf1(21)*pdf2(1) + pdf1(1)*pdf2(21))
-                       + 0.0021403*(pdf1(21)*pdf2(2) + pdf1(2)*pdf2(21))
-                       + 0.0103402*(pdf1(21)*pdf2(3) + pdf1(3)*pdf2(21))
-                       + 0.0139810*(pdf1(21)*pdf2(4) + pdf1(4)*pdf2(21))
-                       + 0.0279787*(pdf1(21)*pdf2(5) + pdf1(5)*pdf2(21))
-                       + 0.0003192*pdf1(1)*pdf2(1) + 0.0003258*pdf1(2)*pdf2(2)
-                       + 0.0075920*pdf1(3)*pdf2(3) + 0.0138812*pdf1(4)*pdf2(4)
-                       + 0.0555812*pdf1(5)*pdf2(5)
-                       + 0.0003225*(pdf1(1)*pdf2(2)+pdf1(2)*pdf2(1))
-                       + 0.0015560*(pdf1(1)*pdf2(3)+pdf1(3)*pdf2(1))
-                       + 0.0021043*(pdf1(1)*pdf2(4)+pdf1(4)*pdf2(1))
-                       + 0.0042075*(pdf1(1)*pdf2(5)+pdf1(5)*pdf2(1))
-                       + 0.0015719*(pdf1(2)*pdf2(3)+pdf1(3)*pdf2(2))
-                       + 0.0021258*(pdf1(2)*pdf2(4)+pdf1(4)*pdf2(2))
-                       + 0.0042506*(pdf1(2)*pdf2(5)+pdf1(5)*pdf2(2))
-                       + 0.0102657*(pdf1(3)*pdf2(4)+pdf1(4)*pdf2(3))
-                       + 0.0205396*(pdf1(3)*pdf2(5)+pdf1(5)*pdf2(3))
-                       + 0.0277709*(pdf1(4)*pdf2(5)+pdf1(5)*pdf2(4));
+  double weightParton = 0;
+  for ( std::map<int, double>::const_iterator x = cFactors_.begin(); x != cFactors_.end(); ++x )
+  {
+    const int idPair = x->first;
+    const double cFactor = x->second;
 
-  return weightParton*weightProfile;
+    const int id1 = idPair/100;
+    const int id2 = idPair%100;
+
+    weightParton += cFactor * pdf1(id1) * pdf2(id2);
+  }
+
+  return weightBH*weightParton;
 }
 
 void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2)
 {
-/*
   std::vector<double> weights;
-  const double pdf_gg = pdf1(21)*pdf2(21);
-  weights.push_back(prodWeights_[0]*pdf_gg); // BH production via Gluon+Gluon
-
-  const double pdf_gb = pdf1(21)*pdf2(5);
-  const double pdf_bg = pdf1(5)*pdf2(21);
-  weights.push_back(prodWeights_[2]*pdf_gb); // g + B_R
-  weights.push_back(prodWeights_[8]*pdf_gb); // g + b_L
-  weights.push_back(prodWeights_[2]*pdf_bg); // B_R + g
-  weights.push_back(prodWeights_[8]*pdf_bg); // b_L + g
-
-  const double pdf_bb = pdf1(5)*pdf2(5);
-  weights.push_back(prodWeights_[1]*pdf_bb); // B_R + B_R
-  weights.push_back(prodWeights_[7]*pdf_bb); // b_L + B_R
-  weights.push_back(prodWeights_[7]*pdf_bb); // B_R + b_L
-  weights.push_back(prodWeights_[6]*pdf_bb); // b_L + b_L
-
-  // Make weights be cumulative
-  for ( int i=1, n=weights.size(); i<n; ++i )
+  std::vector<int> weightCodes;
+  double sumWeight = 0;
+  weightCodes.push_back(2121);
+  for ( int i=0; i<=5; ++i )
   {
-    weights[i] += weights[i-1];
-  }
+    const int partonId1 = i == 0 ? 21 : i;
+    for ( int j=i; j<=5; ++j )
+    {
+      const int partonId2 = j == 0 ? 21 : j;
+      const int partonPairCode = partonId1*100 + partonId2;
+      const double weight = cFactors_[partonPairCode] * pdf1(partonId1) * pdf2(partonId2);
 
+      weightCodes.push_back(partonPairCode);
+      weights.push_back(sumWeight);
+      sumWeight += weight;
+    }
+  }
+  const int index = rnd_->pickFromCDF(weights);
+  const int selectedPartonPair = weightCodes[index];
+/*
   // Select one case from this weights CDF
   const double LEFT = -1, RIGHT = 1;
   const int index = rnd_->pickFromCDF(weights);
