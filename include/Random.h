@@ -3,6 +3,8 @@
 
 #include "boost/random.hpp"
 #include "boost/random/mersenne_twister.hpp"
+#include <map>
+#include <vector>
 
 class Random
 {
@@ -44,6 +46,21 @@ public:
     }
 
     return lo;
+  }
+  template<typename KeyType>
+  KeyType pickFromMap(const std::map<KeyType, double>& v)
+  {
+    typedef const std::map<KeyType, double> MapType;
+    std::vector<double> cdf;
+    std::vector<KeyType> keys;
+    cdf.push_back(0.);
+    for ( typename MapType::const_iterator iter = v.begin(); iter != v.end(); ++iter )
+    {
+      keys.push_back(iter->first);
+      cdf.push_back(cdf.back()+iter->second);
+    }
+    const int index = pickFromCDF(cdf);
+    return keys[index];
   }
 
 private:
