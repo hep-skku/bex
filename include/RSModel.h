@@ -14,8 +14,6 @@ public:
                            Particle& daughter);
 
 private:
-  std::vector<double> prodWeights_;
-  double rs_wGG_, rs_wBG_, rs_wBB_;
 };
 
 #endif

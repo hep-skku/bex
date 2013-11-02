@@ -42,15 +42,6 @@ RSModel::RSModel(const ConfigReader& cfg):
     kn2_ = kn_*kn_;
     formFactor_ = kn2_*physics::Pi*bMax_*bMax_;
   }
-
-  prodWeights_ = cfg_.get<std::vector<double> >("prodWeights");
-  // wGG = C_gg
-  //rs_wGG_ = prodWeights_[0];
-  // wBG = C_gQ + C_gd
-  //rs_wBG_ = prodWeights_[2] + prodWeights_[8];
-  // wBB = C_QQ + C_Qd + C_dd
-  //rs_wBB_ = prodWeights_[1] + prodWeights_[7] + prodWeights_[6];
-
 }
 
 double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF& pdf2)
@@ -61,11 +52,7 @@ double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF
 
   // Consider suppression factor due to profile in extra dimension
   // Assume partons are not polarized; 50% left and 50% right handed
-  //double weightProfile = 0;
-  //weightProfile += rs_wGG_*pdf1(21)*pdf2(21); // gluon+gluon
-  //weightProfile += 2*rs_wBG_*(pdf1(21)*pdf2(5) + pdf1(5)*pdf2(21)); // gluon+bottom (and bbar)
-  //weightProfile += 4*rs_wBB_*pdf1(5)*pdf2(5); // bottom+bottom (and bbar)
-  double weightProfile = 0.0140845*pdf1(21)*pdf2(21)
+  double weightProfile = 0.0140845*pdf1(21)*pdf2(21);
                        + 0.0021186*(pdf1(21)*pdf2(1) + pdf1(1)*pdf2(21))
                        + 0.0021403*(pdf1(21)*pdf2(2) + pdf1(2)*pdf2(21))
                        + 0.0103402*(pdf1(21)*pdf2(3) + pdf1(3)*pdf2(21))
@@ -90,6 +77,7 @@ double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF
 
 void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2)
 {
+/*
   std::vector<double> weights;
   const double pdf_gg = pdf1(21)*pdf2(21);
   weights.push_back(prodWeights_[0]*pdf_gg); // BH production via Gluon+Gluon
@@ -148,7 +136,7 @@ void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, 
   parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
   parton1.spin_ = spin1;
   parton2.spin_ = spin2;
-
+*/
 }
 
 bool RSModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position,
