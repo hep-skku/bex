@@ -5,6 +5,7 @@
 #include <TCanvas.h>
 #include <TLegend.h>
 #include <THStack.h>
+#include <TPie.h>
 
 const double kL = 11.2;
 const double L = 1;
@@ -14,7 +15,7 @@ const double mD = 1;
 double profile_sca(double* x, double* p)
 {
   const double y = x[0];
-  if ( pow((y-L)/L, 2) < 1e-3 ) return 10;
+  if ( pow((y-L)/L, 2) < 1e-3 ) return 1/sqrt(kL/L);
   return 0;
 }
 
@@ -27,18 +28,18 @@ double profile_fer(double* x, double* p)
   const double det = 1+2*nu*sign;
   const double norm = sqrt((kL/pi*det)/(exp(kL*det)-1));
 
-  return 1./sqrt(L)*norm*exp( 0.5*det*kL/L*y );
+  return 1/sqrt(L)*norm*exp( 0.5*det*kL/L*y );
 }
 
 double profile_vec(double* x, double* p)
 {
-  return 1./sqrt(L);
+  return 1/sqrt(L);
 }
 
 double profileSqr_sca(double* x, double* p)
 {
   const double y = x[0];
-  if ( pow((y-L)/L, 2) < 1e-3 ) return 100;
+  if ( pow((y-L)/L, 2) < 1e-3 ) return 1/(kL/L);
   return 0;
 }
 
@@ -62,13 +63,13 @@ double profileSqr_vec(double* x, double* p)
 double dfactorFtn_fer(double* x, double* p)
 {
   const double y = x[0];
-  return exp(3*kL/L*(y-L))*profile_fer(x, p);
+  return sqrt(kL/L)*exp(kL/L*(y-L))*profile_fer(x, p);
 }
 
 double dfactorFtn_vec(double* x, double* p)
 {
   const double y = x[0];
-  return exp(3*kL/L*(y-L))*profile_vec(x, p);
+  return sqrt(kL/L)*exp(kL/L*(y-L))*profile_vec(x, p);
 }
 
 void particleProfile()
@@ -163,19 +164,6 @@ void particleProfile()
   hSqrDFd3->SetFillColor(kRed+0);
   hSqrDFxy->SetFillColor(kYellow);
 
-  TH1F* hRelDSca = new TH1F("hRelDSca", "Scator;BH radius;Relative D factor", 1, 0, L);
-  TH1F* hRelDVec = new TH1F("hRelDVec", "Vector;BH radius;Relative D factor", 1, 0, L);
-  TH1F* hRelDFQ3 = new TH1F("hRelDFQ3", "Q3;BH radius;Relative D factor", 1, 0, L);
-  TH1F* hRelDFu3 = new TH1F("hRelDFu3", "u3;BH radius;Relative D factor", 1, 0, L);
-  TH1F* hRelDFd3 = new TH1F("hRelDFd3", "d3;BH radius;Relative D factor", 1, 0, L);
-  TH1F* hRelDFxy = new TH1F("hRelDFxy", "others;BH radius;Relative D factor", 1, 0, L);
-  hRelDSca->SetFillColor(kWhite);
-  hRelDVec->SetFillColor(kOrange+1);
-  hRelDFQ3->SetFillColor(kGreen+3);
-  hRelDFu3->SetFillColor(kAzure+0);
-  hRelDFd3->SetFillColor(kRed+0);
-  hRelDFxy->SetFillColor(kYellow);
-   
   for ( int i=1; i<=100; ++i )
   {
     const double x = hSqrDVec->GetXaxis()->GetBinCenter(i);
@@ -201,31 +189,35 @@ void particleProfile()
     hSqrDFxy->SetBinContent(i, dSqrFxy/dSqrSum);
   }
 
-  for ( int i=1; i<=hRelDVec->GetNbinsX(); ++i )
+  Float_t relDValues[6];
+  int colors[6] = {kWhite, kOrange+1, kGreen+3, kAzure+0, kRed+0, kYellow};
+  const char* labels[6] = {"Higgs", "Vectors", "Quark Q_{3}", "Quark u_{3}", "Quark d_{3}", "Other quarks"};
+  if ( true )
   {
-    const double x = hSqrDVec->GetXaxis()->GetBinLowEdge(i);
     const double dSca = 1;
 
-    const double dVec = pow(fDfacVec->Integral(x, L), 2);
-    const double dFQ3 = pow(fDfacFQ3->Integral(x, L), 2);
-    const double dFu3 = pow(fDfacFu3->Integral(x, L), 2);
-    const double dFd3 = pow(fDfacFd3->Integral(x, L), 2);
+    const double dVec = pow(fDfacVec->Integral(0, L), 2);
+    const double dFQ3 = pow(fDfacFQ3->Integral(0, L), 2);
+    const double dFu3 = pow(fDfacFu3->Integral(0, L), 2);
+    const double dFd3 = pow(fDfacFd3->Integral(0, L), 2);
     double dFxy = 0;
-    dFxy += pow(fDfacFQ1->Integral(x, L), 2);
-    dFxy += pow(fDfacFu1->Integral(x, L), 2);
-    dFxy += pow(fDfacFd1->Integral(x, L), 2);
-    dFxy += pow(fDfacFQ2->Integral(x, L), 2);
-    dFxy += pow(fDfacFu2->Integral(x, L), 2);
-    dFxy += pow(fDfacFd2->Integral(x, L), 2);
+    dFxy += pow(fDfacFQ1->Integral(0, L), 2);
+    dFxy += pow(fDfacFu1->Integral(0, L), 2);
+    dFxy += pow(fDfacFd1->Integral(0, L), 2);
+    dFxy += pow(fDfacFQ2->Integral(0, L), 2);
+    dFxy += pow(fDfacFu2->Integral(0, L), 2);
+    dFxy += pow(fDfacFd2->Integral(0, L), 2);
     const double dSum = dSca+dVec+dFQ3+dFu3+dFd3+dFxy;
-    hRelDSca->SetBinContent(i, dSca/dSum);
-    hRelDVec->SetBinContent(i, dVec/dSum);
-    hRelDFQ3->SetBinContent(i, dFQ3/dSum);
-    hRelDFu3->SetBinContent(i, dFu3/dSum);
-    hRelDFd3->SetBinContent(i, dFd3/dSum);
-    hRelDFxy->SetBinContent(i, dFxy/dSum);
 
+    relDValues[0] = dSca;
+    relDValues[1] = dVec;
+    relDValues[2] = dFQ3;
+    relDValues[3] = dFu3;
+    relDValues[4] = dFd3;
+    relDValues[5] = dFxy;
   }
+for ( int i=0; i<6; ++i ) cout << labels[i] << ' ' << relDValues[i] << endl;
+  TPie* hPieD = new TPie("hPieD", "Relative D factor ratio", 6, relDValues, colors, labels);
 
   THStack* hSqrD = new THStack();
   hSqrD->SetTitle("Relative D factor;Overlap size;D factor fraction");
@@ -244,24 +236,6 @@ void particleProfile()
   legSqrD->AddEntry(hSqrDFu3, "u_{3}", "F");
   legSqrD->AddEntry(hSqrDFd3, "d_{3}", "F");
   legSqrD->AddEntry(hSqrDFxy, "Others", "F");
-
-  THStack* hRelD = new THStack();
-  hRelD->SetTitle("Relative D factor;Overlap size;D factor fraction");
-  hRelD->Add(hRelDFxy);
-  hRelD->Add(hRelDFd3);
-  hRelD->Add(hRelDFu3);
-  hRelD->Add(hRelDFQ3);
-  hRelD->Add(hRelDVec);
-  hRelD->Add(hRelDSca);
-  TLegend* legRelD = new TLegend(0.75, 0.65, 0.95, 0.90);
-  legRelD->SetFillStyle(0);
-  legRelD->SetBorderSize(0);
-  legRelD->AddEntry(hRelDSca, "Higgs", "F");
-  legRelD->AddEntry(hRelDVec, "Vector", "F");
-  legRelD->AddEntry(hRelDFQ3, "Q_{3}", "F");
-  legRelD->AddEntry(hRelDFu3, "u_{3}", "F");
-  legRelD->AddEntry(hRelDFd3, "d_{3}", "F");
-  legRelD->AddEntry(hRelDFxy, "Others", "F");
 
   TCanvas* c = new TCanvas("cProfile", "cProfile", 500, 500);
   c->SetLogy();
@@ -333,9 +307,12 @@ void particleProfile()
   legSqrD->Draw();
 
   TCanvas* cRelD = new TCanvas("cRelD", "cRelD", 500, 500);
-  hRelD->Draw();
-  hRelD->GetYaxis()->SetRangeUser(0,1);
-  hRelD->GetXaxis()->SetNdivisions(505);
+  TLegend* legRelD = hPieD->MakeLegend();
+  legRelD->SetBorderSize(0);
+  legRelD->SetFillStyle(0);
+  hPieD->SetLabelFormat("%frac");
+  hPieD->SetRadius(0.3);
+  hPieD->Draw("");
   legRelD->Draw();
 
 }
