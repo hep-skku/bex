@@ -3,6 +3,8 @@
 
 #include "boost/random.hpp"
 #include "boost/random/mersenne_twister.hpp"
+#include <map>
+#include <vector>
 
 class Random
 {

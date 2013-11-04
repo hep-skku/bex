@@ -2,6 +2,8 @@
 #define RSModel_H
 
 #include "include/AbsModel.h"
+#include <vector>
+#include <map>
 
 class RSModel : public AbsModel
 {
@@ -14,8 +16,10 @@ public:
                            Particle& daughter);
 
 private:
-  std::vector<double> prodWeights_;
-  double rs_wGG_, rs_wBG_, rs_wBB_;
+  double extraDimSize_;
+  std::vector<double> nuQ_, nuU_, nuD_;
+  std::map<int, double> cFactors_;
+  std::map<int, double> dFactors_;
 };
 
 #endif
