@@ -141,18 +141,18 @@ void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, 
 
     if ( id1 != 21 )
     {
-      idPairs.push_back((id1+1000)*1000+id2);
+      idPairs.push_back((id1+100)*1000+id2);
       cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(-id1)*pdf2(id2));
     }
     if ( id2 != 21 )
     {
-      idPairs.push_back(id1*1000+(id2+1000));
+      idPairs.push_back(id1*1000+(id2+100));
       cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(id1)*pdf2(-id2));
     }
     if ( id1 != 21 and id2 != 21 )
     {
       // qbar + qbar
-      idPairs.push_back((id1+1000)*1000+(id2+1000));
+      idPairs.push_back((id1+100)*1000+(id2+100));
       cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(-id1)*pdf2(-id2));
     }
   }
@@ -160,8 +160,8 @@ void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, 
   const int idPair = idPairs[index];
   const int id1 = (idPair/1000)%100;
   const int id2 = (idPair%1000)%100;
-  const int sign1 = (id1 != 21 and idPair/1000 >= 1000) ? -1 : 1;
-  const int sign2 = (id2 != 21 and idPair%1000 >= 1000) ? -1 : 1;
+  const int sign1 = (id1 != 21 and idPair/1000 >= 100) ? -1 : 1;
+  const int sign2 = (id2 != 21 and idPair%1000 >= 100) ? -1 : 1;
 
   const double spin1 = 9., spin2 = 9.;
 
@@ -169,6 +169,8 @@ void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, 
   parton2 = Particle(id2*sign2, -1, 2, 2, 0., 0., parton2.pz_);
   parton1.spin_ = spin1;
   parton2.spin_ = spin2;
+
+  printf("Parton: %d %d\n", id1*sign1, id2*sign2);
 
 }
 
