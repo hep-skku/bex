@@ -54,8 +54,8 @@ RSModel::RSModel(const ConfigReader& cfg):
   cFactors_[2121] = (1-exp(-2*kL))/(2*kL); // Gluon+Gluon = 2121
   for ( int i=0; i<3; ++i )
   {
-    const int idD1 = i==0 ? 2 : 2*i+1;
-    const int idU1 = i==0 ? 1 : 2*i+2;
+    const int idD1 = 2*i+1;
+    const int idU1 = 2*i+2;
 
     const double nQ1 = 1+2*nuQ_[i];
     const double nU1 = 1+2*nuU_[i];
@@ -71,8 +71,8 @@ RSModel::RSModel(const ConfigReader& cfg):
 
     for ( int j=0; j<3; ++j )
     {
-      const int idD2 = j==0 ? 2 : 2*j+1;
-      const int idU2 = j==0 ? 1 : 2*j+2;
+      const int idD2 = 2*j+1;
+      const int idU2 = 2*j+2;
 
       const double nQ2 = 1+2*nuQ_[j];
       const double nU2 = 1+2*nuU_[j];
