@@ -26,8 +26,7 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
 
   cmEnergy_ = cfg_.get<double>("cmEnergy", 0, 1e9);
   massMin_ = cfg_.get<double>("massMin", 0., cmEnergy_);
-  massMax_ = cfg_.get<double>("massMax", massMin_, cmEnergy_);
-  massMin_ = cfg_.get<double>("massMin", 0., massMax_); // Check once again to check reversed input
+  massMax_ = cmEnergy_; // Let maximum value to CM energy
   mD_   = cfg_.get<double>("mD", 0., 1e9);
   nDim_ = cfg_.get<int>("dimension", 4, 11);
 
