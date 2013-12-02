@@ -52,14 +52,16 @@ RSModel::RSModel(const ConfigReader& cfg):
   // Calculate C-factors and D-factors from nuFermion parameters
   const double kL = 11.3*physics::Pi;
   cFactors_[2121] = (1-exp(-2*kL))/(2*kL); // Gluon+Gluon = 2121
+  dFactors_[21] = pow(1-exp(-kL), 2)/kL; // Gluon D-factor
+  dFactors_[25] = 1; // Higgs D-factor
   for ( int i=0; i<3; ++i )
   {
     const int idD1 = 2*i+1;
     const int idU1 = 2*i+2;
 
     const double nQ1 = 1+2*nuQ_[i];
-    const double nU1 = 1+2*nuU_[i];
-    const double nD1 = 1+2*nuD_[i];
+    const double nU1 = 1-2*nuU_[i];
+    const double nD1 = 1-2*nuD_[i];
 
     // C_gq factors
     const double c_gQ = sqrt(nQ1/kL/(exp(kL*nQ1)-1)) * (exp(kL*nQ1/2)-exp(-2*kL)) * 2 / (4+nQ1);
@@ -69,14 +71,22 @@ RSModel::RSModel(const ConfigReader& cfg):
     cFactors_[idU1*100+21] = cFactors_[21*100+idU1] = (c_gQ + c_gU)/2;
     cFactors_[idD1*100+21] = cFactors_[21*100+idD1] = (c_gQ + c_gD)/2;
 
+    // D_q factors
+    const double d_Q = 4*nQ1/(exp(nQ1*kL)-1)*pow((exp(nQ1/2*kL)-exp(-kL))/(1-exp(-kL))/(nQ1+2), 2);
+    const double d_U = 4*nU1/(exp(nU1*kL)-1)*pow((exp(nU1/2*kL)-exp(-kL))/(1-exp(-kL))/(nU1+2), 2);
+    const double d_D = 4*nD1/(exp(nD1*kL)-1)*pow((exp(nD1/2*kL)-exp(-kL))/(1-exp(-kL))/(nD1+2), 2);
+
+    dFactors_[idU1] = d_U + d_Q;
+    dFactors_[idD1] = d_D + d_Q;
+
     for ( int j=0; j<3; ++j )
     {
       const int idD2 = 2*j+1;
       const int idU2 = 2*j+2;
 
       const double nQ2 = 1+2*nuQ_[j];
-      const double nU2 = 1+2*nuU_[j];
-      const double nD2 = 1+2*nuD_[j];
+      const double nU2 = 1-2*nuU_[j];
+      const double nD2 = 1-2*nuD_[j];
 
       // C_qq factors
       const double c_QQ = sqrt( nQ1*nQ2/(exp(kL*nQ1)-1)/(exp(kL*nQ2)-1) ) * 2 * (exp(kL/2*(nQ1+nQ2)) - exp(-2*kL)) / (4+nQ1+nQ2);
@@ -94,6 +104,18 @@ RSModel::RSModel(const ConfigReader& cfg):
       cFactors_[idD1*100 + idD2] = cFactors_[idD1 + 100*idD2] = (c_QQ + 2*c_QD + c_DD)/4;
     }
   }
+
+/*
+  for ( std::map<int, double>::const_iterator x = cFactors_.begin(); x != cFactors_.end(); ++x )
+  {
+    cout << x->first << ' ' << x->second << endl;
+  }
+
+  for ( std::map<int, double>::const_iterator x = dFactors_.begin(); x != dFactors_.end(); ++x )
+  {
+    cout << x->first << ' ' << x->second << endl;
+  }
+*/
 }
 
 double RSModel::calculatePartonWeight(const double m, const PDF& pdf1, const PDF& pdf2)
@@ -141,18 +163,18 @@ void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, 
 
     if ( id1 != 21 )
     {
-      idPairs.push_back((id1+1000)*1000+id2);
+      idPairs.push_back((id1+100)*1000+id2);
       cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(-id1)*pdf2(id2));
     }
     if ( id2 != 21 )
     {
-      idPairs.push_back(id1*1000+(id2+1000));
+      idPairs.push_back(id1*1000+(id2+100));
       cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(id1)*pdf2(-id2));
     }
     if ( id1 != 21 and id2 != 21 )
     {
       // qbar + qbar
-      idPairs.push_back((id1+1000)*1000+(id2+1000));
+      idPairs.push_back((id1+100)*1000+(id2+100));
       cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(-id1)*pdf2(-id2));
     }
   }
@@ -160,8 +182,8 @@ void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, 
   const int idPair = idPairs[index];
   const int id1 = (idPair/1000)%100;
   const int id2 = (idPair%1000)%100;
-  const int sign1 = (id1 != 21 and idPair/1000 >= 1000) ? -1 : 1;
-  const int sign2 = (id2 != 21 and idPair%1000 >= 1000) ? -1 : 1;
+  const int sign1 = (id1 != 21 and idPair/1000 >= 100) ? -1 : 1;
+  const int sign2 = (id2 != 21 and idPair%1000 >= 100) ? -1 : 1;
 
   const double spin1 = 9., spin2 = 9.;
 
@@ -169,6 +191,8 @@ void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, 
   parton2 = Particle(id2*sign2, -1, 2, 2, 0., 0., parton2.pz_);
   parton1.spin_ = spin1;
   parton2.spin_ = spin2;
+
+  //printf("Parton: %d %d\n", id1*sign1, id2*sign2);
 
 }
 
