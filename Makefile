@@ -4,7 +4,7 @@
 ## Detect OSX
 ifeq ($(shell uname),Darwin)
 CC=clang++
-SWPATH=$(HOME)/sw/osx_x86_64_gcc421
+SWPATH=$(HOME)/sw/osx_x86_64_gcc482
 else
 CC=g++
 SWPATH=$(HOME)/sw/slc5_x86_64_gcc412
