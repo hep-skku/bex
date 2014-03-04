@@ -30,7 +30,7 @@ public:
   virtual ~AbsModel();
 
   struct FormFactorType { enum X { YOSHINO, FIOP, PiR2, END }; };
-  struct MassLossType { enum X { YOSHINO, LINEAR, UNIFORM, CONST, NONE, END }; };
+  struct MJLossType { enum X { YOSHINO, LINEAR, UNIFORM, CONST, NONE, END }; };
 
   void calculateCrossSection();
   virtual double calculatePartonWeight(const double m, const PDF& pdf1, const PDF& pdf2) = 0;

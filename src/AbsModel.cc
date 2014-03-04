@@ -55,43 +55,43 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
 
   // Mass loss types
   ConfigReader::MenuType mLossMenu;
-  mLossMenu["Yoshino"] = MassLossType::YOSHINO;
-  mLossMenu["Uniform"] = MassLossType::UNIFORM;
-  mLossMenu["Linear" ] = MassLossType::LINEAR ;
-  mLossMenu["Const"  ] = MassLossType::CONST  ;
-  mLossMenu["None"   ] = MassLossType::NONE   ;
+  mLossMenu["Yoshino"] = MJLossType::YOSHINO;
+  mLossMenu["Uniform"] = MJLossType::UNIFORM;
+  mLossMenu["Linear" ] = MJLossType::LINEAR ;
+  mLossMenu["Const"  ] = MJLossType::CONST  ;
+  mLossMenu["None"   ] = MJLossType::NONE   ;
   mLossType_ = cfg_.get("mLossType", mLossMenu);
 
   // Build Impact parameter vs mass loss factor tables
-  if ( mLossType_ == MassLossType::YOSHINO )
+  if ( mLossType_ == MJLossType::YOSHINO )
   {
     loadYoshinoDataTable();
   }
   else
   {
-    if ( mLossType_ == MassLossType::NONE ) cfg_.set("mLossFactor", 1);
+    if ( mLossType_ == MJLossType::NONE ) cfg_.set("mLossFactor", 1);
     const double mLossFactor = cfg_.get<double>("mLossFactor", 0, 1);
     mLossTab_.push_back(std::make_pair(0., mLossFactor));
     mLossTab_.push_back(std::make_pair(bMax_, mLossFactor));
   }
 
   // Angular momentum loss
-  if ( mLossType_ == MassLossType::YOSHINO and !cfg_.hasOption("jLossType") )
+  if ( mLossType_ == MJLossType::YOSHINO and !cfg_.hasOption("jLossType") )
   {
-    jLossType_ = MassLossType::YOSHINO;
+    jLossType_ = MJLossType::YOSHINO;
     jLossFactor_ = 1.0;
   }
   else
   {
     ConfigReader::MenuType jLossMenu;
-    jLossMenu["Yoshino"] = MassLossType::YOSHINO;
-    jLossMenu["Uniform"] = MassLossType::UNIFORM;
-    jLossMenu["Linear" ] = MassLossType::LINEAR ;
-    jLossMenu["Const"  ] = MassLossType::CONST  ;
-    jLossMenu["None"   ] = MassLossType::NONE   ;
+    jLossMenu["Yoshino"] = MJLossType::YOSHINO;
+    jLossMenu["Uniform"] = MJLossType::UNIFORM;
+    jLossMenu["Linear" ] = MJLossType::LINEAR ;
+    jLossMenu["Const"  ] = MJLossType::CONST  ;
+    jLossMenu["None"   ] = MJLossType::NONE   ;
     jLossType_ = cfg_.get("jLossType", jLossMenu);
-    if ( jLossType_ == MassLossType::NONE ) jLossFactor_ = 1.0;
-    else if ( jLossType_ == MassLossType::YOSHINO ) jLossFactor_ = 1.0;
+    if ( jLossType_ == MJLossType::NONE ) jLossFactor_ = 1.0;
+    else if ( jLossType_ == MJLossType::YOSHINO ) jLossFactor_ = 1.0;
     else jLossFactor_ = cfg_.get<double>("jLossFactor");
   }
 
@@ -230,20 +230,20 @@ void AbsModel::calculateCrossSection()
     while ( true )
     {
       // Generate mass fraction after balding phase
-      if ( mLossType_ == MassLossType::UNIFORM )
+      if ( mLossType_ == MJLossType::UNIFORM )
       {
         mFrac = rnd_->uniform(mFracMin, 1);
       }
-      else if ( mLossType_ == MassLossType::LINEAR or mLossType_ == MassLossType::YOSHINO )
+      else if ( mLossType_ == MJLossType::LINEAR or mLossType_ == MJLossType::YOSHINO )
       {
         mFrac = rnd_->ramp(mFracMin, 1);
       }
-      else if ( mLossType_ == MassLossType::CONST or mLossType_ == MassLossType::NONE )
+      else if ( mLossType_ == MJLossType::CONST or mLossType_ == MJLossType::NONE )
       {
         mFrac = mFracMin;
       }
 
-      if ( jLossType_ == MassLossType::YOSHINO )
+      if ( jLossType_ == MJLossType::YOSHINO )
       {
         // Generate angular momentum fraction after balding phase
         const double jFrac = rnd_->ramp(0, 1);
@@ -332,15 +332,15 @@ void AbsModel::event()
     while ( true )
     {
       // Generate mass fraction after balding phase
-      if ( mLossType_ == MassLossType::UNIFORM )
+      if ( mLossType_ == MJLossType::UNIFORM )
       {
         mFrac = rnd_->uniform(mFracMin, 1);
       }
-      else if ( mLossType_ == MassLossType::LINEAR or mLossType_ == MassLossType::YOSHINO )
+      else if ( mLossType_ == MJLossType::LINEAR or mLossType_ == MJLossType::YOSHINO )
       {
         mFrac = rnd_->ramp(mFracMin, 1);
       }
-      else if ( mLossType_ == MassLossType::CONST or mLossType_ == MassLossType::NONE )
+      else if ( mLossType_ == MJLossType::CONST or mLossType_ == MJLossType::NONE )
       {
         mFrac = mFracMin;
       }
@@ -351,22 +351,22 @@ void AbsModel::event()
       // There's upper bound of angular momentum for low dimensional cases
       // Adjust jFracMax for low dimensional cases
       double jFracMax = jLossFactor_;
-      if ( jLossType_ == MassLossType::LINEAR or jLossType_ == MassLossType::UNIFORM )
+      if ( jLossType_ == MJLossType::LINEAR or jLossType_ == MJLossType::UNIFORM )
       {
         if ( nDim_ == 4 ) jFracMax = min(mFrac*mFrac/b0, jLossFactor_);
         else if ( nDim_ == 5 ) jFracMax = min(pow(mFrac, 3./2.)/b0, jLossFactor_);
       }
 
       // Generate angular momentum fraction after balding phase
-      if ( jLossType_ == MassLossType::UNIFORM )
+      if ( jLossType_ == MJLossType::UNIFORM )
       {
         jFrac = rnd_->uniform(0, jFracMax);
       }
-      else if ( jLossType_ == MassLossType::LINEAR or jLossType_ == MassLossType::YOSHINO )
+      else if ( jLossType_ == MJLossType::LINEAR or jLossType_ == MJLossType::YOSHINO )
       {
         jFrac = rnd_->ramp(0, jFracMax);
       }
-      else if ( jLossType_ == MassLossType::CONST or jLossType_ == MassLossType::NONE )
+      else if ( jLossType_ == MJLossType::CONST or jLossType_ == MJLossType::NONE )
       {
         jFrac = jFracMax;
       }
@@ -374,7 +374,7 @@ void AbsModel::event()
       // BH should obey area theorem and cosmic censorship condition
       // according to the Yoshino-Rychkov, irreducible mass have to be
       // greater than minimum mass
-      if ( jLossType_ == MassLossType::YOSHINO )
+      if ( jLossType_ == MJLossType::YOSHINO )
       {
         const double mIrr = computeMirr(mFrac, jFrac, b0);
         if ( mIrr < mFracMin ) continue;
