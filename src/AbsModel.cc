@@ -446,12 +446,14 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   const double rs = computeRs(bh_mass);
   const double rh = computeRh(bh_mass, bh_spin);
   const double astar = (nDim_-2.)/2*bh_spin/bh_mass/rh;
-  const double astar2 = astar*astar;
-  const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
+  //const double astar2 = astar*astar;
+  //const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
 
   // Choose particle type and its energy
   // Step 1 : pick particle spin for a given M and J, considering DoF
   //    <- we need values of g \int_0^\infty d\omega dN/d\omega
+  std::vector<double> integratedFlux = getIntegratedFlux(bh_mass, astar);
+  const unsigned int particleType = rnd_->pickFromHist(integratedFlux);
   // Step 2 : pick particle energy from cumulative dN/dw distribution
   //    <- we already have full energy flux curve.
 
@@ -568,6 +570,17 @@ double AbsModel::computeRh(const double m0, const double j0) const
 
   return -1;
 
+}
+
+std::vector<double> AbsModel::getIntegratedFlux(const double bh_mass, const double astar) const
+{
+  std::vector<double> integratedFlux(3);
+  // Interpolate fluxes from the data table and put them
+  const double // FIXME resume here
+  integratedFlux[0] = flux_scalar; // Scalar
+  integratedFlux[1] = flux_spinor; // Spinor
+  integratedFlux[2] = flux_vector; // Vector
+  return integratedFlux;
 }
 
 Particle::Particle(const int id, const int status,

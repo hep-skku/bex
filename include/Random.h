@@ -47,6 +47,16 @@ public:
 
     return lo;
   }
+  template<typename VectorType>
+  int pickFromHist(VectorType v)
+  {
+    // Make it CDF
+    for ( int i=1, n=v.size(); i<n; ++i )
+    {
+      v[i] += v[i-1];
+    }
+    return pickFromCDF(v);
+  }
 
 private:
   boost::mt19937 rnd_;
