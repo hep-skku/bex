@@ -27,7 +27,7 @@ RSModel::RSModel(const ConfigReader& cfg):
     kn_ = physics::kn[nDim_-4];
     kn2_ = kn_*kn_;
 
-    if ( mLossType_ == MassLossType::YOSHINO )
+    if ( mLossType_ == MJLossType::YOSHINO )
     {
       loadYoshinoDataTable(); // Reload mass loss data table since nDim_ is altered
     }
