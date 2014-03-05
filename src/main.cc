@@ -15,8 +15,6 @@
 #include "TH2F.h"
 TFile* f = new TFile("debug.root", "recreate");
 TH2F* _hMJLoss = new TH2F("hMJLoss", "hMJLoss", 100, 0., 1., 100, 0., 1.);
-TH2F* _hMJLossNoWeight = new TH2F("hMJLossNoWeight", "hMJLossNoWeight", 100, 0., 1., 100, 0., 1.);
-TH2F* _hMJLossUnWeight = new TH2F("hMJLossUnWeight", "hMJLossUnWeight", 100, 0., 1., 100, 0., 1.);
 #endif
 
 using namespace std;
