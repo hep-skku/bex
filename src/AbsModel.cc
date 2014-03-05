@@ -439,17 +439,21 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
                            Particle& daughter)
 {
   const double bh_mass = bh_momentum.mD();
+  // Check BH state for safety
+  if ( !checkBHState(bh_mass, bh_charge, bh_spin) ) return false;
+
   //const double bh_pos5 = bh_position.p(5); // Position in 5th dimension - not used in ADD model
   const double rs = computeRs(bh_mass);
   const double rh = computeRh(bh_mass, bh_spin);
-  if ( rh < 0 )
-  {
-    cerr << "Invalid black hole mass and spin" << endl;
-    return false;
-  }
   const double astar = (nDim_-2.)/2*bh_spin/bh_mass/rh;
   const double astar2 = astar*astar;
   const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
+
+  // Choose particle type and its energy
+  // Step 1 : pick particle spin for a given M and J, considering DoF
+  //    <- we need values of g \int_0^\infty d\omega dN/d\omega
+  // Step 2 : pick particle energy from cumulative dN/dw distribution
+  //    <- we already have full energy flux curve.
 
   return false;
 }
