@@ -54,6 +54,7 @@ public:
 
 protected:
   void loadYoshinoDataTable();
+  void loadFluxDataTable();
   double computeRs(const double m0) const;
   double computeRh(const double m0, const double j0) const;
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
@@ -88,6 +89,8 @@ protected:
   double s_;
   double bMax_, formFactor_;
   Pairs mLossTab_;
+  Pairs eFluxTabS0_, eFluxTabS1_, eFluxTabS2_;
+  Pairs nFluxTabS0_, nFluxTabS1_, nFluxTabS2_;
   double kn_, kn2_;
 };
 
