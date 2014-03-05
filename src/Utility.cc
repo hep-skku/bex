@@ -156,6 +156,35 @@ istream& operator>>(istream& in, std::vector<std::pair<double, double> >& data)
   return in;
 }
 
+istream& operator>>(istream& in, std::vector<std::vector<double> >& data)
+{
+  const size_t nCol = data.size();
+  if ( nCol == 0 )
+  {
+    std::cerr << "Data column is empty." << std::endl;
+    return in;
+  }
+
+  string line;
+  while ( getline(in, line) )
+  {
+    const size_t commentPos = line.find('#');
+    if ( commentPos != string::npos ) line.erase(commentPos);
+    boost::algorithm::trim(line);
+    if ( line.empty() or line[0] == '#' ) continue;
+    std::replace(line.begin(), line.end(), ',', ' ');
+
+    stringstream ss(line);
+    for ( int i=0; i<nCol; ++i )
+    {
+      double x;
+      ss >> x;
+      data[i].push_back(x);
+    }
+  }
+  return in;
+}
+
 istream& operator>>(istream& in, std::vector<double>& data)
 {
   string content;
