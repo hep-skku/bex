@@ -241,7 +241,7 @@ void AbsModel::calculateCrossSection()
     {
       mFrac = mFracMin;
     }
-    if ( mFrac*m0 < massMin_ ) weight = 0;
+    if ( !checkBHState(mFrac*m0) ) weight = 0;
 
     // Does cross section supressed by angular momentum loss? Maybe not.
     // From the hoop conjecture, we assume a BH forms only if mass of chunk exceeds the minimum mass criteria
@@ -327,7 +327,7 @@ void AbsModel::event()
     }
 
     // Retry if final mass is below minimum mass range
-    if ( mFrac*m0 < massMin_ ) continue;
+    if ( !checkBHState(mFrac*m0) ) continue;
 
     do
     {
@@ -423,6 +423,15 @@ void AbsModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1,
   const int id2 = PDF::indexToPdgId(rnd_->pickFromCDF(stackPDF2));
   parton1 = Particle(id1, -1, 1, 1, 0., 0., parton1.pz_);
   parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
+}
+
+bool AbsModel::checkBHState(const double bh_mass, const int bh_charge, const double bh_spin) const
+{
+  if ( bh_mass < massMin_ ) return false;
+  const double rh = computeRh(bh_mass, bh_spin);
+  if ( rh < 0 ) return false;
+
+  return true;
 }
 
 bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position,

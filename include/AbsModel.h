@@ -58,6 +58,8 @@ protected:
   double computeRh(const double m0, const double j0) const;
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
+  bool checkBHState(const double bh_mass, const int bh_charge = 0, const double bh_spin = 0) const;
+
 protected:
   bool isValid_;
   std::string name_;
