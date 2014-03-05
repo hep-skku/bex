@@ -13,7 +13,7 @@
 
 #ifdef DEBUGROOT
 #include "TH2F.h"
-extern TH2F* _hMJLoss, * _hMJLossNoWeight, * _hMJLossUnWeight;
+extern TH2F* _hMJLoss;
 #endif
 
 using namespace std;
@@ -227,48 +227,30 @@ void AbsModel::calculateCrossSection()
     double mFrac = 1.0;
     const double b0 = rnd_->ramp(0, bMax_);
     const double mFracMin = interpolate(mLossTab_, b0);
-    while ( true )
+
+    // Generate mass fraction after balding phase
+    if ( mLossType_ == MJLossType::UNIFORM )
     {
-      // Generate mass fraction after balding phase
-      if ( mLossType_ == MJLossType::UNIFORM )
-      {
-        mFrac = rnd_->uniform(mFracMin, 1);
-      }
-      else if ( mLossType_ == MJLossType::LINEAR or mLossType_ == MJLossType::YOSHINO )
-      {
-        mFrac = rnd_->ramp(mFracMin, 1);
-      }
-      else if ( mLossType_ == MJLossType::CONST or mLossType_ == MJLossType::NONE )
-      {
-        mFrac = mFracMin;
-      }
-
-      if ( jLossType_ == MJLossType::YOSHINO )
-      {
-        // Generate angular momentum fraction after balding phase
-        const double jFrac = rnd_->ramp(0, 1);
-        // BH should obey area theorem and cosmic censorship condition
-        // according to the Yoshino-Rychkov, irreducible mass have to be
-        // greater than minimum mass
-        const double mIrr = computeMirr(mFrac, jFrac, b0);
-        if ( mIrr < mFracMin ) continue;
-#ifdef DEBUGROOT
-        jFracV = jFrac;
-#endif
-      }
-
-      break;
+      mFrac = rnd_->uniform(mFracMin, 1);
+    }
+    else if ( mLossType_ == MJLossType::LINEAR or mLossType_ == MJLossType::YOSHINO )
+    {
+      mFrac = rnd_->ramp(mFracMin, 1);
+    }
+    else if ( mLossType_ == MJLossType::CONST or mLossType_ == MJLossType::NONE )
+    {
+      mFrac = mFracMin;
     }
     if ( mFrac*m0 < massMin_ ) weight = 0;
 
-#ifdef DEBUGROOT
-    _hMJLoss->Fill(mFrac, jFracV, weight);
-    _hMJLossNoWeight->Fill(mFrac, jFracV);
-#endif
-
+    // Does cross section supressed by angular momentum loss? Maybe not.
+    // From the hoop conjecture, we assume a BH forms only if mass of chunk exceeds the minimum mass criteria
+    // Angular momentum loss especially due to the upper limit of J in low dimensions
+    // are calculated AFTER BH is formed.
     if ( weightMax_ < weight ) weightMax_ = weight;
     sumW += weight;
     sumW2 += weight*weight;
+
   }
 
   // Now calculate total cross section and its error
@@ -298,7 +280,7 @@ void AbsModel::event()
 
   // Start BH production
   PDF pdf1, pdf2;
-  while ( true )
+  do
   {
     // Same routine in the xsec calculation
     const double m0 = 1/rnd_->uniform(1/massMax_, 1/massMin_);
@@ -329,25 +311,26 @@ void AbsModel::event()
     double mFrac = 1.0, jFrac = 1.0;
     const double b0 = rnd_->ramp(0, bMax_);
     const double mFracMin = interpolate(mLossTab_, b0);
-    while ( true )
+
+    // Generate mass fraction after balding phase
+    if ( mLossType_ == MJLossType::UNIFORM )
     {
-      // Generate mass fraction after balding phase
-      if ( mLossType_ == MJLossType::UNIFORM )
-      {
-        mFrac = rnd_->uniform(mFracMin, 1);
-      }
-      else if ( mLossType_ == MJLossType::LINEAR or mLossType_ == MJLossType::YOSHINO )
-      {
-        mFrac = rnd_->ramp(mFracMin, 1);
-      }
-      else if ( mLossType_ == MJLossType::CONST or mLossType_ == MJLossType::NONE )
-      {
-        mFrac = mFracMin;
-      }
+      mFrac = rnd_->uniform(mFracMin, 1);
+    }
+    else if ( mLossType_ == MJLossType::LINEAR or mLossType_ == MJLossType::YOSHINO )
+    {
+      mFrac = rnd_->ramp(mFracMin, 1);
+    }
+    else if ( mLossType_ == MJLossType::CONST or mLossType_ == MJLossType::NONE )
+    {
+      mFrac = mFracMin;
+    }
 
-      // Retry if final mass is below minimum mass range
-      if ( mFrac*m0 < massMin_ ) continue;
+    // Retry if final mass is below minimum mass range
+    if ( mFrac*m0 < massMin_ ) continue;
 
+    do
+    {
       // There's upper bound of angular momentum for low dimensional cases
       // Adjust jFracMax for low dimensional cases
       double jFracMax = jLossFactor_;
@@ -379,27 +362,25 @@ void AbsModel::event()
         const double mIrr = computeMirr(mFrac, jFrac, b0);
         if ( mIrr < mFracMin ) continue;
       }
+    } while ( false );
 
-      break;
-    }
 #ifdef DEBUGROOT
-    _hMJLossUnWeight->Fill(mFrac, jFrac);
+    _hMJLoss->Fill(mFrac, jFrac);
 #endif
-
-    // Initial mass loss by 2 graviton radiation along +- z direction,
-    // thus BH 3-momentum will be conserved
-    // NOTE : This assumes isotropic gravitational radiation
-    const double graviton_e = (1-mFrac)*m0/2;
-    decays.push_back(Particle(39, 1, 3, 4, 0., 0., +graviton_e));
-    decays.push_back(Particle(39, 1, 3, 4, 0., 0., -graviton_e));
 
     // Build initial BH
     bh_mass = mFrac*m0;
     const double bh_pz = parton1.pz_+parton2.pz_;
     bh_momentum.set(std::sqrt(bh_mass*bh_mass+bh_pz*bh_pz), 0, 0, bh_pz);
 
-    break;
-  }
+    // Initial mass loss by 2 graviton radiation along +- z direction,
+    // thus BH 3-momentum will be conserved
+    // NOTE : This assumes isotropic gravitational radiation
+    const double graviton_e = (1-mFrac)*m0/2;
+    decays.push_back(Particle(39, 1, 3, 4, 0., 0., bh_pz+graviton_e));
+    decays.push_back(Particle(39, 1, 3, 4, 0., 0., bh_pz-graviton_e));
+
+  } while ( false );
 
   // Start evaporation by hawking radiation
   while ( true )
