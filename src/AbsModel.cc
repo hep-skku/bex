@@ -576,7 +576,10 @@ std::vector<double> AbsModel::getIntegratedFlux(const double bh_mass, const doub
 {
   std::vector<double> integratedFlux(3);
   // Interpolate fluxes from the data table and put them
-  const double // FIXME resume here
+  double flux_scalar = 1;
+  double flux_spinor = 1;
+  double flux_vector = 1;
+
   integratedFlux[0] = flux_scalar; // Scalar
   integratedFlux[1] = flux_spinor; // Spinor
   integratedFlux[2] = flux_vector; // Vector
