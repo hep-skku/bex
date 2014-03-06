@@ -59,7 +59,7 @@ protected:
   double computeRh(const double m0, const double j0) const;
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
-  std::vector<double> getIntegratedFlux(const double bh_mass, const double astar) const;
+  void cacheInterpolatedFluxes(const double bh_mass, const double astar);
   bool checkBHState(const double bh_mass, const int bh_charge = 0, const double bh_spin = 0) const;
 
 protected:
@@ -85,12 +85,13 @@ protected:
 
   const static int nXsecIter_ = 100000;
 
+  // Full data tables
+  Pairs mLossTab_;
+  Pairs nFluxTabS0_, nFluxTabS1_, nFluxTabS2_;
+
   // Cached variables for convenience
   double s_;
   double bMax_, formFactor_;
-  Pairs mLossTab_;
-  Pairs eFluxTabS0_, eFluxTabS1_, eFluxTabS2_;
-  Pairs nFluxTabS0_, nFluxTabS1_, nFluxTabS2_;
   double kn_, kn2_;
 };
 

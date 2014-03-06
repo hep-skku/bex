@@ -130,32 +130,20 @@ void AbsModel::loadYoshinoDataTable()
 void AbsModel::loadFluxDataTable()
 {
   // Load flux data. data is stored in the data/flux/*D_*flux.dat
-  const std::string eFluxFileName = (boost::format("data/flux/%1%D_Eflux.dat") % nDim_).str();
   const std::string nFluxFileName = (boost::format("data/flux/%1%D_Nflux.dat") % nDim_).str();
-  ifstream eFluxFile(eFluxFileName);
   ifstream nFluxFile(nFluxFileName);
 
   // Data is 3 columned data, uniform step
-  std::vector<std::vector<double> > eFluxData(3);
   std::vector<std::vector<double> > nFluxData(3);
-  eFluxFile >> eFluxData;
   nFluxFile >> nFluxData;
 
   // Make cumulative distribution
-  eFluxTabS0_.push_back(make_pair(0., eFluxData[0][0]));
-  eFluxTabS1_.push_back(make_pair(0., eFluxData[1][0]));
-  eFluxTabS2_.push_back(make_pair(0., eFluxData[2][0]));
-
   nFluxTabS0_.push_back(make_pair(0., nFluxData[0][0]));
   nFluxTabS1_.push_back(make_pair(0., nFluxData[1][0]));
   nFluxTabS2_.push_back(make_pair(0., nFluxData[2][0]));
-  for ( int i=0, n=eFluxData[0].size(); i<n; ++i )
+  for ( int i=0, n=nFluxData[0].size(); i<n; ++i )
   {
     const double omega = 0.2*(i+1);
-
-    eFluxTabS0_.push_back(make_pair(omega, eFluxTabS0_.back().second + eFluxData[0][i]));
-    eFluxTabS1_.push_back(make_pair(omega, eFluxTabS1_.back().second + eFluxData[1][i]));
-    eFluxTabS2_.push_back(make_pair(omega, eFluxTabS2_.back().second + eFluxData[2][i]));
 
     nFluxTabS0_.push_back(make_pair(omega, nFluxTabS0_.back().second + nFluxData[0][i]));
     nFluxTabS1_.push_back(make_pair(omega, nFluxTabS1_.back().second + nFluxData[1][i]));
@@ -488,8 +476,6 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   // Choose particle type and its energy
   // Step 1 : pick particle spin for a given M and J, considering DoF
   //    <- we need values of g \int_0^\infty d\omega dN/d\omega
-  std::vector<double> integratedFlux = getIntegratedFlux(bh_mass, astar);
-  const unsigned int particleType = rnd_->pickFromHist(integratedFlux);
   // Step 2 : pick particle energy from cumulative dN/dw distribution
   //    <- we already have full energy flux curve.
 
@@ -608,8 +594,9 @@ double AbsModel::computeRh(const double m0, const double j0) const
 
 }
 
-std::vector<double> AbsModel::getIntegratedFlux(const double bh_mass, const double astar) const
+void AbsModel::cacheInterpolatedFluxes(const double bh_mass, const double astar)
 {
+/*
   std::vector<double> integratedFlux(3);
   // Interpolate fluxes from the data table and put them
   double flux_scalar = 1;
@@ -620,6 +607,7 @@ std::vector<double> AbsModel::getIntegratedFlux(const double bh_mass, const doub
   integratedFlux[1] = flux_spinor; // Spinor
   integratedFlux[2] = flux_vector; // Vector
   return integratedFlux;
+*/
 }
 
 Particle::Particle(const int id, const int status,
