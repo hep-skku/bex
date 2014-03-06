@@ -29,6 +29,16 @@ public:
   template<typename VectorType>
   int pickFromCDF(const VectorType& v)
   {
+    // Check validity of CDF : is it monolothic array?
+    for ( int i=0, n=v.size()-1; i<n; ++i )
+    {
+      if ( v[i] > v[i+1] )
+      {
+        std::cerr << "Invalid CDF, array is not monolothic\n";
+        return -1;
+      }
+    }
+
     const double x = uniform(0, v.back());
 
     // Do binary search
@@ -48,14 +58,16 @@ public:
     return lo;
   }
   template<typename VectorType>
-  int pickFromHist(VectorType v)
+  int pickFromHist(const VectorType& v)
   {
+    VectorType cdf(v.size()+1);
+    cdf[0] = 0;
     // Make it CDF
-    for ( int i=1, n=v.size(); i<n; ++i )
+    for ( int i=0, n=v.size(); i<n; ++i )
     {
-      v[i] += v[i-1];
+      cdf[i+1] = cdf[i]+v[i];
     }
-    return pickFromCDF(v);
+    return pickFromCDF(cdf);
   }
 
 private:
