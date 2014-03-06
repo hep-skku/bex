@@ -131,7 +131,7 @@ void AbsModel::loadFluxDataTable()
 {
   // Load flux data. data is stored in the data/flux/*D_*flux.dat
   const std::string nFluxFileName = (boost::format("data/flux/%1%D_Nflux.dat") % nDim_).str();
-  ifstream nFluxFile(nFluxFileName);
+  ifstream nFluxFile(nFluxFileName.c_str());
 
   // Data is 3 columned data, uniform step
   std::vector<std::vector<double> > nFluxData(3);
@@ -226,9 +226,6 @@ void AbsModel::calculateCrossSection()
 
   cfg_.print();
 
-#ifdef DEBUGROOT
-  double jFracV = 1.0;
-#endif
   double sumW = 0, sumW2 = 0;
   PDF pdf1, pdf2;
   for ( int i=0; i<nXsecIter_; ++i )
