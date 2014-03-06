@@ -175,7 +175,7 @@ istream& operator>>(istream& in, std::vector<std::vector<double> >& data)
     std::replace(line.begin(), line.end(), ',', ' ');
 
     stringstream ss(line);
-    for ( int i=0; i<nCol; ++i )
+    for ( size_t i=0; i<nCol; ++i )
     {
       double x;
       ss >> x;
