@@ -28,11 +28,13 @@ public:
   }
   int pickFromCDF(const std::vector<double>& v);
   int pickFromHist(const std::vector<double>& v);
+  double curve(const std::vector<std::pair<double, double> >& points);
 
 private:
   boost::mt19937 rnd_;
   double rnd_min_, rnd_width_;
 
+  unsigned int find(const double x, const std::vector<double>& v) const;
   inline double rand()
   {
     return (rnd_()-rnd_min_)/rnd_width_;
