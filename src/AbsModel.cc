@@ -10,6 +10,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
+#include <boost/assign/std/vector.hpp>
 
 #ifdef DEBUGROOT
 #include "TH2F.h"
@@ -107,20 +108,27 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
   kn2_ = kn_*kn_;
   formFactor_ = kn2_*physics::Pi*bMax_*bMax_;
 
-  // Set Number of Degree of Freedom for each spins
+  // Set Number of Degree of Freedom for each particles and spins
+  using namespace boost::assign;
   // Bosons
   nDoF_[0] = 1;
+  decayPdgIds_ += 35;
+  decayNDoFs_  +=  1;
   // Spinors : charged leptons + neutrinos + quarks
   //  quarks : 3 generations with up/down types and 3 colors
   //  charged leptons : 3 generations
   //  neutrinos : 3 generations but no right handed neutrinos
-  nDoF_[1] = 2*( 3*2*3 + 3 + 3/2. );
+  nDoF_[1] = 2*( 3*2*3 + 3 + 3./2 );
+  decayPdgIds_ += 1, 2, 3, 4, 5, 6, 11, 13, 15, 12, 14, 16;
+  decayNDoFs_  += 6, 6, 6, 6, 6, 6,  2,  2,  2,  1,  1,  1;
   // Vector bosons : gluons + photons + W + Z
-  //  gluons : 8 combintions of bi-colors
-  //  photons : 2 spin out of 3
-  //  W : 2 charge
-  //  Z
-  nDoF_[2] = 8+2/3.+2+1;
+  //  gluons = 8 : 8 combintions of bi-colors
+  //  photons = 2/3. : 2 spin out of 3
+  //  Z = 1 : 1 Z boson
+  //  W = 2 : W+ and W-
+  nDoF_[2] = 8+2/3.+1+2;
+  decayPdgIds_ += 21,   22, 23, 24;
+  decayNDoFs_  +=  8, 2/3.,  1,  2;
 
   isValid_ = true;
 
@@ -501,11 +509,13 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
     const double energy = rnd_->curve(fluxCurve);
 
     // Step 3 : pick specific particle
-    const int id = rnd_->pick(0, nDoF_[selectedSpin2]);
+    const int id = decayPdgIds_[rnd_->pickFromHist(decayNDoFs_)];
     // Check the particle has enough energy to create daughter particle
     // If particle does not hold on shell condition, retry from the particle spin selection
     const double m = physics::getMassByPdgId(id);
+    cout << "Try:" << m << ' ' << energy << endl;
     if ( energy < m ) continue;
+    cout << "Accepted energy" << endl;
 
     // Choose particle
     daughter = Particle(id, -1, 0, 0, 0., 0., energy);
@@ -634,7 +644,7 @@ double AbsModel::getIntegratedFlux(const int spin2, const double rh, const doubl
   //const double bh_omega = astar/(1+astar2)/rh;
   const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
 
-  // Interpolate fluxes from the data table and put them
+  // Integrate fluxes from the data table and put them
   double cFlux = 1;
 
   return cFlux;
@@ -642,7 +652,30 @@ double AbsModel::getIntegratedFlux(const int spin2, const double rh, const doubl
 
 AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const double astar) const
 {
+  const int signFactor = (spin2 % 2 == 0) ? -1 : 1;
+
+  const double astar2 = astar*astar;
+  const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
+  //const double bh_omega = astar/(1+astar2)/rh;
+  const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
+
   Pairs fluxCurve;
+  const double xmax = 16;
+  fluxCurve.push_back(std::make_pair(0., 0.));
+  for ( int i=1; i<=100; ++i )
+  {
+    const double x = xmax/100*i;
+    double y = 0;
+    for ( int l2=0; l2<spin2; l2+=2 )
+    {
+      for ( int m2=-l2; m2<=l2; m2+=2 )
+      {
+        y += max(0., 1/(exp(x/bh_tem - m2/2.*bh_mFactor)+signFactor));
+      }
+    }
+    fluxCurve.push_back(std::make_pair(x, y));
+  }
+
   return fluxCurve;
 }
 

@@ -89,6 +89,8 @@ protected:
   // Full data tables
   Pairs mLossTab_;
   Pairs nFluxTabS0_, nFluxTabS1_, nFluxTabS2_;
+  std::vector<int> decayPdgIds_;
+  std::vector<double> decayNDoFs_;
 
   // Cached variables for convenience
   double s_;
