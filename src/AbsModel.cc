@@ -107,9 +107,20 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
   kn2_ = kn_*kn_;
   formFactor_ = kn2_*physics::Pi*bMax_*bMax_;
 
-  nDoF_scalar_ = 1;
-  nDoF_spinor_ = 36;
-  nDoF_vector_ = 8+2/3.+2+1; // gluon(8) + photon(2 spin out of 3) + W(2 charge) + Z
+  // Set Number of Degree of Freedom for each spins
+  // Bosons
+  nDoF_[0] = 1;
+  // Spinors : charged leptons + neutrinos + quarks
+  //  quarks : 3 generations with up/down types and 3 colors
+  //  charged leptons : 3 generations
+  //  neutrinos : 3 generations but no right handed neutrinos
+  nDoF_[1] = 2*( 3*2*3 + 3 + 3/2. );
+  // Vector bosons : gluons + photons + W + Z
+  //  gluons : 8 combintions of bi-colors
+  //  photons : 2 spin out of 3
+  //  W : 2 charge
+  //  Z
+  nDoF_[2] = 8+2/3.+2+1;
 
   isValid_ = true;
 
@@ -476,14 +487,30 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   // Step 1 : pick particle spin for a given M and J, considering DoF
   //    <- we need values of g \int_0^\infty d\omega dN/d\omega
   std::vector<double> fluxes(3);
-  fluxes[0] = getIntegratedFlux(0, rh, astar)*nDoF_scalar_; // Scalar integrated flux * nDoF
-  fluxes[1] = getIntegratedFlux(1, rh, astar)*nDoF_spinor_; // Spinor integrated flux * nDoF
-  fluxes[2] = getIntegratedFlux(2, rh, astar)*nDoF_vector_; // Vector integrated flux * nDoF
-  const int selectedSpin2 = rnd_->pickFromHist(fluxes);
-  // Step 2 : pick particle energy from cumulative dN/dw distribution
-  //    <- we already have full energy flux curve.
-  //Pairs fluxCurve = getFluxCurve(selectedSpin2, rh, astar);
-  //const double energy = rnd_->curve(fluxCurve);
+  fluxes[0] = getIntegratedFlux(0, rh, astar)*nDoF_[0]; // Scalar integrated flux * nDoF
+  fluxes[1] = getIntegratedFlux(1, rh, astar)*nDoF_[1]; // Spinor integrated flux * nDoF
+  fluxes[2] = getIntegratedFlux(2, rh, astar)*nDoF_[2]; // Vector integrated flux * nDoF
+
+  while ( true )
+  {
+    const int selectedSpin2 = rnd_->pickFromHist(fluxes);
+
+    // Step 2 : pick particle energy from cumulative dN/dw distribution
+    //    <- assume we already have full energy flux curve.
+    Pairs fluxCurve = getFluxCurve(selectedSpin2, rh, astar);
+    const double energy = rnd_->curve(fluxCurve);
+
+    // Step 3 : pick specific particle
+    const int id = rnd_->pick(0, nDoF_[selectedSpin2]);
+    // Check the particle has enough energy to create daughter particle
+    // If particle does not hold on shell condition, retry from the particle spin selection
+    const double m = physics::getMassByPdgId(id);
+    if ( energy < m ) continue;
+
+    // Choose particle
+    daughter = Particle(id, -1, 0, 0, 0., 0., energy);
+    break;
+  }
 
   return false;
 }
@@ -611,6 +638,12 @@ double AbsModel::getIntegratedFlux(const int spin2, const double rh, const doubl
   double cFlux = 1;
 
   return cFlux;
+}
+
+AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const double astar) const
+{
+  Pairs fluxCurve;
+  return fluxCurve;
 }
 
 Particle::Particle(const int id, const int status,

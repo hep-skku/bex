@@ -60,7 +60,7 @@ protected:
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
   double getIntegratedFlux(const int spin2, const double rh, const double astar) const;
-  void cacheInterpolatedFluxes(const double bh_mass, const double astar);
+  Pairs getFluxCurve(const int spin2, const double bh_mass, const double astar) const;
   bool checkBHState(const double bh_mass, const int bh_charge = 0, const double bh_spin = 0) const;
 
 protected:
@@ -94,7 +94,7 @@ protected:
   double s_;
   double bMax_, formFactor_;
   double kn_, kn2_;
-  double nDoF_scalar_, nDoF_spinor_, nDoF_vector_;
+  double nDoF_[3];
 };
 
 #endif
