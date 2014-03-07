@@ -107,6 +107,10 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
   kn2_ = kn_*kn_;
   formFactor_ = kn2_*physics::Pi*bMax_*bMax_;
 
+  nDoF_scalar_ = 1;
+  nDoF_spinor_ = 36;
+  nDoF_vector_ = 8+2/3.+2+1; // gluon(8) + photon(2 spin out of 3) + W(2 charge) + Z
+
   isValid_ = true;
 
 }
@@ -464,17 +468,22 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   if ( !checkBHState(bh_mass, bh_charge, bh_spin) ) return false;
 
   //const double bh_pos5 = bh_position.p(5); // Position in 5th dimension - not used in ADD model
-  const double rs = computeRs(bh_mass);
+  //const double rs = computeRs(bh_mass);
   const double rh = computeRh(bh_mass, bh_spin);
   const double astar = (nDim_-2.)/2*bh_spin/bh_mass/rh;
-  //const double astar2 = astar*astar;
-  //const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
 
   // Choose particle type and its energy
   // Step 1 : pick particle spin for a given M and J, considering DoF
   //    <- we need values of g \int_0^\infty d\omega dN/d\omega
+  std::vector<double> fluxes(3);
+  fluxes[0] = getIntegratedFlux(0, rh, astar)*nDoF_scalar_; // Scalar integrated flux * nDoF
+  fluxes[1] = getIntegratedFlux(1, rh, astar)*nDoF_spinor_; // Spinor integrated flux * nDoF
+  fluxes[2] = getIntegratedFlux(2, rh, astar)*nDoF_vector_; // Vector integrated flux * nDoF
+  const int selectedSpin2 = rnd_->pickFromHist(fluxes);
   // Step 2 : pick particle energy from cumulative dN/dw distribution
   //    <- we already have full energy flux curve.
+  //Pairs fluxCurve = getFluxCurve(selectedSpin2, rh, astar);
+  //const double energy = rnd_->curve(fluxCurve);
 
   return false;
 }
@@ -591,20 +600,17 @@ double AbsModel::computeRh(const double m0, const double j0) const
 
 }
 
-void AbsModel::cacheInterpolatedFluxes(const double bh_mass, const double astar)
+double AbsModel::getIntegratedFlux(const int spin2, const double rh, const double astar) const
 {
-/*
-  std::vector<double> integratedFlux(3);
-  // Interpolate fluxes from the data table and put them
-  double flux_scalar = 1;
-  double flux_spinor = 1;
-  double flux_vector = 1;
+  const double astar2 = astar*astar;
+  //const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
+  //const double bh_omega = astar/(1+astar2)/rh;
+  const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
 
-  integratedFlux[0] = flux_scalar; // Scalar
-  integratedFlux[1] = flux_spinor; // Spinor
-  integratedFlux[2] = flux_vector; // Vector
-  return integratedFlux;
-*/
+  // Interpolate fluxes from the data table and put them
+  double cFlux = 1;
+
+  return cFlux;
 }
 
 Particle::Particle(const int id, const int status,
