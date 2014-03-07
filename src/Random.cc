@@ -76,10 +76,13 @@ int Random::pickFromHist(const std::vector<double>& v)
   return pickFromCHist(cdf);
 }
 
-double Random::curve(const std::vector<std::pair<double, double> >& points)
+double Random::curve(const std::vector<std::pair<double, double> >& points, const double xmin, const double xmax)
 {
   // Make CDF
-  std::vector<double> cdf(points.size());
+  // FIXME : xmin is not applied. to be implemented
+  // FIXME : xmax is not true xmax. to be updated
+  std::vector<double> cdf(1);
+  cdf.reserve(points.size());
   cdf[0] = 0;
   for ( int i=1, n=points.size(); i<n; ++i )
   {
@@ -89,7 +92,9 @@ double Random::curve(const std::vector<std::pair<double, double> >& points)
     const double y1 = max(0., points[i].second);
     const double area = (x1-x0)*(y1+y0)/2;
 
-    cdf[i] = cdf[i-1]+area;
+    cdf.push_back(cdf.back()+area);
+
+    if ( x1 > xmax ) break;
   }
 
   // Generate by inverse method

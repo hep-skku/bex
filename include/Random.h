@@ -28,7 +28,7 @@ public:
   }
   int pickFromCHist(const std::vector<double>& v);
   int pickFromHist(const std::vector<double>& v);
-  double curve(const std::vector<std::pair<double, double> >& points);
+  double curve(const std::vector<std::pair<double, double> >& points, const double min, const double max);
 
 private:
   boost::mt19937 rnd_;
