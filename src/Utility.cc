@@ -85,6 +85,29 @@ void rotate(const double phi, double& x, double& y)
   y = newY;
 }
 
+void boost(const double b[], double p4[])
+{
+  const double beta2 = b[0]*b[0] + b[1]*b[1] + b[2]*b[2];
+  const double gamma = 1./sqrt(1-beta2);
+  const double sFact = (gamma-1)/beta2;
+
+  double newP[4] = {0,};
+  newP[0] = gamma*(p4[0]-b[0]*p4[1]-b[1]*p4[2]-b[2]*p4[3]);
+  for ( int i=1; i<=3; ++i )
+  {
+    newP[i] = -gamma*b[i-1]*p4[0];
+    newP[i] += p4[i];
+    for ( int j=1; j<=3; ++j )
+    {
+      newP[i] += sFact*b[i-1]*b[j-1]*p4[j];
+    }
+  }
+  for ( int i=0; i<=3; ++i )
+  {
+    p4[i] = newP[i];
+  }
+}
+
 }
 // namespace physics
 
