@@ -77,6 +77,14 @@ double r0ToRs(const int nDim, const double r0)
   return r0*pow( (nDim-2.)*OmegaDs[nDim-2]/4./OmegaDs[nDim-3], 1./(nDim-3) );
 }
 
+void rotate(const double phi, double& x, double& y)
+{
+  const double newX =  cos(phi)*x + sin(phi)*y;
+  const double newY = -sin(phi)*x + cos(phi)*y;
+  x = newX;
+  y = newY;
+}
+
 }
 // namespace physics
 

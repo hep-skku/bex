@@ -17,6 +17,8 @@ int get3ChargeByPdgId(const int pdgId);
 double getMassByPdgId(const int pdgId);
 double r0ToRs(const int nDim, const double r0);
 
+void rotate(const double phi, double& x, double& y);
+
 }
 
 double interpolate(const std::vector<std::pair<double, double> >& data, const double x);

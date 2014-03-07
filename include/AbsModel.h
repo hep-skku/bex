@@ -16,6 +16,7 @@ struct Particle
   Particle(const int id, const int status,
            const int mother1, const int mother2,
            const double energy);
+  NVector p4();
 
   int id_, status_;
   int mother1_, mother2_, color1_, color2_;

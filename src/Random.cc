@@ -103,7 +103,7 @@ double Random::curve(const std::vector<std::pair<double, double> >& points)
   const double dy = y1-y0;
 
   // Special case if zero prob. in this range
-  if ( dy == 0 ) return x0;
+  if ( std::abs(dy) < 1e-12  ) return x0;
   const double invSlope = (x1-x0)/dy;
 
   return invSlope*(y-y0) + x0;

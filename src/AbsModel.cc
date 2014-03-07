@@ -324,7 +324,7 @@ void AbsModel::event()
 
   // Start BH production
   PDF pdf1, pdf2;
-  do
+  while ( true )
   {
     // Same routine in the xsec calculation
     const double m0 = 1/rnd_->uniform(1/massMax_, 1/massMin_);
@@ -373,7 +373,7 @@ void AbsModel::event()
     // Retry if final mass is below minimum mass range
     if ( !checkBHState(mFrac*m0) ) continue;
 
-    do
+    while ( true )
     {
       // There's upper bound of angular momentum for low dimensional cases
       // Adjust jFracMax for low dimensional cases
@@ -406,7 +406,8 @@ void AbsModel::event()
         const double mIrr = computeMirr(mFrac, jFrac, b0);
         if ( mIrr < mFracMin ) continue;
       }
-    } while ( false );
+      break;
+    }
 
 #ifdef DEBUGROOT
     _hMJLoss->Fill(mFrac, jFrac);
@@ -424,7 +425,8 @@ void AbsModel::event()
     decays.push_back(Particle(39, 1, 3, 4, 0., 0., bh_pz+graviton_e));
     decays.push_back(Particle(39, 1, 3, 4, 0., 0., bh_pz-graviton_e));
 
-  } while ( false );
+    break;
+  }
 
   // Start evaporation by hawking radiation
   while ( true )
@@ -436,9 +438,18 @@ void AbsModel::event()
     // Particle is selected. Add it into the daughter particle collection
     decays.push_back(daughter);
 
+    bh_momentum -= daughter.p4();
   }
 
   // Remant decay
+
+  // Apply overall phi rotations for all particles in the event
+  // since we assumed BH rotation axis is parallel to x axis
+  const double phi = rnd_->uniform(0, 2*physics::Pi);
+  for ( int i=0, n=decays.size(); i<n; ++i )
+  {
+    physics::rotate(phi, decays[i].px_, decays[i].py_);
+  }
 
   // Put BH to event record
   fout_ << "<event>\n";
@@ -513,16 +524,14 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
     // Check the particle has enough energy to create daughter particle
     // If particle does not hold on shell condition, retry from the particle spin selection
     const double m = physics::getMassByPdgId(id);
-    cout << "Try:" << m << ' ' << energy << endl;
     if ( energy < m ) continue;
-    cout << "Accepted energy" << endl;
 
     // Choose particle
-    daughter = Particle(id, -1, 0, 0, 0., 0., energy);
+    daughter = Particle(id, -1, 0, 0, energy);
     break;
   }
 
-  return false;
+  return true;
 }
 
 double AbsModel::computeMirr(const double mFrac, const double jFrac, const double b0) const
@@ -716,4 +725,11 @@ Particle::Particle(const int id, const int status,
   vt_ = 0;
   spin_ = 9;
 
+}
+
+NVector Particle::p4()
+{
+  NVector v;
+  v.set(e_, px_, py_, pz_);
+  return v;
 }
