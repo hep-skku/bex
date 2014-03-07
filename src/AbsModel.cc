@@ -429,15 +429,23 @@ void AbsModel::event()
   }
 
   // Start evaporation by hawking radiation
+  double b[3], p4[4];
   while ( true )
   {
     // Select daughter particle
     Particle daughter(0, 1, 3, 4, 0., 0., 0.); // A dummy particle
     if ( !selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, daughter) ) break;
 
-    // Particle is selected. Add it into the daughter particle collection
-    decays.push_back(daughter);
+    // Particle is selected.
+    // Boost along BH momentum direction
+    b[0] = bh_momentum.p(1)/bh_momentum.p(0);
+    b[1] = bh_momentum.p(2)/bh_momentum.p(0);
+    b[2] = bh_momentum.p(3)/bh_momentum.p(0);
+    p4[0] = daughter.e_; p4[1] = daughter.px_; p4[2] = daughter.py_; p4[3] = daughter.pz_;
+    physics::boost(b, p4);
+    daughter = Particle(daughter.id_, -1, 0, 0, p4[1], p4[2], p4[3]);
 
+    decays.push_back(daughter);
     bh_momentum -= daughter.p4();
   }
 
@@ -496,6 +504,9 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   const double bh_mass = bh_momentum.mD();
   // Check BH state for safety
   if ( !checkBHState(bh_mass, bh_charge, bh_spin) ) return false;
+  // INFO : We applied slightly tight max energy requirement
+  //        the true maximum is (bh_mass^2 - massMin^2 + particle_mass^2)/bh_mass/2.
+  const double maxE = (bh_mass - massMin_*massMin_/bh_mass)/2;
 
   //const double bh_pos5 = bh_position.p(5); // Position in 5th dimension - not used in ADD model
   //const double rs = computeRs(bh_mass);
@@ -517,7 +528,7 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
     // Step 2 : pick particle energy from cumulative dN/dw distribution
     //    <- assume we already have full energy flux curve.
     Pairs fluxCurve = getFluxCurve(selectedSpin2, rh, astar);
-    const double energy = rnd_->curve(fluxCurve);
+    const double energy = rnd_->curve(fluxCurve, 0, maxE);
 
     // Step 3 : pick specific particle
     const int id = decayPdgIds_[rnd_->pickFromHist(decayNDoFs_)];
@@ -525,13 +536,18 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
     // If particle does not hold on shell condition, retry from the particle spin selection
     const double m = physics::getMassByPdgId(id);
     if ( energy < m ) continue;
+    const double p = sqrt(energy*energy - m*m);
 
     // Choose particle
-    daughter = Particle(id, -1, 0, 0, energy);
-    break;
+    // Spherical symmetric as the first implementation
+    double px, py, pz;
+    rnd_->sphere(p, px, py, pz);
+    daughter = Particle(id, -1, 0, 0, px, py, pz);
+
+    return true;
   }
 
-  return true;
+  return false;
 }
 
 double AbsModel::computeMirr(const double mFrac, const double jFrac, const double b0) const
@@ -661,6 +677,7 @@ double AbsModel::getIntegratedFlux(const int spin2, const double rh, const doubl
 
 AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const double astar) const
 {
+  // FIXME : this flux curve is un-physical!!!
   const int signFactor = (spin2 % 2 == 0) ? -1 : 1;
 
   const double astar2 = astar*astar;
@@ -669,17 +686,17 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
   const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
 
   Pairs fluxCurve;
-  const double xmax = 16;
+  const double xmax = 1000;
   fluxCurve.push_back(std::make_pair(0., 0.));
-  for ( int i=1; i<=100; ++i )
+  for ( int i=1; i<=1000; ++i )
   {
-    const double x = xmax/100*i;
+    const double x = xmax/1000*i;
     double y = 0;
-    for ( int l2=0; l2<spin2; l2+=2 )
+    for ( int l2=0; l2<=spin2; l2+=2 )
     {
       for ( int m2=-l2; m2<=l2; m2+=2 )
       {
-        y += max(0., 1/(exp(x/bh_tem - m2/2.*bh_mFactor)+signFactor));
+        y += std::max(0., 1./(exp(x/bh_tem - m2/2.*bh_mFactor)+signFactor));
       }
     }
     fluxCurve.push_back(std::make_pair(x, y));
