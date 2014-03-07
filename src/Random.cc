@@ -47,7 +47,7 @@ int Random::pick(const int min, const int max)
   return int(rand()*(max+1-min));
 }
 
-int Random::pickFromCDF(const std::vector<double>& v)
+int Random::pickFromCHist(const std::vector<double>& v)
 {
   // Check validity of CDF : is it monolothic array?
   for ( int i=0, n=v.size()-1; i<n; ++i )
@@ -73,7 +73,7 @@ int Random::pickFromHist(const std::vector<double>& v)
   {
     cdf[i+1] = cdf[i]+v[i];
   }
-  return pickFromCDF(cdf);
+  return pickFromCHist(cdf);
 }
 
 double Random::curve(const std::vector<std::pair<double, double> >& points)

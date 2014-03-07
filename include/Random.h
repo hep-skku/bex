@@ -26,7 +26,7 @@ public:
     const size_t shift(rand()*(end-begin));
     return begin+shift;
   }
-  int pickFromCDF(const std::vector<double>& v);
+  int pickFromCHist(const std::vector<double>& v);
   int pickFromHist(const std::vector<double>& v);
   double curve(const std::vector<std::pair<double, double> >& points);
 

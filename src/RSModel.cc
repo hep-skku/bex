@@ -178,7 +178,7 @@ void RSModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, 
       cFactorCDF.push_back(cFactorCDF.back()+cFactor*pdf1(-id1)*pdf2(-id2));
     }
   }
-  const int index = rnd_->pickFromCDF(cFactorCDF);
+  const int index = rnd_->pickFromCHist(cFactorCDF);
   const int idPair = idPairs[index];
   const int id1 = (idPair/1000)%100;
   const int id2 = (idPair%1000)%100;

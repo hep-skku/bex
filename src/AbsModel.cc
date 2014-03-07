@@ -444,8 +444,8 @@ void AbsModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1,
 {
   std::vector<double> stackPDF1 = pdf1.getStackPDF();
   std::vector<double> stackPDF2 = pdf2.getStackPDF();
-  const int id1 = PDF::indexToPdgId(rnd_->pickFromCDF(stackPDF1));
-  const int id2 = PDF::indexToPdgId(rnd_->pickFromCDF(stackPDF2));
+  const int id1 = PDF::indexToPdgId(rnd_->pickFromCHist(stackPDF1));
+  const int id2 = PDF::indexToPdgId(rnd_->pickFromCHist(stackPDF2));
   parton1 = Particle(id1, -1, 1, 1, 0., 0., parton1.pz_);
   parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
 }
