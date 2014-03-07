@@ -94,7 +94,7 @@ double Random::curve(const std::vector<std::pair<double, double> >& points)
 
   // Generate by inverse method
   const double y = uniform(0, cdf.back());
-  const unsigned int index = find(y, cdf);
+  const size_t index = find(y, cdf);
 
   const double x0 = points[index].first;
   const double y0 = points[index].second;
@@ -110,16 +110,16 @@ double Random::curve(const std::vector<std::pair<double, double> >& points)
 
 }
 
-unsigned int Random::find(const double x, const std::vector<double>& v) const
+size_t Random::find(const double x, const std::vector<double>& v) const
 {
   // Do binary search
-  unsigned int lo = 0, hi=v.size()-1;
+  size_t lo = 0, hi=v.size()-1;
   // Special case when hitting upper bound, x == v[hi]
   // This case can appear depending on implementation of random number algorithm
   if ( x == v[hi] ) return hi;
   while ( true )
   {
-    const unsigned int curr = (hi+lo)/2;
+    const size_t curr = (hi+lo)/2;
     const double currX = v[curr];
     if ( x < currX ) hi = curr;
     else if ( currX <= x ) lo = curr;
