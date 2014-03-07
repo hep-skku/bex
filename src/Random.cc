@@ -84,9 +84,9 @@ double Random::curve(const std::vector<std::pair<double, double> >& points)
   for ( int i=1, n=points.size(); i<n; ++i )
   {
     const double x0 = points[i-1].first;
-    const double y0 = points[i-1].second;
+    const double y0 = max(0., points[i-1].second);
     const double x1 = points[i].first;
-    const double y1 = points[i].second;
+    const double y1 = max(0., points[i].second);
     const double area = (x1-x0)*(y1+y0)/2;
 
     cdf[i] = cdf[i-1]+area;
@@ -97,9 +97,9 @@ double Random::curve(const std::vector<std::pair<double, double> >& points)
   const size_t index = find(y, cdf);
 
   const double x0 = points[index].first;
-  const double y0 = points[index].second;
   const double x1 = points[index+1].first;
-  const double y1 = points[index+1].second;
+  const double y0 = cdf[index];
+  const double y1 = cdf[index+1];
   const double dy = y1-y0;
 
   // Special case if zero prob. in this range
