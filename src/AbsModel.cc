@@ -512,11 +512,13 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
                            Particle& daughter)
 {
   const double bh_mass = bh_momentum.mD();
-  // Check BH state for safety
-  if ( !checkBHState(bh_mass, bh_charge, bh_spin) ) return false;
+  // Stop decay if phase space is too small.
   // INFO : We applied slightly tight max energy requirement
   //        the true maximum is (bh_mass^2 - massMin^2 + particle_mass^2)/bh_mass/2.
   const double maxE = (bh_mass - massMin_*massMin_/bh_mass)/2;
+  if ( maxE < 1e-5 ) return false;
+  // Check BH state for safety
+  if ( !checkBHState(bh_mass, bh_charge, bh_spin) ) return false;
 
   //const double bh_pos5 = bh_position.p(5); // Position in 5th dimension - not used in ADD model
   //const double rs = computeRs(bh_mass);
@@ -706,11 +708,12 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
   const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
 
   Pairs fluxCurve;
-  const double xmax = 1000;
+  const double xmax = 500;
+  const int nPoint = 1000;
   fluxCurve.push_back(std::make_pair(0., 0.));
-  for ( int i=1; i<=1000; ++i )
+  for ( int i=1; i<=nPoint; ++i )
   {
-    const double x = xmax/1000*i;
+    const double x = xmax/nPoint*i;
     double y = 0;
     for ( int l2=0; l2<=spin2; l2+=2 )
     {
