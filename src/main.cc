@@ -16,8 +16,8 @@
 #include "TGraph.h"
 TFile* f = new TFile("debug.root", "recreate");
 TH2F* _hMJLoss = new TH2F("hMJLoss", "hMJLoss", 100, 0., 1., 100, 0., 1.);
-TH1F* _hNDecay = new TH1F("hNDecay", "hNDecay", 50, 0, 1000);
-TH1F* _hEDecay = new TH1F("hEDecay", "hEDecay", 50, 0, 100);
+TH1F* _hNDecay = new TH1F("hNDecay", "hNDecay", 20, 0, 20);
+TH1F* _hEDecay = new TH1F("hEDecay", "hEDecay", 50, 0, 500);
 TGraph* _grpFlux = new TGraph();
 #endif
 
