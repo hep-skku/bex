@@ -16,7 +16,9 @@
 #include "TGraph.h"
 TFile* f = new TFile("debug.root", "recreate");
 TH2F* _hMJLoss = new TH2F("hMJLoss", "hMJLoss", 100, 0., 1., 100, 0., 1.);
-TGraph* _grpFlux;
+TH1F* _hNDecay = new TH1F("hNDecay", "hNDecay", 50, 0, 1000);
+TH1F* _hEDecay = new TH1F("hEDecay", "hEDecay", 50, 0, 100);
+TGraph* _grpFlux = new TGraph();
 #endif
 
 using namespace std;
@@ -25,9 +27,6 @@ void printUsageAndExit();
 
 int main(int argc, char* argv[])
 {
-#ifdef DEBUGROOT
-_grpFlux = new TGraph();
-#endif
   if ( argc < 2 ) printUsageAndExit();
   for ( int i=0; i<argc; ++i )
   {

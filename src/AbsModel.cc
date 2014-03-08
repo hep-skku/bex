@@ -16,6 +16,7 @@
 #include "TH2F.h"
 #include "TGraph.h"
 extern TH2F* _hMJLoss;
+extern TH1F* _hNDecay, * _hEDecay;
 extern TGraph* _grpFlux;
 #endif
 
@@ -438,6 +439,9 @@ void AbsModel::event()
     // Select daughter particle
     Particle daughter(0, 1, 3, 4, 0., 0., 0.); // A dummy particle
     if ( !selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, daughter) ) break;
+#ifdef DEBUGROOT
+_hEDecay->Fill(daughter.e_);
+#endif
 
     // Particle is selected.
     // Boost along BH momentum direction
@@ -451,6 +455,9 @@ void AbsModel::event()
     decays.push_back(daughter);
     bh_momentum -= daughter.p4();
   }
+#ifdef DEBUGROOT
+_hNDecay->Fill(decays.size()-6);
+#endif
 
   // Remant decay
 
@@ -673,7 +680,17 @@ double AbsModel::getIntegratedFlux(const int spin2, const double rh, const doubl
   const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
 
   // Integrate fluxes from the data table and put them
-  double cFlux = 1;
+  Pairs curve = getFluxCurve(spin2, rh, astar);
+  double cFlux = 0;
+  for ( int i=1, n=curve.size(); i<n; ++i )
+  {
+    const double x1 = curve[i-1].first;
+    const double y1 = curve[i-1].second;
+    const double x2 = curve[i+0].first;
+    const double y2 = curve[i+0].second;
+    const double area = (y2+y1)/2*(x2-x1);
+    cFlux += area;
+  }
 
   return cFlux;
 }
@@ -699,16 +716,20 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
     {
       for ( int m2=-l2; m2<=l2; m2+=2 )
       {
-        y += std::max(0., 1./(exp(x/bh_tem - m2/2.*bh_mFactor)+signFactor));
+        //y += std::max(0., 1./(exp(x/bh_tem - m2/2.*bh_mFactor)+signFactor));
+        y += std::max(0., x*x/(exp(x/bh_tem - m2/2.*bh_mFactor)+signFactor));
       }
     }
     fluxCurve.push_back(std::make_pair(x, y));
   }
 
 #ifdef DEBUGROOT
-for ( int i=0; i<fluxCurve.size(); ++i )
+if ( _grpFlux->GetN() == 0 )
 {
-  _grpFlux->SetPoint(i, fluxCurve[i].first, fluxCurve[i].second);
+  for ( int i=0; i<fluxCurve.size(); ++i )
+  {
+    _grpFlux->SetPoint(i, fluxCurve[i].first, fluxCurve[i].second);
+  }
 }
 #endif
 
