@@ -84,21 +84,31 @@ double Random::curve(const std::vector<std::pair<double, double> >& points, cons
   std::vector<double> cdf(1);
   cdf.reserve(points.size());
   cdf[0] = 0;
+  double sumArea = 0;
   for ( int i=1, n=points.size(); i<n; ++i )
   {
     const double x0 = points[i-1].first;
     const double y0 = max(0., points[i-1].second);
     const double x1 = points[i].first;
     const double y1 = max(0., points[i].second);
-    const double area = (x1-x0)*(y1+y0)/2;
+    const double dx = x1-x0;
+    if ( x1 > xmax )
+    {
+      const double dxAtEnd = xmax-x0;
+      const double yAtEnd = dxAtEnd/dx*(y1-y0)+y0;
+      const double area = dxAtEnd*(yAtEnd+y0)/2;
+      sumArea += area;
+      cdf.push_back(sumArea);
+      break;
+    }
 
-    cdf.push_back(cdf.back()+area);
-
-    if ( x1 > xmax ) break;
+    const double area = dx*(y1+y0)/2;
+    sumArea += area;
+    cdf.push_back(sumArea);
   }
 
   // Generate by inverse method
-  const double y = uniform(0, cdf.back());
+  const double y = uniform(0, sumArea);
   const size_t index = find(y, cdf);
 
   const double x0 = points[index].first;
