@@ -29,7 +29,7 @@ double Random::ramp(const double min, const double max)
 void Random::sphere(const double r, double& x, double& y, double& z)
 {
   double rr = 1e9;
-  while ( rr <= 1 and rr > 0.01 )
+  while ( rr > 1 or rr < 0.01 )
   {
     x = rand();
     y = rand();
