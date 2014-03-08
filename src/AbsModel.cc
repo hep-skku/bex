@@ -14,7 +14,9 @@
 
 #ifdef DEBUGROOT
 #include "TH2F.h"
+#include "TGraph.h"
 extern TH2F* _hMJLoss;
+extern TGraph* _grpFlux;
 #endif
 
 using namespace std;
@@ -172,6 +174,7 @@ void AbsModel::loadFluxDataTable()
     nFluxTabS1_.push_back(make_pair(omega, nFluxTabS1_.back().second + nFluxData[1][i]));
     nFluxTabS2_.push_back(make_pair(omega, nFluxTabS2_.back().second + nFluxData[2][i]));
   }
+
 }
 
 void AbsModel::beginJob()
@@ -701,6 +704,13 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
     }
     fluxCurve.push_back(std::make_pair(x, y));
   }
+
+#ifdef DEBUGROOT
+for ( int i=0; i<fluxCurve.size(); ++i )
+{
+  _grpFlux->SetPoint(i, fluxCurve[i].first, fluxCurve[i].second);
+}
+#endif
 
   return fluxCurve;
 }

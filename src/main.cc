@@ -13,8 +13,10 @@
 #include "TFile.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include "TGraph.h"
 TFile* f = new TFile("debug.root", "recreate");
 TH2F* _hMJLoss = new TH2F("hMJLoss", "hMJLoss", 100, 0., 1., 100, 0., 1.);
+TGraph* _grpFlux;
 #endif
 
 using namespace std;
@@ -23,6 +25,9 @@ void printUsageAndExit();
 
 int main(int argc, char* argv[])
 {
+#ifdef DEBUGROOT
+_grpFlux = new TGraph();
+#endif
   if ( argc < 2 ) printUsageAndExit();
   for ( int i=0; i<argc; ++i )
   {
@@ -65,6 +70,7 @@ int main(int argc, char* argv[])
   model->endJob();
 
 #ifdef DEBUGROOT
+  _grpFlux->Write();
   f->Write();
 #endif
 
