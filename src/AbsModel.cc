@@ -511,7 +511,9 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
                            const int bh_charge, const double bh_spin,
                            Particle& daughter)
 {
-  const double bh_mass = bh_momentum.mD();
+  const double bh_mass2 = bh_momentum.m2();
+  if ( bh_mass2 < 0 ) return false;
+  const double bh_mass = sqrt(bh_mass2);
   // Stop decay if phase space is too small.
   // INFO : We applied slightly tight max energy requirement
   //        the true maximum is (bh_mass^2 - massMin^2 + particle_mass^2)/bh_mass/2.
@@ -708,7 +710,7 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
   const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
 
   Pairs fluxCurve;
-  const double xmax = 500;
+  const double xmax = 1000;
   const int nPoint = 1000;
   fluxCurve.push_back(std::make_pair(0., 0.));
   for ( int i=1; i<=nPoint; ++i )
