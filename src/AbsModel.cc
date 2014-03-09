@@ -440,7 +440,7 @@ void AbsModel::event()
     Particle daughter(0, 1, 3, 4, 0., 0., 0.); // A dummy particle
     if ( !selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, daughter) ) break;
 #ifdef DEBUGROOT
-_hEDecay->Fill(daughter.e_);
+    _hEDecay->Fill(daughter.e_);
 #endif
 
     // Particle is selected.
@@ -456,7 +456,7 @@ _hEDecay->Fill(daughter.e_);
     bh_momentum -= daughter.p4();
   }
 #ifdef DEBUGROOT
-_hNDecay->Fill(decays.size()-6);
+  _hNDecay->Fill(decays.size()-6);
 #endif
 
   // Remant decay
@@ -727,13 +727,13 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
   }
 
 #ifdef DEBUGROOT
-if ( _grpFlux[spin2]->GetN() == 0 )
-{
-  for ( int i=0; i<fluxCurve.size(); ++i )
+  if ( _grpFlux[spin2]->GetN() == 0 )
   {
-    _grpFlux[spin2]->SetPoint(i, fluxCurve[i].first, fluxCurve[i].second);
+    for ( int i=0; i<fluxCurve.size(); ++i )
+    {
+      _grpFlux[spin2]->SetPoint(i, fluxCurve[i].first, fluxCurve[i].second);
+    }
   }
-}
 #endif
 
   return fluxCurve;
