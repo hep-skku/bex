@@ -19,6 +19,8 @@ TH2F* _hMJLoss = new TH2F("hMJLoss", "hMJLoss", 100, 0., 1., 100, 0., 1.);
 TH1F* _hNDecay = new TH1F("hNDecay", "hNDecay", 20, 0, 20);
 TH1F* _hEDecay = new TH1F("hEDecay", "hEDecay", 100, 0, 2500);
 TGraph* _grpFlux[3];
+TGraph* _grpTemVsPeakPos[3];
+TGraph* _grpTemVsTotalFlux[3];
 #endif
 
 using namespace std;
@@ -63,8 +65,16 @@ int main(int argc, char* argv[])
   for ( int i=0; i<3; ++i )
   {
     _grpFlux[i] = new TGraph();
-    _grpFlux[i]->SetName(Form("grp_s2_%d", i));
+    _grpFlux[i]->SetName(Form("grpFlux_%d", i));
     _grpFlux[i]->SetTitle(Form("flux curve s2 = %d", i));
+
+    _grpTemVsTotalFlux[i] = new TGraph();
+    _grpTemVsTotalFlux[i]->SetName(Form("grpTemVsTotalFlux_%d", i));
+    _grpTemVsTotalFlux[i]->SetTitle(Form("Temperature vs total flux s2 = %d", i));
+
+    _grpTemVsPeakPos[i] = new TGraph();
+    _grpTemVsPeakPos[i]->SetName(Form("grpTemVsPeakPos_%d", i));
+    _grpTemVsPeakPos[i]->SetTitle(Form("Temperature vs peak position s2 = %d", i));
   }
 #endif
   cout << "\n+ Starting to generate events...\n\n";
@@ -77,7 +87,12 @@ int main(int argc, char* argv[])
   model->endJob();
 
 #ifdef DEBUGROOT
-  for ( int i=0; i<3; ++i ) _grpFlux[i]->Write();
+  for ( int i=0; i<3; ++i )
+  {
+    _grpFlux[i]->Write();
+    _grpTemVsTotalFlux[i]->Write();
+    _grpTemVsPeakPos[i]->Write();
+  }
   f->Write();
 #endif
 

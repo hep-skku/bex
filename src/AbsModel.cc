@@ -17,7 +17,7 @@
 #include "TGraph.h"
 extern TH2F* _hMJLoss;
 extern TH1F* _hNDecay, * _hEDecay;
-extern TGraph* _grpFlux[];
+extern TGraph* _grpFlux[], * _grpTemVsTotalFlux[], * _grpTemVsPeakPos[];
 #endif
 
 using namespace std;
@@ -679,7 +679,6 @@ double AbsModel::computeRh(const double m0, const double j0) const
 double AbsModel::getIntegratedFlux(const int spin2, const double rh, const double astar) const
 {
   const double astar2 = astar*astar;
-  //const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
   //const double bh_omega = astar/(1+astar2)/rh;
 
   // Integrate fluxes from the data table and put them
@@ -694,6 +693,11 @@ double AbsModel::getIntegratedFlux(const int spin2, const double rh, const doubl
     const double area = (y2+y1)/2*(x2-x1);
     cFlux += area;
   }
+#ifdef DEBUGROOT
+  const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
+  TGraph* grp = _grpTemVsTotalFlux[spin2];
+  grp->SetPoint(grp->GetN(), bh_tem, cFlux);
+#endif
 
   return cFlux;
 }
@@ -727,13 +731,22 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
   }
 
 #ifdef DEBUGROOT
-  if ( _grpFlux[spin2]->GetN() == 0 )
+  double peakX = -1, peakY = -1e9;
+  TGraph* grpFlux = _grpFlux[spin2];
+  const bool doDraw = grpFlux->GetN() == 0;
+  for ( int i=0; i<fluxCurve.size(); ++i )
   {
-    for ( int i=0; i<fluxCurve.size(); ++i )
+    const double x = fluxCurve[i].first;
+    const double y = fluxCurve[i].second;
+    if ( y > peakY )
     {
-      _grpFlux[spin2]->SetPoint(i, fluxCurve[i].first, fluxCurve[i].second);
+      peakX = x;
+      peakY = y;
     }
+    if ( doDraw ) grpFlux->SetPoint(i, x, y);
   }
+
+  _grpTemVsPeakPos[spin2]->SetPoint(_grpTemVsPeakPos[spin2]->GetN(), bh_tem, peakX);
 #endif
 
   return fluxCurve;
