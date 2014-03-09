@@ -17,7 +17,7 @@
 #include "TGraph.h"
 extern TH2F* _hMJLoss;
 extern TH1F* _hNDecay, * _hEDecay;
-extern TGraph* _grpFlux;
+extern TGraph* _grpFlux[];
 #endif
 
 using namespace std;
@@ -681,7 +681,6 @@ double AbsModel::getIntegratedFlux(const int spin2, const double rh, const doubl
   const double astar2 = astar*astar;
   //const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
   //const double bh_omega = astar/(1+astar2)/rh;
-  const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
 
   // Integrate fluxes from the data table and put them
   Pairs curve = getFluxCurve(spin2, rh, astar);
@@ -701,16 +700,16 @@ double AbsModel::getIntegratedFlux(const int spin2, const double rh, const doubl
 
 AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const double astar) const
 {
-  // FIXME : this flux curve is un-physical!!!
+  // A black body radiation curve
   const int signFactor = (spin2 % 2 == 0) ? -1 : 1;
 
   const double astar2 = astar*astar;
   const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
-  //const double bh_omega = astar/(1+astar2)/rh;
+  //const double bh_Omega = astar/(1+astar2)/rh;
   const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
 
   Pairs fluxCurve;
-  const double xmax = 1000;
+  const double xmax = 2500;
   const int nPoint = 1000;
   fluxCurve.push_back(std::make_pair(0., 0.));
   for ( int i=1; i<=nPoint; ++i )
@@ -721,7 +720,6 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
     {
       for ( int m2=-l2; m2<=l2; m2+=2 )
       {
-        //y += std::max(0., 1./(exp(x/bh_tem - m2/2.*bh_mFactor)+signFactor));
         y += std::max(0., x*x/(exp(x/bh_tem - m2/2.*bh_mFactor)+signFactor));
       }
     }
@@ -729,11 +727,11 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
   }
 
 #ifdef DEBUGROOT
-if ( _grpFlux->GetN() == 0 )
+if ( _grpFlux[spin2]->GetN() == 0 )
 {
   for ( int i=0; i<fluxCurve.size(); ++i )
   {
-    _grpFlux->SetPoint(i, fluxCurve[i].first, fluxCurve[i].second);
+    _grpFlux[spin2]->SetPoint(i, fluxCurve[i].first, fluxCurve[i].second);
   }
 }
 #endif

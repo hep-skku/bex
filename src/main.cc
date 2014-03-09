@@ -17,8 +17,8 @@
 TFile* f = new TFile("debug.root", "recreate");
 TH2F* _hMJLoss = new TH2F("hMJLoss", "hMJLoss", 100, 0., 1., 100, 0., 1.);
 TH1F* _hNDecay = new TH1F("hNDecay", "hNDecay", 20, 0, 20);
-TH1F* _hEDecay = new TH1F("hEDecay", "hEDecay", 50, 0, 500);
-TGraph* _grpFlux = new TGraph();
+TH1F* _hEDecay = new TH1F("hEDecay", "hEDecay", 100, 0, 2500);
+TGraph* _grpFlux[3];
 #endif
 
 using namespace std;
@@ -59,6 +59,14 @@ int main(int argc, char* argv[])
   cout << boost::format("** Maximum weight = %-21.5g **\n") % model->getWeightMax();
   cout << "********************************************\n";
 
+#ifdef DEBUGROOT
+  for ( int i=0; i<3; ++i )
+  {
+    _grpFlux[i] = new TGraph();
+    _grpFlux[i]->SetName(Form("grp_s2_%d", i));
+    _grpFlux[i]->SetTitle(Form("flux curve s2 = %d", i));
+  }
+#endif
   cout << "\n+ Starting to generate events...\n\n";
   model->beginJob();
   for ( int i=0; i<nEvent; ++i )
@@ -69,7 +77,7 @@ int main(int argc, char* argv[])
   model->endJob();
 
 #ifdef DEBUGROOT
-  _grpFlux->Write();
+  for ( int i=0; i<3; ++i ) _grpFlux[i]->Write();
   f->Write();
 #endif
 
