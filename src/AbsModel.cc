@@ -401,7 +401,7 @@ void AbsModel::event()
       {
         jFrac = rnd_->uniform(0, jFracMax);
       }
-      else if ( jLossType_ == MJLossType::LINEAR or jLossType_ == MJLossType::YOSHINO )
+      else if ( jLossType_ == MJLossType::LINEAR )
       {
         jFrac = rnd_->ramp(0, jFracMax);
       }
@@ -409,15 +409,17 @@ void AbsModel::event()
       {
         jFrac = jFracMax;
       }
-
-      // BH should obey area theorem and cosmic censorship condition
-      // according to the Yoshino-Rychkov, irreducible mass have to be
-      // greater than minimum mass
-      if ( jLossType_ == MJLossType::YOSHINO )
+      else if ( jLossType_ == MJLossType::YOSHINO )
       {
+        // BH should obey area theorem and cosmic censorship condition
+        // according to the Yoshino-Rychkov, irreducible mass have to be
+        // greater than minimum mass
+        jFrac = rnd_->ramp(0, jFracMax);
         const double mIrr = computeMirr(mFrac, jFrac, b0);
         if ( mIrr < mFracMin ) continue;
       }
+      if ( !checkBHState(mFrac*m0, jFrac*j0) ) continue;
+
       break;
     }
 
@@ -530,7 +532,7 @@ void AbsModel::selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1,
   parton2 = Particle(id2, -1, 2, 2, 0., 0., parton2.pz_);
 }
 
-bool AbsModel::checkBHState(const double bh_mass, const int bh_charge, const double bh_spin) const
+bool AbsModel::checkBHState(const double bh_mass, const double bh_spin, const int bh_charge) const
 {
   if ( bh_mass < massMin_ ) return false;
   const double rh = computeRh(bh_mass, bh_spin);
@@ -552,7 +554,7 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   const double maxE = (bh_mass - massMin_*massMin_/bh_mass)/2;
   if ( maxE < 1e-5 ) return false;
   // Check BH state for safety
-  if ( !checkBHState(bh_mass, bh_charge, bh_spin) ) return false;
+  if ( !checkBHState(bh_mass, bh_spin, bh_charge) ) return false;
 
   //const double bh_pos5 = bh_position.p(5); // Position in 5th dimension - not used in ADD model
   //const double rs = computeRs(bh_mass);

@@ -62,7 +62,7 @@ protected:
 
   double getIntegratedFlux(const int spin2, const double astar) const;
   Pairs getFluxCurve(const int spin2, const double bh_mass, const double astar) const;
-  bool checkBHState(const double bh_mass, const int bh_charge = 0, const double bh_spin = 0) const;
+  bool checkBHState(const double bh_mass, const double bh_spin = 0, const int bh_charge = 0) const;
 
 protected:
   bool isValid_;
