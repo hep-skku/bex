@@ -276,9 +276,9 @@ void AbsModel::calculateCrossSection()
     double weight = calculatePartonWeight(m0, pdf1, pdf2);
 
     // Suppression by mass and angular momentum loss
-    double mFrac = 1.0;
     const double b0 = rnd_->ramp(0, bMax_);
     const double mFracMin = interpolate(mLossTab_, b0);
+    double mFrac = mFracMin;
 
     // Generate mass fraction after balding phase
     if ( mLossType_ == MJLossType::UNIFORM )
@@ -288,10 +288,6 @@ void AbsModel::calculateCrossSection()
     else if ( mLossType_ == MJLossType::LINEAR or mLossType_ == MJLossType::YOSHINO )
     {
       mFrac = rnd_->ramp(mFracMin, 1);
-    }
-    else if ( mLossType_ == MJLossType::CONST or mLossType_ == MJLossType::NONE )
-    {
-      mFrac = mFracMin;
     }
     if ( !checkBHState(mFrac*m0) ) weight = 0;
 
@@ -362,9 +358,9 @@ void AbsModel::event()
     bh_charge = physics::get3ChargeByPdgId(parton1.id_) + physics::get3ChargeByPdgId(parton2.id_);
 
     // Apply mass loss
-    double mFrac = 1.0, jFrac = 1.0;
     const double b0 = rnd_->ramp(0, bMax_);
     const double mFracMin = interpolate(mLossTab_, b0);
+    double mFrac = mFracMin, jFrac = 1.0;
 
     // Generate mass fraction after balding phase
     if ( mLossType_ == MJLossType::UNIFORM )
@@ -374,10 +370,6 @@ void AbsModel::event()
     else if ( mLossType_ == MJLossType::LINEAR or mLossType_ == MJLossType::YOSHINO )
     {
       mFrac = rnd_->ramp(mFracMin, 1);
-    }
-    else if ( mLossType_ == MJLossType::CONST or mLossType_ == MJLossType::NONE )
-    {
-      mFrac = mFracMin;
     }
 
     // Retry if final mass is below minimum mass range
@@ -404,10 +396,6 @@ void AbsModel::event()
       else if ( jLossType_ == MJLossType::LINEAR )
       {
         jFrac = rnd_->ramp(0, jFracMax);
-      }
-      else if ( jLossType_ == MJLossType::CONST or jLossType_ == MJLossType::NONE )
-      {
-        jFrac = jFracMax;
       }
       else if ( jLossType_ == MJLossType::YOSHINO )
       {
