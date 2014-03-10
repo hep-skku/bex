@@ -108,6 +108,17 @@ void boost(const double b[], double p4[])
   }
 }
 
+void boost(const double b, double& e, double& p)
+{
+  const double gamma = 1./sqrt(1-b*b);
+
+  const double newE = gamma*(e - b*p);
+  const double newP = gamma*(-b*e + p);
+
+  p = newP;
+  e = newE;
+}
+
 }
 // namespace physics
 

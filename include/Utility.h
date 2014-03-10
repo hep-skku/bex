@@ -19,6 +19,7 @@ double r0ToRs(const int nDim, const double r0);
 
 void rotate(const double phi, double& x, double& y);
 void boost(const double b[], double p[]);
+void boost(const double bz, double& e, double& p);
 }
 
 double interpolate(const std::vector<std::pair<double, double> >& data, const double x);
