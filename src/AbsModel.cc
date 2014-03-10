@@ -18,6 +18,7 @@
 extern TH2F* _hMJLoss;
 extern TH1F* _hNDecay, * _hEDecay;
 extern TGraph* _grpFlux[], * _grpTemVsTotalFlux[], * _grpTemVsPeakPos[];
+extern std::vector<TGraph*> _grpMBHHistory;
 #endif
 
 using namespace std;
@@ -326,6 +327,10 @@ void AbsModel::event()
   int bh_charge = 0; // Blackhole charge
   double qsqr = 0; // Initial CM energy before mass loss, Q^2
 
+#ifdef DEBUGROOT
+  TGraph* grpMBHHistory = _grpMBHHistory.back();
+#endif
+
   // Start BH production
   PDF pdf1, pdf2;
   while ( true )
@@ -351,8 +356,6 @@ void AbsModel::event()
     Particle parton1(0, -1, 1, 1, 0., 0., +beamEnergy*x1);
     Particle parton2(0, -1, 2, 2, 0., 0., -beamEnergy*x2);
     selectParton(pdf1, pdf2, parton1, parton2);
-    decays.push_back(parton1);
-    decays.push_back(parton2);
     bh_charge = physics::get3ChargeByPdgId(parton1.id_) + physics::get3ChargeByPdgId(parton2.id_);
 
     // Apply mass loss
@@ -413,25 +416,40 @@ void AbsModel::event()
       break;
     }
 
-#ifdef DEBUGROOT
-    _hMJLoss->Fill(mFrac, jFrac);
-#endif
-
     // Build initial BH
     bh_mass = mFrac*m0;
     const double bh_pz = parton1.pz_+parton2.pz_;
-    bh_momentum.set(std::sqrt(bh_mass*bh_mass+bh_pz*bh_pz), 0, 0, bh_pz);
+    //bh_momentum.set(std::sqrt(bh_mass*bh_mass+bh_pz*bh_pz), 0, 0, bh_pz);
+    bh_momentum.set(std::sqrt(m0*m0+bh_pz*bh_pz), 0, 0, bh_pz);
+
+#ifdef DEBUGROOT
+    _hMJLoss->Fill(mFrac, jFrac);
+#endif
 
     // Initial mass loss by 2 graviton radiation along +- z direction,
     // thus BH 3-momentum will be conserved
     // NOTE : This assumes isotropic gravitational radiation
     const double graviton_e = (1-mFrac)*m0/2;
-    decays.push_back(Particle(39, 1, 3, 4, 0., 0., bh_pz+graviton_e));
-    decays.push_back(Particle(39, 1, 3, 4, 0., 0., bh_pz-graviton_e));
+    double gravPz1 =  graviton_e, gravE1 = graviton_e;
+    double gravPz2 = -graviton_e, gravE2 = graviton_e;
+    physics::boost(-bh_pz/bh_momentum.p(0), gravE1, gravPz1);
+    physics::boost(-bh_pz/bh_momentum.p(0), gravE2, gravPz2);
+    Particle graviton1(39, 1, 3, 4, 0., 0., gravPz1);
+    Particle graviton2(39, 1, 3, 4, 0., 0., gravPz2);
+    bh_momentum -= graviton1.p4();
+    bh_momentum -= graviton2.p4();
+
+    decays.push_back(parton1);
+    decays.push_back(parton2);
+    decays.push_back(graviton1);
+    decays.push_back(graviton2);
 
     break;
   }
 
+#ifdef DEBUGROOT
+  grpMBHHistory->SetPoint(grpMBHHistory->GetN(), grpMBHHistory->GetN(), 1);
+#endif
   // Start evaporation by hawking radiation
   double b[3], p4[4];
   while ( true )
@@ -439,21 +457,22 @@ void AbsModel::event()
     // Select daughter particle
     Particle daughter(0, 1, 3, 4, 0., 0., 0.); // A dummy particle
     if ( !selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, daughter) ) break;
-#ifdef DEBUGROOT
-    _hEDecay->Fill(daughter.e_);
-#endif
 
     // Particle is selected.
     // Boost along BH momentum direction
-    b[0] = bh_momentum.p(1)/bh_momentum.p(0);
-    b[1] = bh_momentum.p(2)/bh_momentum.p(0);
-    b[2] = bh_momentum.p(3)/bh_momentum.p(0);
+    b[0] = -bh_momentum.p(1)/bh_momentum.p(0);
+    b[1] = -bh_momentum.p(2)/bh_momentum.p(0);
+    b[2] = -bh_momentum.p(3)/bh_momentum.p(0);
     p4[0] = daughter.e_; p4[1] = daughter.px_; p4[2] = daughter.py_; p4[3] = daughter.pz_;
     physics::boost(b, p4);
-    daughter = Particle(daughter.id_, -1, 0, 0, p4[1], p4[2], p4[3]);
+    daughter = Particle(daughter.id_, 1, 0, 0, p4[1], p4[2], p4[3]);
 
     decays.push_back(daughter);
     bh_momentum -= daughter.p4();
+#ifdef DEBUGROOT
+    _hEDecay->Fill(daughter.e_);
+    grpMBHHistory->SetPoint(grpMBHHistory->GetN(), grpMBHHistory->GetN(), bh_momentum.mass()/bh_mass);
+#endif
   }
 #ifdef DEBUGROOT
   _hNDecay->Fill(decays.size()-6);
@@ -463,10 +482,17 @@ void AbsModel::event()
 
   // Apply overall phi rotations for all particles in the event
   // since we assumed BH rotation axis is parallel to x axis
+  double totalpx = 0, totalpy = 0, totalpz = 0;
   const double phi = rnd_->uniform(0, 2*physics::Pi);
   for ( int i=0, n=decays.size(); i<n; ++i )
   {
     physics::rotate(phi, decays[i].px_, decays[i].py_);
+    if ( decays[i].status_ == 1 )
+    {
+      totalpx += decays[i].px_;
+      totalpy += decays[i].py_;
+      totalpz += decays[i].pz_;
+    }
   }
 
   // Put BH to event record
