@@ -16,11 +16,12 @@
 #include "TGraph.h"
 TFile* f = new TFile("debug.root", "recreate");
 TH2F* _hMJLoss = new TH2F("hMJLoss", "hMJLoss", 100, 0., 1., 100, 0., 1.);
-TH1F* _hNDecay = new TH1F("hNDecay", "hNDecay", 20, 0, 20);
-TH1F* _hEDecay = new TH1F("hEDecay", "hEDecay", 100, 0, 2500);
+TH1F* _hNDecay = new TH1F("hNDecay", "hNDecay", 30, 0, 30);
+TH1F* _hEDecay = new TH1F("hEDecay", "hEDecay", 100, 0, 1500);
 TGraph* _grpFlux[3];
 TGraph* _grpTemVsPeakPos[3];
 TGraph* _grpTemVsTotalFlux[3];
+std::vector<TGraph*> _grpMBHHistory;
 #endif
 
 using namespace std;
@@ -62,6 +63,7 @@ int main(int argc, char* argv[])
   cout << "********************************************\n";
 
 #ifdef DEBUGROOT
+  TDirectory* dirMBHHistory = f->mkdir("MBHHistory");
   for ( int i=0; i<3; ++i )
   {
     _grpFlux[i] = new TGraph();
@@ -81,8 +83,18 @@ int main(int argc, char* argv[])
   model->beginJob();
   for ( int i=0; i<nEvent; ++i )
   {
+#ifdef DEBUGROOT
+    _grpMBHHistory.push_back(new TGraph());
+#endif
     printEventNumber(i, nEvent);
     model->event();
+#ifdef DEBUGROOT
+    dirMBHHistory->cd();
+    _grpMBHHistory.back()->SetName(Form("grpMBHHistory_%d", i));
+    _grpMBHHistory.back()->SetTitle(Form("BH history %d;Iteration;Mass/Initial mass", i));
+    _grpMBHHistory.back()->Write();
+    f->cd();
+#endif
   }
   model->endJob();
 
