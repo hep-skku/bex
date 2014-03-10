@@ -60,7 +60,7 @@ protected:
   double computeRh(const double m0, const double j0) const;
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
-  double getIntegratedFlux(const int spin2, const double rh, const double astar) const;
+  double getIntegratedFlux(const int spin2, const double astar) const;
   Pairs getFluxCurve(const int spin2, const double bh_mass, const double astar) const;
   bool checkBHState(const double bh_mass, const int bh_charge = 0, const double bh_spin = 0) const;
 
@@ -89,7 +89,7 @@ protected:
 
   // Full data tables
   Pairs mLossTab_;
-  Pairs nFluxTabS0_, nFluxTabS1_, nFluxTabS2_;
+  Pairs nFluxTabs_[3];
   std::vector<int> decayPdgIds_;
   std::vector<double> decayNDoFs_;
 

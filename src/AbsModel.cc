@@ -105,6 +105,9 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
 
   weightMax_ = 0;
 
+  // Load data tables
+  loadFluxDataTable();
+
   // Calculate constants for speed up
   xsec_ = xsecErr_ = -1;
   s_ = cmEnergy_*cmEnergy_;
@@ -157,24 +160,24 @@ void AbsModel::loadYoshinoDataTable()
 void AbsModel::loadFluxDataTable()
 {
   // Load flux data. data is stored in the data/flux/*D_*flux.dat
-  const std::string nFluxFileName = (boost::format("data/flux/%1%D_Nflux.dat") % nDim_).str();
+  const std::string nFluxFileName = (boost::format("data/flux/%1%D/nFlux.dat") % nDim_).str();
   ifstream nFluxFile(nFluxFileName.c_str());
 
   // Data is 3 columned data, uniform step
-  std::vector<std::vector<double> > nFluxData(3);
+  std::vector<std::vector<double> > nFluxData(4);
   nFluxFile >> nFluxData;
 
-  // Make cumulative distribution
-  nFluxTabS0_.push_back(make_pair(0., nFluxData[0][0]));
-  nFluxTabS1_.push_back(make_pair(0., nFluxData[1][0]));
-  nFluxTabS2_.push_back(make_pair(0., nFluxData[2][0]));
-  for ( int i=0, n=nFluxData[0].size(); i<n; ++i )
+  const std::vector<double>& nFluxesOmega = nFluxData[0];
+  for ( int spin2=0; spin2<3; ++spin2 )
   {
-    const double omega = 0.2*(i+1);
-
-    nFluxTabS0_.push_back(make_pair(omega, nFluxTabS0_.back().second + nFluxData[0][i]));
-    nFluxTabS1_.push_back(make_pair(omega, nFluxTabS1_.back().second + nFluxData[1][i]));
-    nFluxTabS2_.push_back(make_pair(omega, nFluxTabS2_.back().second + nFluxData[2][i]));
+    const std::vector<double>& nFluxes = nFluxData[spin2+1];
+    Pairs& nFluxTab = nFluxTabs_[spin2];
+    for ( int i=0, n=nFluxesOmega.size(); i<n; ++i )
+    {
+      const double omega = nFluxesOmega[i];
+      const double nFlux = nFluxes[i];
+      nFluxTab.push_back(make_pair(omega, nFlux));
+    }
   }
 
 }
@@ -380,6 +383,8 @@ void AbsModel::event()
     // Retry if final mass is below minimum mass range
     if ( !checkBHState(mFrac*m0) ) continue;
 
+    // Do the angular momentum part
+    const double j0 = b0*m0/2;
     while ( true )
     {
       // There's upper bound of angular momentum for low dimensional cases
@@ -418,6 +423,7 @@ void AbsModel::event()
 
     // Build initial BH
     bh_mass = mFrac*m0;
+    bh_spin = jFrac*j0;
     const double bh_pz = parton1.pz_+parton2.pz_;
     //bh_momentum.set(std::sqrt(bh_mass*bh_mass+bh_pz*bh_pz), 0, 0, bh_pz);
     bh_momentum.set(std::sqrt(m0*m0+bh_pz*bh_pz), 0, 0, bh_pz);
@@ -557,9 +563,9 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   // Step 1 : pick particle spin for a given M and J, considering DoF
   //    <- we need values of g \int_0^\infty d\omega dN/d\omega
   std::vector<double> fluxes(3);
-  fluxes[0] = getIntegratedFlux(0, rh, astar)*nDoF_[0]; // Scalar integrated flux * nDoF
-  fluxes[1] = getIntegratedFlux(1, rh, astar)*nDoF_[1]; // Spinor integrated flux * nDoF
-  fluxes[2] = getIntegratedFlux(2, rh, astar)*nDoF_[2]; // Vector integrated flux * nDoF
+  fluxes[0] = getIntegratedFlux(0, astar)*nDoF_[0]; // Scalar integrated flux * nDoF
+  fluxes[1] = getIntegratedFlux(1, astar)*nDoF_[1]; // Spinor integrated flux * nDoF
+  fluxes[2] = getIntegratedFlux(2, astar)*nDoF_[2]; // Vector integrated flux * nDoF
 
   while ( true )
   {
@@ -702,30 +708,12 @@ double AbsModel::computeRh(const double m0, const double j0) const
 
 }
 
-double AbsModel::getIntegratedFlux(const int spin2, const double rh, const double astar) const
+double AbsModel::getIntegratedFlux(const int spin2, const double astar) const
 {
-  const double astar2 = astar*astar;
-  //const double bh_omega = astar/(1+astar2)/rh;
+  const Pairs& nFluxTab = nFluxTabs_[spin2];
+  const double flux = interpolate(nFluxTab, astar);
 
-  // Integrate fluxes from the data table and put them
-  Pairs curve = getFluxCurve(spin2, rh, astar);
-  double cFlux = 0;
-  for ( int i=1, n=curve.size(); i<n; ++i )
-  {
-    const double x1 = curve[i-1].first;
-    const double y1 = curve[i-1].second;
-    const double x2 = curve[i+0].first;
-    const double y2 = curve[i+0].second;
-    const double area = (y2+y1)/2*(x2-x1);
-    cFlux += area;
-  }
-#ifdef DEBUGROOT
-  const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
-  TGraph* grp = _grpTemVsTotalFlux[spin2];
-  grp->SetPoint(grp->GetN(), bh_tem, cFlux);
-#endif
-
-  return cFlux;
+  return flux;
 }
 
 AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const double astar) const
