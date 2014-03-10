@@ -382,11 +382,8 @@ void AbsModel::event()
       // There's upper bound of angular momentum for low dimensional cases
       // Adjust jFracMax for low dimensional cases
       double jFracMax = jLossFactor_;
-      if ( jLossType_ == MJLossType::LINEAR or jLossType_ == MJLossType::UNIFORM )
-      {
-        if ( nDim_ == 4 ) jFracMax = min(mFrac*mFrac/b0, jLossFactor_);
-        else if ( nDim_ == 5 ) jFracMax = min(pow(mFrac, 3./2.)/b0, jLossFactor_);
-      }
+      if ( nDim_ == 4 ) jFracMax = min(mFrac*mFrac/b0, jLossFactor_);
+      else if ( nDim_ == 5 ) jFracMax = min(pow(mFrac, 3./2.)/b0, jLossFactor_);
 
       // Generate angular momentum fraction after balding phase
       if ( jLossType_ == MJLossType::UNIFORM )
