@@ -104,3 +104,10 @@ NVector operator*(NVector op, const double scale)
   return op;
 }
 
+std::ostream& operator<<(std::ostream& out, const NVector& op)
+{
+  for ( int i=0; i<op.nDim-1; ++i ) out << op.p(i) << ", ";
+  out << op.p(op.nDim-1);
+
+  return out;
+}

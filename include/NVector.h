@@ -2,6 +2,7 @@
 #define NVector_H
 
 #include <cmath>
+#include <ostream>
 
 class NVector
 {
@@ -49,6 +50,8 @@ public:
   friend NVector  operator*(const double scale, NVector op);
   friend NVector  operator*(NVector op, const double scale);
 
+  friend std::ostream& operator<<(std::ostream& out, const NVector& op);
+
 private:
   double data_[nDim];
 
@@ -61,6 +64,8 @@ NVector  operator-(NVector op1, const NVector& op2);
 NVector& operator*=(NVector& op, const double scale);
 NVector  operator*(const double scale, NVector op);
 NVector  operator*(NVector op, const double scale);
+
+std::ostream& operator<<(std::ostream& out, const NVector& op);
 
 #endif
 
