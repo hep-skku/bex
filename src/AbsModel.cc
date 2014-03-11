@@ -567,9 +567,9 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
     const int id = decayPdgIds_[rnd_->pickFromHist(decayNDoFs_)];
     // Check the particle has enough energy to create daughter particle
     // If particle does not hold on shell condition, retry from the particle spin selection
-    const double m = physics::getMassByPdgId(id);
-    if ( energy < m ) continue;
-    const double p = sqrt(energy*energy - m*m);
+    const double mass = physics::getMassByPdgId(id);
+    if ( energy < mass ) continue;
+    const double p = sqrt(energy*energy - mass*mass);
 
     // Choose particle
     // Spherical symmetric as the first implementation
