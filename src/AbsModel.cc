@@ -119,23 +119,23 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
   using namespace boost::assign;
   // Bosons
   nDoF_[0] = 1;
-  decayPdgIds_ += 35;
-  decayNDoFs_  +=  1;
+  decayPdgIds_[0] += 35;
+  decayNDoFs_[0]  +=  1;
   // Spinors : charged leptons + neutrinos + quarks
   //  quarks : 3 generations with up/down types and 3 colors
   //  charged leptons : 3 generations
   //  neutrinos : 3 generations but no right handed neutrinos
   nDoF_[1] = 2*( 3*2*3 + 3 + 3./2 );
-  decayPdgIds_ += 1, 2, 3, 4, 5, 6, 11, 13, 15, 12, 14, 16;
-  decayNDoFs_  += 6, 6, 6, 6, 6, 6,  2,  2,  2,  1,  1,  1;
+  decayPdgIds_[1] += 1, 2, 3, 4, 5, 6, 11, 13, 15, 12, 14, 16;
+  decayNDoFs_[1]  += 6, 6, 6, 6, 6, 6,  2,  2,  2,  1,  1,  1;
   // Vector bosons : gluons + photons + W + Z
   //  gluons = 8 : 8 combintions of bi-colors
   //  photons = 2/3. : 2 spin out of 3
   //  Z = 1 : 1 Z boson
   //  W = 2 : W+ and W-
   nDoF_[2] = 8+2/3.+1+2;
-  decayPdgIds_ += 21,   22, 23, 24;
-  decayNDoFs_  +=  8, 2/3.,  1,  2;
+  decayPdgIds_[2] += 21,   22, 23, 24;
+  decayNDoFs_[2]  +=  8, 2/3.,  1,  2;
 
   isValid_ = true;
 
@@ -585,10 +585,11 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
     // Step 2 : pick particle energy from cumulative dN/dw distribution
     //    <- assume we already have full energy flux curve.
     Pairs fluxCurve = getFluxCurve(s2, l2, m2, astar);
+    // FIXME: check energy unit in flux curve
     const double energy = rnd_->curve(fluxCurve, 0, fluxCurve.back().second)/rh;
 
     // Step 3 : pick specific particle
-    const int id = decayPdgIds_[rnd_->pickFromHist(decayNDoFs_)];
+    const int id = decayPdgIds_[s2][rnd_->pickFromHist(decayNDoFs_[s2])];
     // Check the particle has enough energy to create daughter particle
     // If particle does not hold on shell condition, retry from the particle spin selection
     const double mass = physics::getMassByPdgId(id);
@@ -765,6 +766,7 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int s2, const int l2, const int m2,
   Pairs fluxCurve;
   const int mode = encodeMode(nDim_, s2, l2, m2);
   std::map<int, Pairs> fluxTab = cNFluxTabs_[mode];
+
   // Find two nearest a10 curve to interpolate
   std::map<int, Pairs>::const_iterator pre = fluxTab.begin(), post = fluxTab.begin();
   for ( std::map<int, Pairs>::const_iterator iter = fluxTab.begin();
@@ -775,58 +777,14 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int s2, const int l2, const int m2,
     const int& a10Post = post->first;
 
     // a10 <= a* -> check if lower bound can be set by a10
-    if ( a10 <= ast10 and a10Pre < a10 ) pre = iter;
+    if ( a10 <= ast10 and a10Pre <= a10 ) pre = iter;
     // a* <= a10 -> check if upper bound can be set by a10
     if ( ast10 <= a10 and a10 <= a10Post ) post = iter;
   }
 
+  // Do the interpolation or morph
+  // FIXME: Implementation to be done
   return pre->second;
-
-/*
-  const double astar2 = astar*astar;
-  const int signFactor = (s2 % 2 == 0) ? -1 : 1;
-  const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
-  //const double bh_Omega = astar/(1+astar2)/rh;
-  const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
-*/
-
-/*
-  const double xmax = 2500;
-  const int nPoint = 1000;
-  fluxCurve.push_back(std::make_pair(0., 0.));
-  for ( int i=1; i<=nPoint; ++i )
-  {
-    const double x = xmax/nPoint*i;
-    double y = 0;
-    for ( int l2=0; l2<=spin2; l2+=2 )
-    {
-      for ( int m2=-l2; m2<=l2; m2+=2 )
-      {
-        y += std::max(0., x*x/(exp(x/bh_tem - m2/2.*bh_mFactor)+signFactor));
-      }
-    }
-    fluxCurve.push_back(std::make_pair(x, y));
-  }
-
-#ifdef DEBUGROOT
-  double peakX = -1, peakY = -1e9;
-  TGraph* grpFlux = _grpFlux[spin2];
-  const bool doDraw = grpFlux->GetN() == 0;
-  for ( int i=0; i<fluxCurve.size(); ++i )
-  {
-    const double x = fluxCurve[i].first;
-    const double y = fluxCurve[i].second;
-    if ( y > peakY )
-    {
-      peakX = x;
-      peakY = y;
-    }
-    if ( doDraw ) grpFlux->SetPoint(i, x, y);
-  }
-
-  _grpTemVsPeakPos[spin2]->SetPoint(_grpTemVsPeakPos[spin2]->GetN(), bh_tem, peakX);
-#endif
-*/
 
   return fluxCurve;
 }

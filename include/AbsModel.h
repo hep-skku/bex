@@ -93,8 +93,8 @@ protected:
   // Full data tables
   Pairs mLossTab_;
   std::map<int, std::map<int, Pairs> > cNFluxTabs_; // Cumulative number flux table, code->(a10->flux vs omega) table
-  std::vector<int> decayPdgIds_;
-  std::vector<double> decayNDoFs_;
+  std::vector<int> decayPdgIds_[3];
+  std::vector<double> decayNDoFs_[3];
 
   // Cached variables for convenience
   double s_;
