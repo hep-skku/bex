@@ -78,12 +78,19 @@ for filePath in dataFiles:
         cNFluxData[(nDim, s, l, m, a)] = cNFluxes
 
 ## Store all results into files
-outDir = "../data/flux"
+outDir = "."
 fouts = []
 for s2 in range(3):
     f = open("%s/D%d/cFlux_ss%d.dat" % (outDir, 5, s2), "w")
+    print>>f, "#Cumulative flux data tables"
+    print>>f, "#!:nDim s2 l m a"
+    print>>f, "#X:x1 x2 x3 x4 ...."
+    print>>f, "#Y:y1 y2 y3 y4 ...."
     fouts.append(f)
 for key in cNFluxData.keys():
     nDim, s2, l, m, a = key
     cNFlux = cNFluxData[key]
-    fout = open("%s/D%d/ss%1d/l%02d_m%03d_aa%02d.dat" % (outDir, nDim, s2, l, m, a), "w")
+    f = fouts[s2]
+    print>>f, "#!:%d %d %d %d %f" % (nDim, s2, l, m, a)
+    print>>f, ("#X:"+(" ".join(["%13.9e" % x for x, y in cNFlux])))
+    print>>f, ("#Y:"+(" ".join(["%13.9e" % y for x, y in cNFlux])))
