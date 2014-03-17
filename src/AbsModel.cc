@@ -159,25 +159,48 @@ void AbsModel::loadYoshinoDataTable()
 
 void AbsModel::loadFluxDataTable()
 {
-  // Load flux data. data is stored in the data/flux/*D_*flux.dat
-  const std::string nFluxFileName = (boost::format("data/flux/%1%D/nFlux.dat") % nDim_).str();
-  ifstream nFluxFile(nFluxFileName.c_str());
-
-  // Data is 3 columned data, uniform step
-  std::vector<std::vector<double> > nFluxData(4);
-  nFluxFile >> nFluxData;
-
-  const std::vector<double>& nFluxesOmega = nFluxData[0];
-  for ( int spin2=0; spin2<3; ++spin2 )
+  // Load flux data. data is stored in the data/flux/D*/cFlux.dat
+  const std::string fileName = (boost::format("data/flux/D%1%/cFlux.dat") % nDim_).str();
+  ifstream fin(fileName.c_str());
+  if ( fin )
   {
-    const std::vector<double>& nFluxes = nFluxData[spin2+1];
-    Pairs& nFluxTab = nFluxTabs_[spin2];
-    for ( int i=0, n=nFluxesOmega.size(); i<n; ++i )
+    string line;
+    int nDim, s2, l2, m2, a10;
+    std::vector<double> xValues, yValues;
+    while ( getline(fin, line) )
     {
-      const double omega = nFluxesOmega[i];
-      const double nFlux = nFluxes[i];
-      nFluxTab.push_back(make_pair(omega, nFlux));
+      const size_t commentPos = line.find('#');
+      if ( commentPos != string::npos ) line.erase(commentPos);
+      boost::trim(line);
+      if ( line.empty() ) continue;
+
+      const char key = line[0];
+      stringstream ss(line.substr(2));
+      if ( key == 'I' ) ss >> nDim >> s2 >> l2 >> m2 >> a10;
+      else if ( key == 'X' ) ss >> xValues;
+      else if ( key == 'Y' ) ss >> yValues;
+
+      if ( !(nDim == 0 or xValues.empty() or yValues.empty()) )
+      {
+        const int code = encodeMode(nDim, s2, l2, m2);
+        const int nPoint = std::min(xValues.size(), yValues.size());
+        if ( cNFluxTabs_.find(code) == cNFluxTabs_.end() ) cNFluxTabs_[code] = std::map<int, Pairs>();
+        cNFluxTabs_[code][a10] = Pairs();
+        Pairs& data = cNFluxTabs_[code][a10];
+        for ( int i=0; i<nPoint; ++i )
+        {
+          data.push_back(make_pair(xValues[i], yValues[i]));
+        }
+
+        nDim = 0;
+        xValues.clear();
+        yValues.clear();
+      }
     }
+  }
+  else
+  {
+    throw runtime_error(string("Cannot open flux file") + fileName);
   }
 
 }
@@ -550,9 +573,10 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   // Step 1 : pick particle spin for a given M and J, considering DoF
   //    <- we need values of g \int_0^\infty d\omega dN/d\omega
   std::vector<double> fluxes(3);
-  fluxes[0] = getIntegratedFlux(0, astar)*nDoF_[0]; // Scalar integrated flux * nDoF
-  fluxes[1] = getIntegratedFlux(1, astar)*nDoF_[1]; // Spinor integrated flux * nDoF
-  fluxes[2] = getIntegratedFlux(2, astar)*nDoF_[2]; // Vector integrated flux * nDoF
+  getIntegratedFluxes(astar, &fluxes[0]);
+  fluxes[0] *= nDoF_[0]; // Scalar integrated flux * nDoF
+  fluxes[1] *= nDoF_[1]; // Spinor integrated flux * nDoF
+  fluxes[2] *= nDoF_[2]; // Vector integrated flux * nDoF
 
   while ( true )
   {
@@ -695,12 +719,42 @@ double AbsModel::computeRh(const double m0, const double j0) const
 
 }
 
-double AbsModel::getIntegratedFlux(const int spin2, const double astar) const
+void AbsModel::getIntegratedFluxes(const double astar, double fluxes[]) const
 {
-  const Pairs& nFluxTab = nFluxTabs_[spin2];
-  const double flux = interpolate(nFluxTab, astar);
+  // Initialize integrated flux values
+  fluxes[0] = fluxes[1] = fluxes[2] = 0;
+  for ( std::map<int, std::map<int, Pairs> >::const_iterator modeToTabIter = cNFluxTabs_.begin();
+        modeToTabIter != cNFluxTabs_.end(); ++modeToTabIter )
+  {
+    const int& code = modeToTabIter->first;
+    int nDim, s2, l2, m2;
+    decodeMode(code, nDim, s2, l2, m2);
 
-  return flux;
+    // Find interval of aPre <= astar < aPost
+    double aPre = 1e9, aPost = -1e9, cPre, cPost;
+    const std::map<int, Pairs>& a10ToFluxTab = modeToTabIter->second;
+    for ( std::map<int, Pairs>::const_iterator a10ToFluxIter = a10ToFluxTab.begin();
+          a10ToFluxIter != a10ToFluxTab.end(); ++a10ToFluxIter )
+    {
+      const double a = a10ToFluxIter->first/10.;
+      const double cFlux = a10ToFluxIter->second.back().second;
+      if ( aPre >= a or (a <= astar and aPre <= a) )
+      {
+        aPre = a;
+        cPre = cFlux;
+      }
+      if ( a > aPost or (astar < a and a <= aPost) )
+      {
+        aPost = a;
+        cPost = cFlux;
+      }
+    }
+
+    // Interpolate cFlux
+    const double slope = (cPost-cPre)/(aPost-aPre);
+    const double cFlux = slope*(astar-aPre)+cPre;
+    fluxes[s2] += cFlux;
+  }
 }
 
 AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const double astar) const
@@ -751,6 +805,26 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
 #endif
 
   return fluxCurve;
+}
+
+int AbsModel::encodeMode(const int nDim, const int s2, const int l2, const int m2) const
+{
+  // Format : (D)(s)(ll)(mm)(aa)
+  int code = 0;
+  code += (m2+49); // -l2 <= m2 <= l2, shift up by 100
+  code += l2*100; // 0 <= l2, we scan up to l=30 mode, thus l2=60
+  code += s2*10000;
+  code += nDim*100000;
+  return code;
+}
+
+void AbsModel::decodeMode(const int code, int& nDim, int& s2, int& l2, int& m2) const
+{
+  int codeTmp = code;
+  nDim = codeTmp/100000; codeTmp %= 100000;
+  s2 = codeTmp/10000; codeTmp %= 10000;
+  l2 = codeTmp/100; codeTmp %= 100;
+  m2 = codeTmp-49;
 }
 
 Particle::Particle(const int id, const int status,

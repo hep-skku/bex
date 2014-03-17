@@ -60,9 +60,12 @@ protected:
   double computeRh(const double m0, const double j0) const;
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
-  double getIntegratedFlux(const int spin2, const double astar) const;
+  void getIntegratedFluxes(const double astar, double fluxes[]) const;
   Pairs getFluxCurve(const int spin2, const double bh_mass, const double astar) const;
   bool checkBHState(const double bh_mass, const double bh_spin = 0, const int bh_charge = 0) const;
+
+  int encodeMode(const int nDim, const int s2, const int l2, const int m2) const;
+  void decodeMode(const int mode, int& nDim, int& s2, int& l2, int& m2) const;
 
 protected:
   bool isValid_;
@@ -89,7 +92,7 @@ protected:
 
   // Full data tables
   Pairs mLossTab_;
-  Pairs nFluxTabs_[3];
+  std::map<int, std::map<int, Pairs> > cNFluxTabs_; // Cumulative number flux table, code->(a10->flux vs omega) table
   std::vector<int> decayPdgIds_;
   std::vector<double> decayNDoFs_;
 
