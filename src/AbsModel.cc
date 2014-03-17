@@ -835,34 +835,27 @@ Particle::Particle(const int id, const int status,
   status_ = status;
   mother1_ = mother1;
   mother2_ = mother2;
-  color1_ = 0; // Colorless as default value
-  color2_ = 0;
-  px_ = px;
-  py_ = py;
-  pz_ = pz;
+  color1_ = color2_ = 0; // Colorless as default value
+  px_ = px; py_ = py; pz_ = pz;
   m_ = physics::getMassByPdgId(id);
   e_ = sqrt(px*px+py*py+pz*pz + m_*m_);
-  vt_ = 0;
-  spin_ = 9;
+  vt_ = 0; spin_ = 9;
 }
 
 Particle::Particle(const int id, const int status,
-                  const int mother1, const int mother2,
-                  const double energy)
+                   const int mother1, const int mother2,
+                   const double energy)
 {
   id_ = id;
   status_ = status;
   mother1_ = mother1;
   mother2_ = mother2;
-  color1_ = 0; // Colorless as default value
-  color2_ = 0;
-  px_ = 0;
-  py_ = 0;
+  color1_ = color2_ = 0; // Colorless as default value
+  px_ = 0; py_ = 0;
   m_ = physics::getMassByPdgId(id);
   e_ = energy;
   pz_ = max(0., sqrt(energy*energy - m_*m_));
-  vt_ = 0;
-  spin_ = 9;
+  vt_ = 0; spin_ = 9;
 
 }
 
