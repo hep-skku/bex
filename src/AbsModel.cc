@@ -570,22 +570,22 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   const double astar = (nDim_-2.)/2*bh_spin/bh_mass/rh;
 
   // Choose particle type and its energy
-  // Step 1 : pick particle spin for a given M and J, considering DoF
+  // Step 1 : pick particle quantum numbers for a given M and J.
+  //          DoF's will be considered inside of getIntegratedFluxes()
   //    <- we need values of g \int_0^\infty d\omega dN/d\omega
-  std::vector<double> fluxes(3);
-  getIntegratedFluxes(astar, &fluxes[0]);
-  fluxes[0] *= nDoF_[0]; // Scalar integrated flux * nDoF
-  fluxes[1] *= nDoF_[1]; // Spinor integrated flux * nDoF
-  fluxes[2] *= nDoF_[2]; // Vector integrated flux * nDoF
-
+  std::vector<int> modes;
+  std::vector<double> fluxes;
+  getIntegratedFluxes(astar, modes, fluxes);
+  int nDim, s2, l2, m2;
   while ( true )
   {
-    const int selectedSpin2 = rnd_->pickFromHist(fluxes);
+    const int selectedMode = modes[rnd_->pickFromHist(fluxes)];
+    decodeMode(selectedMode, nDim, s2, l2, m2);
 
     // Step 2 : pick particle energy from cumulative dN/dw distribution
     //    <- assume we already have full energy flux curve.
-    Pairs fluxCurve = getFluxCurve(selectedSpin2, rh, astar);
-    const double energy = rnd_->curve(fluxCurve, 0, maxE);
+    Pairs fluxCurve = getFluxCurve(s2, l2, m2, astar);
+    const double energy = rnd_->curve(fluxCurve, 0, fluxCurve.back().second)/rh;
 
     // Step 3 : pick specific particle
     const int id = decayPdgIds_[rnd_->pickFromHist(decayNDoFs_)];
@@ -719,16 +719,16 @@ double AbsModel::computeRh(const double m0, const double j0) const
 
 }
 
-void AbsModel::getIntegratedFluxes(const double astar, double fluxes[]) const
+void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, std::vector<double>& fluxes) const
 {
   // Initialize integrated flux values
-  fluxes[0] = fluxes[1] = fluxes[2] = 0;
+  modes.clear();
+  fluxes.clear();
+
   for ( std::map<int, std::map<int, Pairs> >::const_iterator modeToTabIter = cNFluxTabs_.begin();
         modeToTabIter != cNFluxTabs_.end(); ++modeToTabIter )
   {
     const int& code = modeToTabIter->first;
-    int nDim, s2, l2, m2;
-    decodeMode(code, nDim, s2, l2, m2);
 
     // Find interval of aPre <= astar < aPost
     double aPre = 1e9, aPost = -1e9, cPre, cPost;
@@ -752,22 +752,45 @@ void AbsModel::getIntegratedFluxes(const double astar, double fluxes[]) const
 
     // Interpolate cFlux
     const double slope = (cPost-cPre)/(aPost-aPre);
-    const double cFlux = slope*(astar-aPre)+cPre;
-    fluxes[s2] += cFlux;
+    const double cFlux = max(0., slope*(astar-aPre)+cPre);
+
+    modes.push_back(code);
+    fluxes.push_back(cFlux);
   }
 }
 
-AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const double astar) const
+AbsModel::Pairs AbsModel::getFluxCurve(const int s2, const int l2, const int m2, const double astar)
 {
-  // A black body radiation curve
-  const int signFactor = (spin2 % 2 == 0) ? -1 : 1;
+  const double ast10 = astar*10;
+  Pairs fluxCurve;
+  const int mode = encodeMode(nDim_, s2, l2, m2);
+  std::map<int, Pairs> fluxTab = cNFluxTabs_[mode];
+  // Find two nearest a10 curve to interpolate
+  std::map<int, Pairs>::const_iterator pre = fluxTab.begin(), post = fluxTab.begin();
+  for ( std::map<int, Pairs>::const_iterator iter = fluxTab.begin();
+        iter != fluxTab.end(); ++iter )
+  {
+    const int& a10 = iter->first;
+    const int& a10Pre = pre->first;
+    const int& a10Post = post->first;
 
+    // a10 <= a* -> check if lower bound can be set by a10
+    if ( a10 <= ast10 and a10Pre < a10 ) pre = iter;
+    // a* <= a10 -> check if upper bound can be set by a10
+    if ( ast10 <= a10 and a10 <= a10Post ) post = iter;
+  }
+
+  return pre->second;
+
+/*
   const double astar2 = astar*astar;
+  const int signFactor = (s2 % 2 == 0) ? -1 : 1;
   const double bh_tem = ((nDim_-3) + (nDim_-5)*astar2)/4/physics::Pi/(1+astar2)/rh;
   //const double bh_Omega = astar/(1+astar2)/rh;
   const double bh_mFactor = 4*physics::Pi*astar/((nDim_-3)+(nDim_-5)*astar2); // factor in exponent : Omega/T
+*/
 
-  Pairs fluxCurve;
+/*
   const double xmax = 2500;
   const int nPoint = 1000;
   fluxCurve.push_back(std::make_pair(0., 0.));
@@ -803,6 +826,7 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int spin2, const double rh, const d
 
   _grpTemVsPeakPos[spin2]->SetPoint(_grpTemVsPeakPos[spin2]->GetN(), bh_tem, peakX);
 #endif
+*/
 
   return fluxCurve;
 }

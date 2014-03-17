@@ -60,8 +60,8 @@ protected:
   double computeRh(const double m0, const double j0) const;
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
-  void getIntegratedFluxes(const double astar, double fluxes[]) const;
-  Pairs getFluxCurve(const int spin2, const double bh_mass, const double astar) const;
+  void getIntegratedFluxes(const double astar, std::vector<int>& modes, std::vector<double>& fluxes) const;
+  Pairs getFluxCurve(const int s2, const int l2, const int m2, const double astar);
   bool checkBHState(const double bh_mass, const double bh_spin = 0, const int bh_charge = 0) const;
 
   int encodeMode(const int nDim, const int s2, const int l2, const int m2) const;
