@@ -40,8 +40,8 @@ def findDataFiles(d):
 #spinStrToS2 = {"s0":0, "s12":1, "s1":2}
 
 #srcDir = "/users/jhgoh/Dropbox/BH_SKKU/greybody code/5D_calculation"
-dataFiles  = findDataFiles("/users/jhgoh/Dropbox/BH_SKKU/fast_s1s2")
-dataFiles += findDataFiles("/users/jhgoh/Dropbox/BH_SKKU/fast_s0")
+dataFiles  = findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/fast_s1s2"))
+dataFiles += findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/fast_s0"))
 
 cNFluxData = {}
 
@@ -81,7 +81,7 @@ for filePath in dataFiles:
 outDir = "../data/flux"
 fouts = []
 for s2 in range(3):
-    f = open("%s/D%d/cFlux_ss%d.dat" % s2, "w")
+    f = open("%s/D%d/cFlux_ss%d.dat" % (outDir, 5, s2), "w")
     fouts.append(f)
 for key in cNFluxData.keys():
     nDim, s2, l, m, a = key
