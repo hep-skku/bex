@@ -6,7 +6,10 @@ from math import *
 def mathListToPyList(s):
     s = s.replace('{', '[').replace('}', ']')
     s = s.replace('*^', 'E')
-    l = eval(s)
+    try:
+        l = eval(s)
+    except:
+        return []
 
     return l
 
@@ -40,18 +43,19 @@ def findDataFiles(d):
 #spinStrToS2 = {"s0":0, "s12":1, "s1":2}
 
 #srcDir = "/users/jhgoh/Dropbox/BH_SKKU/greybody code/5D_calculation"
-dataFiles  = findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/fast_s1s2"))
-dataFiles += findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/fast_s0"))
+#dataFiles  = findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/fast_s1s2"))
+#dataFiles += findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/fast_s0"))
+dataFiles = findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/greybody code/example_Hyun/fast_140314"))
 
 cNFluxData = {}
 
 for filePath in dataFiles:
     fileName = os.path.basename(filePath)
     print "Processing", fileName
-    modeStr = fileName[len('greybody_D5_'):-1].split('_')
+    modeStr = fileName[len('greybody_D5_'):].split('_')
 
     s2 = int(modeStr[0][1])#spinStrToS2[modeStr[0]]
-    a10  = float(modeStr[1][1:])
+    a10  = int(modeStr[1][1:])
 
     contents = open(filePath).read()
     contents = contents.replace('\n', '').replace('\r', '').strip()
@@ -60,12 +64,13 @@ for filePath in dataFiles:
         if line == "": continue
         mode, table = line.split(' = ')
         nDim, s, l, m, a = eval(mode)
+        l2, m2 = l*2, m*2
         table = mathListToPyList(table)
 
         nFluxes = []
         for i in range(len(table)):
             x, y = table[i]
-            nFlux = computeNFlux(x, s2, m, a, y)
+            nFlux = computeNFlux(x, s2, m2, a10, y)
             nFluxes.append((x, nFlux))
 
         cNFluxes = [(0,0)]
@@ -75,22 +80,18 @@ for filePath in dataFiles:
             area = (y2+y1)/2*(x2-x1)
             cNFluxes.append((x2, cNFluxes[-1][1]+area))
 
-        cNFluxData[(nDim, s, l, m, a)] = cNFluxes
+        cNFluxData[(nDim, s2, l2, m2, a10)] = cNFluxes
 
 ## Store all results into files
 outDir = "."
-fouts = []
-for s2 in range(3):
-    f = open("%s/D%d/cFlux_ss%d.dat" % (outDir, 5, s2), "w")
-    print>>f, "#Cumulative flux data tables"
-    print>>f, "#!:nDim s2 l m a"
-    print>>f, "#X:x1 x2 x3 x4 ...."
-    print>>f, "#Y:y1 y2 y3 y4 ...."
-    fouts.append(f)
+f = open("%s/D%d/cFlux.dat" % (outDir, 5), "w")
+print>>f, "#Cumulative flux data tables"
+print>>f, "#I nDim s2 l2 m2 a10"
+print>>f, "#X x1 x2 x3 x4 ...."
+print>>f, "#Y y1 y2 y3 y4 ...."
 for key in cNFluxData.keys():
-    nDim, s2, l, m, a = key
+    nDim, s2, l2, m2, a10 = key
     cNFlux = cNFluxData[key]
-    f = fouts[s2]
-    print>>f, "#!:%d %d %d %d %f" % (nDim, s2, l, m, a)
-    print>>f, ("#X:"+(" ".join(["%13.9e" % x for x, y in cNFlux])))
-    print>>f, ("#Y:"+(" ".join(["%13.9e" % y for x, y in cNFlux])))
+    print>>f, "I %d %d %d %d %d" % (nDim, s2, l2, m2, a10)
+    print>>f, ("X "+(" ".join(["%13.9e" % x for x, y in cNFlux])))
+    print>>f, ("Y "+(" ".join(["%13.9e" % y for x, y in cNFlux])))
