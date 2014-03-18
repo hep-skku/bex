@@ -14,21 +14,16 @@ using namespace boost::algorithm;
 ConfigReader::ConfigReader(const char* fileName, int argc, char* argv[])
 {
   ifstream fin(fileName);
-  if ( fin )
+  if ( !fin ) throw runtime_error(string("Cannot open file") + fileName);
+
+  string line;
+  while ( getline(fin, line) )
   {
-    string line;
-    while ( getline(fin, line) )
-    {
-      const size_t commentPos = line.find('#');
-      if ( commentPos != string::npos) line.erase(commentPos);
-      trim(line);
-      if ( line.empty() or line[0] == '#' ) continue;
-      processInputCommand(line);
-    }
-  }
-  else
-  {
-    throw runtime_error(string("Cannot open file") + fileName);
+    const size_t commentPos = line.find('#');
+    if ( commentPos != string::npos) line.erase(commentPos);
+    trim(line);
+    if ( line.empty() or line[0] == '#' ) continue;
+    processInputCommand(line);
   }
   for ( int i=0; i<argc; ++i )
   {
