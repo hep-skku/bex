@@ -576,6 +576,7 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   std::vector<int> modes;
   std::vector<double> fluxes;
   getIntegratedFluxes(astar, modes, fluxes);
+
   int nDim, s2, l2, m2;
   while ( true )
   {
@@ -732,23 +733,27 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
     const int& code = modeToTabIter->first;
 
     // Find interval of aPre <= astar < aPost
-    double aPre = 1e9, aPost = -1e9, cPre, cPost;
-    const std::map<int, Pairs>& a10ToFluxTab = modeToTabIter->second;
-    for ( std::map<int, Pairs>::const_iterator a10ToFluxIter = a10ToFluxTab.begin();
-          a10ToFluxIter != a10ToFluxTab.end(); ++a10ToFluxIter )
+    const std::map<int, Pairs>& fluxTab = modeToTabIter->second;
+    double aPre = -1e9, aPost = 1e9, cPre, cPost;
+    for ( std::map<int, Pairs>::const_iterator fluxTabIter = fluxTab.begin();
+          fluxTabIter != fluxTab.end(); ++fluxTabIter )
     {
-      const double a = a10ToFluxIter->first/10.;
-      const double cFlux = a10ToFluxIter->second.back().second;
-      if ( aPre >= a or (a <= astar and aPre <= a) )
+      const double a = fluxTabIter->first/10.;
+      const double cFlux = fluxTabIter->second.back().second;
+      if ( aPre <= a and a <= astar )
       {
         aPre = a;
         cPre = cFlux;
       }
-      if ( a > aPost or (astar < a and a <= aPost) )
+      if ( astar < a and a < aPost )
       {
         aPost = a;
         cPost = cFlux;
       }
+    }
+    if ( aPre == -1e9 or aPost == 1e9 )
+    {
+      cPre = cPost = aPre = aPost = 0;
     }
 
     // Interpolate cFlux
@@ -779,7 +784,7 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int s2, const int l2, const int m2,
     // a10 <= a* -> check if lower bound can be set by a10
     if ( a10 <= ast10 and a10Pre <= a10 ) pre = iter;
     // a* <= a10 -> check if upper bound can be set by a10
-    if ( ast10 <= a10 and a10 <= a10Post ) post = iter;
+    if ( ast10 < a10 and a10 < a10Post ) post = iter;
   }
 
   // Do the interpolation or morph
