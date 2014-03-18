@@ -162,45 +162,40 @@ void AbsModel::loadFluxDataTable()
   // Load flux data. data is stored in the data/flux/D*/cFlux.dat
   const std::string fileName = (boost::format("data/flux/D%1%/cFlux.dat") % nDim_).str();
   ifstream fin(fileName.c_str());
-  if ( fin )
+  if ( !fin ) throw runtime_error(string("Cannot open flux file") + fileName);
+
+  string line;
+  int nDim, s2, l2, m2, a10;
+  std::vector<double> xValues, yValues;
+  while ( getline(fin, line) )
   {
-    string line;
-    int nDim, s2, l2, m2, a10;
-    std::vector<double> xValues, yValues;
-    while ( getline(fin, line) )
+    const size_t commentPos = line.find('#');
+    if ( commentPos != string::npos ) line.erase(commentPos);
+    boost::trim(line);
+    if ( line.empty() ) continue;
+
+    const char key = line[0];
+    stringstream ss(line.substr(2));
+    if ( key == 'I' ) ss >> nDim >> s2 >> l2 >> m2 >> a10;
+    else if ( key == 'X' ) ss >> xValues;
+    else if ( key == 'Y' ) ss >> yValues;
+
+    if ( !(nDim == 0 or xValues.empty() or yValues.empty()) )
     {
-      const size_t commentPos = line.find('#');
-      if ( commentPos != string::npos ) line.erase(commentPos);
-      boost::trim(line);
-      if ( line.empty() ) continue;
-
-      const char key = line[0];
-      stringstream ss(line.substr(2));
-      if ( key == 'I' ) ss >> nDim >> s2 >> l2 >> m2 >> a10;
-      else if ( key == 'X' ) ss >> xValues;
-      else if ( key == 'Y' ) ss >> yValues;
-
-      if ( !(nDim == 0 or xValues.empty() or yValues.empty()) )
+      const int code = encodeMode(nDim, s2, l2, m2);
+      const int nPoint = std::min(xValues.size(), yValues.size());
+      if ( cNFluxTabs_.find(code) == cNFluxTabs_.end() ) cNFluxTabs_[code] = std::map<int, Pairs>();
+      cNFluxTabs_[code][a10] = Pairs();
+      Pairs& data = cNFluxTabs_[code][a10];
+      for ( int i=0; i<nPoint; ++i )
       {
-        const int code = encodeMode(nDim, s2, l2, m2);
-        const int nPoint = std::min(xValues.size(), yValues.size());
-        if ( cNFluxTabs_.find(code) == cNFluxTabs_.end() ) cNFluxTabs_[code] = std::map<int, Pairs>();
-        cNFluxTabs_[code][a10] = Pairs();
-        Pairs& data = cNFluxTabs_[code][a10];
-        for ( int i=0; i<nPoint; ++i )
-        {
-          data.push_back(make_pair(xValues[i], yValues[i]));
-        }
-
-        nDim = 0;
-        xValues.clear();
-        yValues.clear();
+        data.push_back(make_pair(xValues[i], yValues[i]));
       }
+
+      nDim = 0;
+      xValues.clear();
+      yValues.clear();
     }
-  }
-  else
-  {
-    throw runtime_error(string("Cannot open flux file") + fileName);
   }
 
 }
