@@ -14,7 +14,7 @@ def mathListToPyList(s):
     return l
 
 def computeNFlux(wTilde, s2, m, astar, greybody):
-    if greybody == 0: return 0
+    if abs(greybody) <= 1e-5: return 0
 
     val = 4*pi*((1+astar**2)*wTilde - m*astar)/((nDim-4+1)+(nDim-4-1)*astar**2)
     ## Avoid overflow error when val > 709.78
