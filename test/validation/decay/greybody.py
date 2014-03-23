@@ -18,7 +18,7 @@ def mathListToPyList(s):
     return l
 
 def computeNFlux(wTilde, s2, m, astar, greybody):
-    if greybody == 0: return 0
+    if abs(greybody) <= 1e-5: return 0
 
     val = 4*pi*((1+astar**2)*wTilde - m*astar)/((nDim-4+1)+(nDim-4-1)*astar**2)
     ## Avoid overflow error when val > 709.78
@@ -84,7 +84,7 @@ dataFiles += findDataFiles("/users/jhgoh/Dropbox/BH_SKKU/fast_s0")
 for filePath in dataFiles:
     fileName = os.path.basename(filePath)
     print "Processing", fileName
-    modeStr = fileName[len('greybody_D5_'):-1].split('_')
+    modeStr = fileName[len('greybody_D5_'):].split('_')
 
     s2 = int(modeStr[0][1])#spinStrToS2[modeStr[0]]
     a10  = float(modeStr[1][1:])
@@ -97,6 +97,9 @@ for filePath in dataFiles:
         mode, table = line.split(' = ')
         nDim, s, l, m, a = eval(mode)
         table = mathListToPyList(table)
+        if len(table) == 0:
+            print "!!! Empty data table", mode
+            continue
 
         maxYG, maxYF = 0, 0
         grpG = TGraph()
