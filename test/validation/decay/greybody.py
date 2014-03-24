@@ -5,6 +5,8 @@ from array import array
 from math import *
 from ROOT import *
 gROOT.ProcessLine(".x ../rootlogon.C")
+gStyle.SetPadRightMargin(0.1);
+
 
 def mathListToPyList(s):
     s = s.replace('{', '[').replace('}', ']')
@@ -45,7 +47,7 @@ def findDataFiles(d):
             l.append(os.path.join(d, fileName))
     return l
 
-c = TCanvas("c", "c", 1200, 800)
+c = TCanvas("c", "c", 900, 600)
 c.Divide(3,2)
 hFrameG, hFrameF = [], []
 for s2 in range(3):
@@ -63,7 +65,8 @@ for s2 in range(3):
 
 colors = [kRed, kOrange, kGreen, kGreen+1, kAzure+1, kBlue, kBlue+1]
 
-bins = array('d', [0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8])
+bins = array('d', [0.1*(x-1) for x in range(0, 20, 2)])
+lbins = array('d', range(0, 30))
 hSumNFlux = [
     TH1F("hSumNFlux0", "Scalar;a*;Number flux", len(bins)-1, bins),
     TH1F("hSumNFlux1", "Spinor;a*;Number flux", len(bins)-1, bins),
@@ -75,7 +78,24 @@ hSumNFlux[2].SetLineColor(kGreen+1)
 
 grpGs = [[], [], []]
 grpFs = [[], [], []]
+hF2Ds = [
+    TH2F("hF2D0", "Scalar;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
+    TH2F("hF2D1", "Spinor;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
+    TH2F("hF2D2", "Vector;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
+]
+
+hNDOFs = [
+    TH2F("hNDOF0", "Scalar;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
+    TH2F("hNDOF1", "Spinor;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
+    TH2F("hNDOF2", "Vector;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
+]
 #spinStrToS2 = {"s0":0, "s12":1, "s1":2}
+
+for s2 in range(3):
+    hF2Ds[s2].SetName("hF2D_ss%d" % s2)
+    hF2Ds[s2].SetTitle("s2=%d" % s2)
+    hNDOFs[s2].SetName("hNDOF_ss%d" % s2)
+    hNDOFs[s2].SetTitle("s2=%d" % s2)
 
 #srcDir = "/users/jhgoh/Dropbox/BH_SKKU/greybody code/5D_calculation"
 dataFiles  = findDataFiles("/users/jhgoh/Dropbox/BH_SKKU/fast_s1s2")
@@ -95,7 +115,7 @@ for filePath in dataFiles:
         line = line.strip()
         if line == "": continue
         mode, table = line.split(' = ')
-        nDim, s, l, m, a = eval(mode)
+        nDim, s, l, m, a = eval(mode.replace('/2', '/2.'))
         table = mathListToPyList(table)
         if len(table) == 0:
             print "!!! Empty data table", mode
@@ -122,6 +142,8 @@ for filePath in dataFiles:
             area = (y2+y1)/2*(x2-x1)
             sumArea += area
         hSumNFlux[s2].Fill(a, sumArea)
+        hF2Ds[s2].Fill(a, l, sumArea)
+        hNDOFs[s2].Fill(a, l, 1./(2*l+1))
 
         grpG.SetLineColor(colors[len(grpGs[s2])%len(colors)])
         grpG.SetName("grpG_D%d_ss%02d_l%02d_m%02d_a%02d" % (nDim, s2, l, m, a))
@@ -146,7 +168,7 @@ c.Update()
 c.Print("cGreybody.png")
 c.Print("cGreybody.pdf")
 
-cFlux = TCanvas("cFlux", "cFlux", 500, 500)
+cFlux = TCanvas("cFlux", "cFlux", 300, 300)
 opt = ""
 for h in reversed(hSumNFlux):
     h.Draw(opt)
@@ -156,4 +178,16 @@ legFlux.SetFillStyle(0)
 legFlux.SetBorderSize(0)
 cFlux.Print("cIntegratedFlux.png")
 cFlux.Print("cIntegratedFlux.pdf")
+
+cFlux2D = TCanvas("cFlux2D", "cFlux2D", 900, 300)
+cFlux2D.Divide(3,1)
+for i in range(3):
+    cFlux2D.cd(i+1)
+    hF2Ds[i].Draw("COLZ")
+
+cNDOF2D = TCanvas("cNDOF2D", "cNDOF2D", 900, 300)
+cNDOF2D.Divide(3,1)
+for i in range(3):
+    cNDOF2D.cd(i+1)
+    hNDOFs[i].Draw("COLZ")
 
