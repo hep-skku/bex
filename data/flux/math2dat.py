@@ -71,7 +71,14 @@ for filePath in dataFiles:
         for i in range(len(table)):
             x, y = table[i]
             nFlux = computeNFlux(x, s2, m2, a10, y)
-            nFluxes.append((x, nFlux))
+            nFluxes.append([x, nFlux])
+        ## Smoothing
+        for i in range(1, len(nFluxes)-1):
+            x, y = nFluxes[i]
+            if y != 0: continue
+            x1, y1 = nFluxes[i-1]
+            x3, y3 = nFluxes[i+1]
+            nFluxes[i] = (x, (y3+y1)/2)
 
         cNFluxes = [(0,0)]
         for i in range(1, len(nFluxes)):
