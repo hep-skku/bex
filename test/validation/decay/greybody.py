@@ -101,16 +101,29 @@ for filePath in dataFiles:
             print "!!! Empty data table", mode
             continue
 
-        maxYG, maxYF = 0, 0
+        nFluxTab = []
         grpG = TGraph()
-        grpF = TGraph()
+        maxYG = 0
         for i in range(len(table)):
             x, y = table[i]
-            nFlux = computeNFlux(x, s2, m, a, y)
-            grpG.SetPoint(i, x, y)
-            grpF.SetPoint(i, x, nFlux)
-
             maxYG = max(maxYG, y)
+            grpG.SetPoint(i, x, y)
+            nFlux = computeNFlux(x, s2, m, a, y)
+            nFluxTab.append((x, nFlux))
+
+        ## Apply smoothing
+        for i in range(1, len(nFluxTab)-1):
+            x, y = nFluxTab[i]
+            if y != 0: continue
+            y = (nFluxTab[i-1][1]+nFluxTab[i+1][1])/2
+            nFluxTab[i] = (x, y)
+
+        ## Draw
+        maxYF = 0
+        grpF = TGraph()
+        for i in range(len(nFluxTab)):
+            x, nFlux = nFluxTab[i]
+            grpF.SetPoint(i, x, nFlux)
             maxYF = max(maxYF, nFlux)
         hFrameG[s2].SetMaximum(max(hFrameG[s2].GetMaximum(), 1.1*maxYG))
         hFrameF[s2].SetMaximum(max(hFrameF[s2].GetMaximum(), 1.1*maxYF))
