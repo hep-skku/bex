@@ -58,7 +58,7 @@ for filePath in dataFiles:
     a10  = int(modeStr[1][1:])
 
     contents = open(filePath).read()
-    contents = contents.replace('\n', '').replace('\r', '').strip()
+    contents = contents.replace('\\', '').replace('\n', '').replace('\r', '').strip()
     for line in contents.replace('}}', '}}\n').split('greybodyTable'):
         line = line.strip()
         if line == "": continue
