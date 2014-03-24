@@ -14,10 +14,8 @@ def mathListToPyList(s):
     return l
 
 def computeNFlux(wTilde, s2, m, astar, greybody):
-    if abs(greybody) <= 1e-7: return 0
-
     val = 4*pi*((1+astar**2)*wTilde - m*astar)/((nDim-4+1)+(nDim-4-1)*astar**2)
-    ## Avoid overflow error when val > 709.78
+    ## Avoid overflow error when val > 709.78 -> Gamma/[exp(700)+-1] -> 0
     ## We can safely assume nFlux = 0 nevertherless of other factors
     if val > 709.78: return 0
 
@@ -28,11 +26,17 @@ def computeNFlux(wTilde, s2, m, astar, greybody):
     ## By definition, greybody factor = 0 when thermal factor is 0
     if val == 0: return 0;
 
-    return max(0, greybody/val)
+    ## Avoid divergence due to numerical error in the denominator
+    #if s2 != 1 and abs(val) < 1e-12: return -999;
+    if abs(val) < 1e-12: return -999;
+
+    #return max(0, greybody/val)
+    return greybody/val
 
 def findDataFiles(d):
     l = []
     for fileName in os.listdir(d):
+        if fileName == 'backup': continue
         filePath = os.path.join(d, fileName)
         if os.path.isdir(filePath):
             l.extend(findDataFiles(filePath))
@@ -63,28 +67,28 @@ for filePath in dataFiles:
         line = line.strip()
         if line == "": continue
         mode, table = line.split(' = ')
-        nDim, s, l, m, a = eval(mode)
+        nDim, s, l, m, a = eval(mode.replace('/2', '/2.'))
         l2, m2 = l*2, m*2
         table = mathListToPyList(table)
+        if len(table) == 0:
+            print "!!! Empty data table", mode
+            continue
 
         nFluxes = []
         for i in range(len(table)):
             x, y = table[i]
-            nFlux = computeNFlux(x, s2, m2, a10, y)
-            nFluxes.append([x, nFlux])
-        ## Smoothing
-        for i in range(1, len(nFluxes)-1):
-            x, y = nFluxes[i]
-            if y != 0: continue
-            x1, y1 = nFluxes[i-1]
-            x3, y3 = nFluxes[i+1]
-            nFluxes[i] = (x, (y3+y1)/2)
+            nFlux = computeNFlux(x, s2, m, a, y)
+            if nFlux == -999:
+                print "Invalid nFlux:", mode
+                continue
+            nFluxes.append((x, nFlux))
 
         cNFluxes = [(0,0)]
         for i in range(1, len(nFluxes)):
             x1, y1 = nFluxes[i-1]
             x2, y2 = nFluxes[i]
             area = (y2+y1)/2*(x2-x1)
+            if area < 0: continue
             cNFluxes.append((x2, cNFluxes[-1][1]+area))
 
         cNFluxData[(nDim, s2, l2, m2, a10)] = cNFluxes
