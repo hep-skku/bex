@@ -5,8 +5,6 @@ from array import array
 from math import *
 from ROOT import *
 gROOT.ProcessLine(".x ../rootlogon.C")
-gStyle.SetPadRightMargin(0.1);
-
 
 def mathListToPyList(s):
     s = s.replace('{', '[').replace('}', ']')
@@ -20,10 +18,8 @@ def mathListToPyList(s):
     return l
 
 def computeNFlux(wTilde, s2, m, astar, greybody):
-    if abs(greybody) <= 1e-7: return 0
-
     val = 4*pi*((1+astar**2)*wTilde - m*astar)/((nDim-4+1)+(nDim-4-1)*astar**2)
-    ## Avoid overflow error when val > 709.78
+    ## Avoid overflow error when val > 709.78 -> Gamma/[exp(700)+-1] -> 0
     ## We can safely assume nFlux = 0 nevertherless of other factors
     if val > 709.78: return 0
 
@@ -31,10 +27,15 @@ def computeNFlux(wTilde, s2, m, astar, greybody):
     if s2 == 1: val += 1
     else: val -= 1
 
-    ## By definition, greybody factor = 0 when thermal factor is 0
-    if val == 0: return 0;
+    ## By definition, number flux must vanish at the point when thermal factor is zero
+    if val == 0: return 0
 
-    return max(0, greybody/val)
+    ## Avoid divergence due to numerical error in the denominator
+    #if s2 != 1 and abs(val) < 1e-12: return -999;
+    if abs(val) < 1e-12: return -999;
+
+    #return max(0, greybody/val)
+    return greybody/val
 
 def findDataFiles(d):
     l = []
@@ -84,18 +85,18 @@ hF2Ds = [
     TH2F("hF2D2", "Vector;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
 ]
 
-hNDOFs = [
-    TH2F("hNDOF0", "Scalar;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
-    TH2F("hNDOF1", "Spinor;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
-    TH2F("hNDOF2", "Vector;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
+hSumNegFluxes = [
+    TH2F("hSumNegFlux0", "Scalar;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
+    TH2F("hSumNegFlux1", "Spinor;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
+    TH2F("hSumNegFlux2", "Vector;a*;floor(l mode)", len(bins)-1, bins, len(lbins)-1, lbins),
 ]
 #spinStrToS2 = {"s0":0, "s12":1, "s1":2}
 
 for s2 in range(3):
     hF2Ds[s2].SetName("hF2D_ss%d" % s2)
     hF2Ds[s2].SetTitle("s2=%d" % s2)
-    hNDOFs[s2].SetName("hNDOF_ss%d" % s2)
-    hNDOFs[s2].SetTitle("s2=%d" % s2)
+    hSumNegFluxes[s2].SetName("hSumNegFlux_ss%d" % s2)
+    hSumNegFluxes[s2].SetTitle("s2=%d" % s2)
 
 #srcDir = "/users/jhgoh/Dropbox/BH_SKKU/greybody code/5D_calculation"
 dataFiles  = findDataFiles("/users/jhgoh/Dropbox/BH_SKKU/fast_s1s2")
@@ -124,11 +125,15 @@ for filePath in dataFiles:
         nFluxTab = []
         grpG = TGraph()
         maxYG = 0
+
         for i in range(len(table)):
             x, y = table[i]
             maxYG = max(maxYG, y)
             grpG.SetPoint(i, x, y)
             nFlux = computeNFlux(x, s2, m, a, y)
+            if nFlux == -999:
+                print "Invalid nFlux:", mode
+                continue
             nFluxTab.append((x, nFlux))
 
         ## Apply smoothing
@@ -148,15 +153,17 @@ for filePath in dataFiles:
         hFrameG[s2].SetMaximum(max(hFrameG[s2].GetMaximum(), 1.1*maxYG))
         hFrameF[s2].SetMaximum(max(hFrameF[s2].GetMaximum(), 1.1*maxYF))
 
+        negArea = 0.
         sumArea = 0.
         for i in range(1, grpF.GetN()):
             x1, x2 = grpF.GetX()[i-1], grpF.GetX()[i]
             y1, y2 = grpF.GetY()[i-1], grpF.GetY()[i]
             area = (y2+y1)/2*(x2-x1)
-            sumArea += area
+            if area > 0: sumArea += area
+            else: negArea += area
         hSumNFlux[s2].Fill(a, sumArea)
         hF2Ds[s2].Fill(a, l, sumArea)
-        hNDOFs[s2].Fill(a, l, 1./(2*l+1))
+        hSumNegFluxes[s2].Fill(a, l, abs(negArea))
 
         grpG.SetLineColor(colors[len(grpGs[s2])%len(colors)])
         grpG.SetName("grpG_D%d_ss%02d_l%02d_m%02d_a%02d" % (nDim, s2, l, m, a))
@@ -181,7 +188,7 @@ c.Update()
 c.Print("cGreybody.png")
 c.Print("cGreybody.pdf")
 
-cFlux = TCanvas("cFlux", "cFlux", 300, 300)
+cFlux = TCanvas("cFlux", "cFlux", 400, 400)
 opt = ""
 for h in reversed(hSumNFlux):
     h.Draw(opt)
@@ -192,15 +199,34 @@ legFlux.SetBorderSize(0)
 cFlux.Print("cIntegratedFlux.png")
 cFlux.Print("cIntegratedFlux.pdf")
 
-cFlux2D = TCanvas("cFlux2D", "cFlux2D", 900, 300)
+cFlux2D = TCanvas("cFlux2D", "cFlux2D", 1200, 400)
 cFlux2D.Divide(3,1)
 for i in range(3):
     cFlux2D.cd(i+1)
+    gPad.SetLeftMargin(0.15);
+    gPad.SetRightMargin(0.16);
     hF2Ds[i].Draw("COLZ")
+cFlux2D.Print("cFlux2D.png")
 
-cNDOF2D = TCanvas("cNDOF2D", "cNDOF2D", 900, 300)
-cNDOF2D.Divide(3,1)
+cSumNegFlux2D = TCanvas("cSumNegFlux2D", "cSumNegFlux2D", 1200, 400)
+cSumNegFlux2D.Divide(3,1)
 for i in range(3):
-    cNDOF2D.cd(i+1)
-    hNDOFs[i].Draw("COLZ")
+    cSumNegFlux2D.cd(i+1)
+    gPad.SetLeftMargin(0.15);
+    gPad.SetRightMargin(0.16);
+    hSumNegFluxes[i].SetMaximum(1e-7)
+    hSumNegFluxes[i].Draw("COLZ")
+
+hNegFluxFrac = []
+cNegFluxFrac = TCanvas("cNegFluxFrac", "cNegFluxFrac", 1200, 400)
+cNegFluxFrac.Divide(3,1)
+for i in range(3):
+    cNegFluxFrac.cd(i+1)
+    gPad.SetLeftMargin(0.15);
+    gPad.SetRightMargin(0.16);
+    h = hSumNegFluxes[i].Clone()
+    h.Divide(hF2Ds[i])
+    #h.SetMaximum(2)
+    h.Draw("COLZ")
+    hNegFluxFrac.append(h)
 
