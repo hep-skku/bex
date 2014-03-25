@@ -19,7 +19,7 @@ MYPATH=$(shell pwd)
 
 EXE=bex
 CCFLAGS=-Wall $(addprefix -I,$(INCLUDES))
-LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm
+LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm -lz -L/opt/local/lib -lboost_iostreams-mt
 
 ## Detect ROOT for debugging
 ifdef ROOTSYS
