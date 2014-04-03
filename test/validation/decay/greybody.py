@@ -126,7 +126,7 @@ for filePath in dataFiles:
         grpG = TGraph()
         maxYG = 0
 
-        for i in range(len(table)):
+        for i in xrange(len(table)):
             x, y = table[i]
             maxYG = max(maxYG, y)
             grpG.SetPoint(i, x, y)
@@ -137,7 +137,7 @@ for filePath in dataFiles:
             nFluxTab.append((x, nFlux))
 
         ## Apply smoothing
-        for i in range(1, len(nFluxTab)-1):
+        for i in xrange(1, len(nFluxTab)-1):
             x, y = nFluxTab[i]
             if y != 0: continue
             y = (nFluxTab[i-1][1]+nFluxTab[i+1][1])/2
@@ -146,7 +146,7 @@ for filePath in dataFiles:
         ## Draw
         maxYF = 0
         grpF = TGraph()
-        for i in range(len(nFluxTab)):
+        for i in xrange(len(nFluxTab)):
             x, nFlux = nFluxTab[i]
             grpF.SetPoint(i, x, nFlux)
             maxYF = max(maxYF, nFlux)
@@ -155,7 +155,7 @@ for filePath in dataFiles:
 
         negArea = 0.
         sumArea = 0.
-        for i in range(1, grpF.GetN()):
+        for i in xrange(1, grpF.GetN()):
             x1, x2 = grpF.GetX()[i-1], grpF.GetX()[i]
             y1, y2 = grpF.GetY()[i-1], grpF.GetY()[i]
             area = (y2+y1)/2*(x2-x1)
