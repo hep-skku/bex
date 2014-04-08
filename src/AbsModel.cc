@@ -162,7 +162,7 @@ void AbsModel::loadYoshinoDataTable()
 void AbsModel::loadFluxDataTable()
 {
   // Load flux data. data is stored in the data/flux/D*/cFlux.dat
-  const std::string fileName = (boost::format("data/flux/D%1%/cFlux.dat") % nDim_).str();
+  const std::string fileName = (boost::format("data/flux/cFlux_D%1%.dat") % nDim_).str();
   //ifstream gzin(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
   //if ( !gzin ) throw runtime_error(string("Cannot open flux file") + fileName);
   //boost::iostreams::filtering_istreambuf buffer;
@@ -429,6 +429,7 @@ void AbsModel::event()
         const double mIrr = computeMirr(mFrac, jFrac, b0);
         if ( mIrr < mFracMin ) continue;
       }
+      jFrac = min(jFrac, jFracMax);
       if ( !checkBHState(mFrac*m0, jFrac*j0) ) continue;
 
       break;
@@ -438,7 +439,6 @@ void AbsModel::event()
     bh_mass = mFrac*m0;
     bh_spin = jFrac*j0;
     const double bh_pz = parton1.pz_+parton2.pz_;
-    //bh_momentum.set(std::sqrt(bh_mass*bh_mass+bh_pz*bh_pz), 0, 0, bh_pz);
     bh_momentum.set(std::sqrt(m0*m0+bh_pz*bh_pz), 0, 0, bh_pz);
 
 #ifdef DEBUGROOT
