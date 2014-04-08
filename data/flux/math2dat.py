@@ -80,13 +80,13 @@ for filePath in dataFiles:
                 continue
             nFluxes.append((x, nFlux))
 
-        cNFluxes = [(0,0)]
+        cNFluxes = [(nFluxes[0][0], nFluxes[0][1], 0)]
         for i in range(1, len(nFluxes)):
             x1, y1 = nFluxes[i-1]
             x2, y2 = nFluxes[i]
             area = (y2+y1)/2*(x2-x1)
             if area < 0: continue
-            cNFluxes.append((x2, cNFluxes[-1][1]+area))
+            cNFluxes.append((x2, y2, cNFluxes[-1][2]+area))
 
         cNFluxData[(nDim, s2, l2, m2, a10)] = cNFluxes
 
@@ -97,9 +97,11 @@ print>>f, "#Cumulative flux data tables"
 print>>f, "#I nDim s2 l2 m2 a10"
 print>>f, "#X x1 x2 x3 x4 ...."
 print>>f, "#Y y1 y2 y3 y4 ...."
+print>>f, "#C c1 c2 c3 c4 ...."
 for key in cNFluxData.keys():
     nDim, s2, l2, m2, a10 = key
     cNFlux = cNFluxData[key]
     print>>f, "I %d %d %d %d %d" % (nDim, s2, l2, m2, a10)
-    print>>f, ("X "+(" ".join(["%13.9e" % x for x, y in cNFlux])))
-    print>>f, ("Y "+(" ".join(["%13.9e" % y for x, y in cNFlux])))
+    print>>f, ("X "+(" ".join(["%13.9e" % x for x, y, c in cNFlux])))
+    print>>f, ("Y "+(" ".join(["%13.9e" % y for x, y, c in cNFlux])))
+    print>>f, ("C "+(" ".join(["%13.9e" % c for x, y, c in cNFlux])))
