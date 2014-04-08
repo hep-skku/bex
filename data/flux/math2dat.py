@@ -47,19 +47,14 @@ def findDataFiles(d):
 #spinStrToS2 = {"s0":0, "s12":1, "s1":2}
 
 #srcDir = "/users/jhgoh/Dropbox/BH_SKKU/greybody code/5D_calculation"
-dataFiles  = findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/fast_s1s2"))
-dataFiles += findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/fast_s0"))
 #dataFiles = findDataFiles(os.path.expanduser("~/Dropbox/BH_SKKU/greybody code/example_Hyun/fast_140314"))
+dataFiles = [os.path.expanduser("~/Dropbox/BH_SKKU/greybody code/5D_calculation/result_20140404/greybody_D5.dat")]
 
 cNFluxData = {}
 
 for filePath in dataFiles:
     fileName = os.path.basename(filePath)
     print "Processing", fileName
-    modeStr = fileName[len('greybody_D5_'):].split('_')
-
-    s2 = int(modeStr[0][1])#spinStrToS2[modeStr[0]]
-    a10  = int(modeStr[1][1:])
 
     contents = open(filePath).read()
     contents = contents.replace('\\', '').replace('\n', '').replace('\r', '').strip()
@@ -68,6 +63,8 @@ for filePath in dataFiles:
         if line == "": continue
         mode, table = line.split(' = ')
         nDim, s, l, m, a = eval(mode.replace('/2', '/2.'))
+        s2 = int(s*2)
+        a10 = int(a*10)
         l2, m2 = l*2, m*2
         table = mathListToPyList(table)
         if len(table) == 0:
