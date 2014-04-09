@@ -94,14 +94,15 @@ for filePath in dataFiles:
 outDir = "."
 f = open("%s/cFlux_D%d.dat" % (outDir, 5), "w")
 print>>f, "#Cumulative flux data tables"
-print>>f, "#I nDim s2 l2 m2 a10"
+print>>f, "#I nDim s2 l2 m2 a10 weight"
 print>>f, "#X x1 x2 x3 x4 ...."
 print>>f, "#Y y1 y2 y3 y4 ...."
 print>>f, "#C c1 c2 c3 c4 ...."
-for key in cNFluxData.keys():
+for key in sorted(cNFluxData.keys()):
     nDim, s2, l2, m2, a10 = key
     cNFlux = cNFluxData[key]
+    weight = cNFlux[-1][2]
     print>>f, "I %d %d %d %d %d" % (nDim, s2, l2, m2, a10)
     print>>f, ("X "+(" ".join(["%13.9e" % x for x, y, c in cNFlux])))
-    print>>f, ("Y "+(" ".join(["%13.9e" % y for x, y, c in cNFlux])))
-    print>>f, ("C "+(" ".join(["%13.9e" % c for x, y, c in cNFlux])))
+    print>>f, ("Y "+(" ".join(["%13.9e" % (y/weight) for x, y, c in cNFlux])))
+    print>>f, ("C "+(" ".join(["%13.9e" % (c/weight) for x, y, c in cNFlux])))
