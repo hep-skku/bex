@@ -102,7 +102,7 @@ for key in sorted(cNFluxData.keys()):
     nDim, s2, l2, m2, a10 = key
     cNFlux = cNFluxData[key]
     weight = cNFlux[-1][2]
-    print>>f, "I %d %d %d %d %d" % (nDim, s2, l2, m2, a10)
+    print>>f, "I %d %d %d %d %d %13.9e" % (nDim, s2, l2, m2, a10, weight)
     print>>f, ("X "+(" ".join(["%13.9e" % x for x, y, c in cNFlux])))
     print>>f, ("Y "+(" ".join(["%13.9e" % (y/weight) for x, y, c in cNFlux])))
     print>>f, ("C "+(" ".join(["%13.9e" % (c/weight) for x, y, c in cNFlux])))
