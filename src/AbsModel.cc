@@ -13,6 +13,7 @@
 #include <boost/assign/std/vector.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filter/bzip2.hpp>
 
 #ifdef DEBUGROOT
 #include "TH2F.h"
@@ -163,7 +164,8 @@ void AbsModel::loadFluxDataTable()
 {
   // Load flux data. data is stored in the data/flux/D*/cFlux.dat
   const std::string fileName = (boost::format("data/flux/cFlux_D%1%.dat") % nDim_).str();
-  //ifstream gzin(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
+  //ifstream gzin(fileName+".gz", std::ios_base::in | std::ios_base::binary);
+  //ifstream gzin(fileName+".bzip2", std::ios_base::in | std::ios_base::binary);
   //if ( !gzin ) throw runtime_error(string("Cannot open flux file") + fileName);
   //boost::iostreams::filtering_istreambuf buffer;
   //buffer.push(boost::iostreams::gzip_decompressor());
