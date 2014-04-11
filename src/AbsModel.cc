@@ -172,39 +172,70 @@ void AbsModel::loadFluxDataTable()
   ifstream fin(fileName.c_str());
   if ( !fin ) throw runtime_error(string("Cannot open flux file") + fileName);
 
-  string line;
-  int nDim, s2, l2, m2, a10;
-  std::vector<double> xValues, yValues;
-  while ( getline(fin, line) )
+  // Load data to temporary space, to be sorted later
+  std::map<int, std::vector<int> > modeToA10;
+  std::map<int, std::map<int, double> > modeA10WeightMap;
+  std::map<int, std::map<int, FluxTuples> > modeA10FluxTabMap;
+  if ( true )
   {
-    const size_t commentPos = line.find('#');
-    if ( commentPos != string::npos ) line.erase(commentPos);
-    boost::trim(line);
-    if ( line.empty() ) continue;
-
-    const char key = line[0];
-    stringstream ss(line.substr(2));
-    if ( key == 'I' ) ss >> nDim >> s2 >> l2 >> m2 >> a10;
-    else if ( key == 'X' ) ss >> xValues;
-    else if ( key == 'Y' ) ss >> yValues;
-
-    if ( !(nDim == 0 or xValues.empty() or yValues.empty()) )
+    string line;
+    int nDim, s2, l2, m2, a10;
+    double weight;
+    std::vector<double> xValues, yValues, cValues;
+    cout << "Loading all flux data..";
+    while ( getline(fin, line) )
     {
-      const int code = encodeMode(nDim, s2, l2, m2);
-      const int nPoint = std::min(xValues.size(), yValues.size());
-      if ( cNFluxTabs_.find(code) == cNFluxTabs_.end() ) cNFluxTabs_[code] = std::map<int, Pairs>();
-      cNFluxTabs_[code][a10] = Pairs();
-      Pairs& data = cNFluxTabs_[code][a10];
-      for ( int i=0; i<nPoint; ++i )
-      {
-        data.push_back(make_pair(xValues[i], yValues[i]));
-      }
+      const size_t commentPos = line.find('#');
+      if ( commentPos != string::npos ) line.erase(commentPos);
+      boost::trim(line);
+      if ( line.empty() ) continue;
 
-      nDim = 0;
-      xValues.clear();
-      yValues.clear();
+      const char key = line[0];
+      stringstream ss(line.substr(2));
+      if ( key == 'I' ) ss >> nDim >> s2 >> l2 >> m2 >> a10 >> weight;
+      else if ( key == 'X' ) ss >> xValues;
+      else if ( key == 'Y' ) ss >> yValues;
+      else if ( key == 'C' ) ss >> cValues;
+
+      if ( !(nDim == 0 or xValues.empty() or yValues.empty() or cValues.empty()) )
+      {
+        const int mode = encodeMode(nDim, s2, l2, m2);
+
+        modeToA10[mode].push_back(a10);
+        modeA10WeightMap[mode][a10] = weight;
+
+        FluxTuples& fluxTab = modeA10FluxTabMap[mode][a10];
+        for ( int i=0, nPoint = xValues.size(); i<nPoint; ++i )
+        {
+          boost::tuple<double, double, double> t(xValues[i], yValues[i], cValues[i]);
+          fluxTab.push_back(t);
+        }
+        nDim = 0;
+        xValues.clear();
+        yValues.clear();
+        cValues.clear();
+      }
     }
   }
+  cout << ".";
+  for ( std::map<int, std::vector<int> >::iterator iter = modeToA10.begin();
+        iter != modeToA10.end(); ++iter )
+  {
+    const int mode = iter->first;
+    std::vector<int>& a10Values = iter->second;
+    sort(a10Values.begin(), a10Values.end());
+
+    std::vector<double>& astars = modeToAst_[mode];
+    std::vector<double>& weights = modeToWeights_[mode];
+    std::vector<FluxTuples>& fluxTabs = modeToFlux_[mode];
+    for ( int i=0, n=a10Values.size(); i<n; ++i )
+    {
+      astars.push_back(a10Values[i]/10.);
+      weights.push_back(modeA10WeightMap[mode][i]);
+      fluxTabs.push_back(modeA10FluxTabMap[mode][i]);
+    }
+  }
+  cout << "Flux data loaded." << endl;
 
 }
 
@@ -587,10 +618,9 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
     decodeMode(selectedMode, nDim, s2, l2, m2);
 
     // Step 2 : pick particle energy from cumulative dN/dw distribution
-    //    <- assume we already have full energy flux curve.
-    Pairs fluxCurve = getFluxCurve(s2, l2, m2, astar);
-    // FIXME: check energy unit in flux curve
-    const double energy = rnd_->curve(fluxCurve, 0, fluxCurve.back().second)/rh;
+    //Pairs fluxCurve = getFluxCurve(s2, l2, m2, astar);
+    //const double energy = rnd_->curve(fluxCurve, 0, fluxCurve.back().second)/rh;
+    const double energy = generateFromMorphedCurve(selectedMode, astar)/rh;
 
     // Step 3 : pick specific particle
     const int id = decayPdgIds_[s2][rnd_->pickFromHist(decayNDoFs_[s2])];
@@ -730,49 +760,38 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
   modes.clear();
   fluxes.clear();
 
-  for ( std::map<int, std::map<int, Pairs> >::const_iterator modeToTabIter = cNFluxTabs_.begin();
-        modeToTabIter != cNFluxTabs_.end(); ++modeToTabIter )
+  for ( std::map<int, std::vector<double> >::const_iterator iter = modeToAst_.begin();
+        iter != modeToAst_.end(); ++iter )
   {
-    const int& code = modeToTabIter->first;
+    const int& mode = iter->first;
+    const std::vector<double>& aValues = iter->second;
+    const std::vector<double>& weights = modeToWeights_.find(mode)->second;
 
     // Find interval of aPre <= astar < aPost
-    const std::map<int, Pairs>& fluxTab = modeToTabIter->second;
-    double aPre = -1e9, aPost = 1e9, cPre, cPost;
-    for ( std::map<int, Pairs>::const_iterator fluxTabIter = fluxTab.begin();
-          fluxTabIter != fluxTab.end(); ++fluxTabIter )
-    {
-      const double a = fluxTabIter->first/10.;
-      const double cFlux = fluxTabIter->second.back().second;
-      if ( aPre <= a and a <= astar )
-      {
-        aPre = a;
-        cPre = cFlux;
-      }
-      if ( astar < a and a < aPost )
-      {
-        aPost = a;
-        cPost = cFlux;
-      }
-    }
-    if ( aPre == -1e9 or aPost == 1e9 )
-    {
-      cPre = cPost = aPre = aPost = 0;
-    }
+    const size_t lo = rnd_->find(astar, aValues);
+    const double aLo = aValues[lo], aHi = aValues[lo+1];
+    const double wLo = weights[lo], wHi = weights[lo+1];
 
     // Interpolate cFlux
-    const double slope = (cPost-cPre)/(aPost-aPre);
-    const double cFlux = max(0., slope*(astar-aPre)+cPre);
+    const double slope = (wHi-wLo)/(aHi-aLo);
+    const double w = max(0., slope*(astar-aLo)+wLo);
 
-    modes.push_back(code);
-    fluxes.push_back(cFlux);
+    // multiply by nDoF
+    int nDim, s2, l2, m2;
+    decodeMode(mode, nDim, s2, l2, m2);
+    const double nDoF = nDoF_[s2];
+
+    modes.push_back(mode);
+    fluxes.push_back(w*nDoF);
   }
 }
 
-AbsModel::Pairs AbsModel::getFluxCurve(const int s2, const int l2, const int m2, const double astar)
+double AbsModel::generateFromMorphedCurve(const int mode, const double astar)
 {
+/*
   const double ast10 = astar*10;
-  Pairs fluxCurve;
-  const int mode = encodeMode(nDim_, s2, l2, m2);
+  std::map<int, Pairs>& nFluxTab = nFluxTabs_[mode];
+  std::map<int, Pairs>& cFluxTab = cFluxTabs_[mode];
   std::map<int, Pairs> fluxTab = cNFluxTabs_[mode];
 
   // Find two nearest a10 curve to interpolate
@@ -793,28 +812,29 @@ AbsModel::Pairs AbsModel::getFluxCurve(const int s2, const int l2, const int m2,
   // Do the interpolation or morph
   // FIXME: Implementation to be done
   return pre->second;
+*/
 
-  return fluxCurve;
+  return 0;
 }
 
 int AbsModel::encodeMode(const int nDim, const int s2, const int l2, const int m2) const
 {
   // Format : (D)(s)(ll)(mm)(aa)
-  int code = 0;
-  code += (m2+49); // -l2 <= m2 <= l2, shift up by 100
-  code += l2*100; // 0 <= l2, we scan up to l=30 mode, thus l2=60
-  code += s2*10000;
-  code += nDim*100000;
-  return code;
+  int mode = 0;
+  mode += (m2+49); // -l2 <= m2 <= l2, shift up by 100
+  mode += l2*100; // 0 <= l2, we scan up to l=30 mode, thus l2=60
+  mode += s2*10000;
+  mode += nDim*100000;
+  return mode;
 }
 
-void AbsModel::decodeMode(const int code, int& nDim, int& s2, int& l2, int& m2) const
+void AbsModel::decodeMode(const int mode, int& nDim, int& s2, int& l2, int& m2) const
 {
-  int codeTmp = code;
-  nDim = codeTmp/100000; codeTmp %= 100000;
-  s2 = codeTmp/10000; codeTmp %= 10000;
-  l2 = codeTmp/100; codeTmp %= 100;
-  m2 = codeTmp-49;
+  int modeTmp = mode;
+  nDim = modeTmp/100000; modeTmp %= 100000;
+  s2 = modeTmp/10000; modeTmp %= 10000;
+  l2 = modeTmp/100; modeTmp %= 100;
+  m2 = modeTmp-49;
 }
 
 Particle::Particle(const int id, const int status,

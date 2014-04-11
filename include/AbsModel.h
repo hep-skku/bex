@@ -5,6 +5,7 @@
 #include "include/PDFInterface.h"
 #include "include/Random.h"
 #include "include/NVector.h"
+#include "boost/tuple/tuple.hpp"
 
 #include <fstream>
 
@@ -61,7 +62,7 @@ protected:
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
   void getIntegratedFluxes(const double astar, std::vector<int>& modes, std::vector<double>& fluxes) const;
-  Pairs getFluxCurve(const int s2, const int l2, const int m2, const double astar);
+  double generateFromMorphedCurve(const int mode, const double astar);
   bool checkBHState(const double bh_mass, const double bh_spin = 0, const int bh_charge = 0) const;
 
   int encodeMode(const int nDim, const int s2, const int l2, const int m2) const;
@@ -92,7 +93,10 @@ protected:
 
   // Full data tables
   Pairs mLossTab_;
-  std::map<int, std::map<int, Pairs> > cNFluxTabs_; // Cumulative number flux table, code->(a10->flux vs omega) table
+  typedef std::vector<boost::tuple<double, double, double> > FluxTuples;
+  std::map<int, std::vector<double> > modeToAst_; // mode->a10 values
+  std::map<int, std::vector<double> > modeToWeights_; // mode->integrated weights
+  std::map<int, std::vector<FluxTuples> > modeToFlux_; // mode->(w, nFlux, cFlux) curve, sorted by a10 values
   std::vector<int> decayPdgIds_[3];
   std::vector<double> decayNDoFs_[3];
 
