@@ -560,8 +560,8 @@ void AbsModel::event()
   fout_ << "<event>\n";
   // Header of user process common block
   // NUP IDPRUP=1 XWGTUP=1 SCALUP AQEDUP=-1 AQCDUP=-1
-  fout_ << boost::format(" %5d %5d %15.10e %15.10e %15.10e\n")
-         % decays.size() % 1 % qsqr % -1 % -1;
+  fout_ << boost::format(" %5d %5d %15.10e %15.10e %15.10e %15.10e\n")
+         % decays.size() % 1 % 1 % qsqr % -1 % -1;
   for ( int i=0, n=decays.size(); i<n; ++i )
   {
     // User process ID, particles list
