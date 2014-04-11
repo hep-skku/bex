@@ -46,7 +46,7 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
 
   if ( formFactorType_ == FormFactorType::YOSHINO )
   {
-    std::vector<double> maxBValues;
+    doubles maxBValues;
     std::ifstream fin("data/yoshino/max_b.data");
     fin >> maxBValues;
     bMax_ = physics::r0ToRs(nDim_, maxBValues[nDim_-4]);
@@ -173,15 +173,15 @@ void AbsModel::loadFluxDataTable()
   if ( !fin ) throw runtime_error(string("Cannot open flux file") + fileName);
 
   // Load data to temporary space, to be sorted later
-  std::map<int, std::vector<int> > modeToA10;
+  std::map<int, ints> modeToA10;
   std::map<int, std::map<int, double> > modeA10WeightMap;
-  std::map<int, std::map<int, FluxTuples> > modeA10FluxTabMap;
+  std::map<int, std::map<int, doubles> > modeA10FluxWMap, modeA10FluxYMap, modeA10FluxCMap;
   if ( true )
   {
     string line;
     int nDim, s2, l2, m2, a10;
     double weight;
-    std::vector<double> xValues, yValues, cValues;
+    doubles xValues, yValues, cValues;
     cout << "Loading all flux data..";
     while ( getline(fin, line) )
     {
@@ -204,36 +204,47 @@ void AbsModel::loadFluxDataTable()
         modeToA10[mode].push_back(a10);
         modeA10WeightMap[mode][a10] = weight;
 
-        FluxTuples& fluxTab = modeA10FluxTabMap[mode][a10];
+        doubles& fluxW = modeA10FluxWMap[mode][a10];
+        doubles& fluxY = modeA10FluxYMap[mode][a10];
+        doubles& fluxC = modeA10FluxCMap[mode][a10];
         for ( int i=0, nPoint = xValues.size(); i<nPoint; ++i )
         {
-          boost::tuple<double, double, double> t(xValues[i], yValues[i], cValues[i]);
-          fluxTab.push_back(t);
+          fluxW.push_back(xValues[i]);
+          fluxY.push_back(yValues[i]);
+          fluxC.push_back(cValues[i]);
         }
         nDim = 0;
         xValues.clear();
         yValues.clear();
         cValues.clear();
+
       }
     }
   }
   cout << ".";
-  for ( std::map<int, std::vector<int> >::iterator iter = modeToA10.begin();
+  for ( std::map<int, ints>::iterator iter = modeToA10.begin();
         iter != modeToA10.end(); ++iter )
   {
     const int mode = iter->first;
-    std::vector<int>& a10Values = iter->second;
+    ints& a10Values = iter->second;
     sort(a10Values.begin(), a10Values.end());
 
-    std::vector<double>& astars = modeToAst_[mode];
-    std::vector<double>& weights = modeToWeights_[mode];
-    std::vector<FluxTuples>& fluxTabs = modeToFlux_[mode];
+    doubles& astars = modeToAst_[mode];
+    doubles& weights = modeToWeights_[mode];
+    std::vector<doubles>& fluxW = modeToFluxW_[mode];
+    std::vector<doubles>& fluxY = modeToFluxY_[mode];
+    std::vector<doubles>& fluxC = modeToFluxC_[mode];
+
     for ( int i=0, n=a10Values.size(); i<n; ++i )
     {
-      astars.push_back(a10Values[i]/10.);
-      weights.push_back(modeA10WeightMap[mode][i]);
-      fluxTabs.push_back(modeA10FluxTabMap[mode][i]);
+      const int a10 = a10Values[i];
+      astars.push_back(a10/10.);
+      weights.push_back(modeA10WeightMap[mode][a10]);
+      fluxW.push_back(modeA10FluxWMap[mode][a10]);
+      fluxY.push_back(modeA10FluxYMap[mode][a10]);
+      fluxC.push_back(modeA10FluxCMap[mode][a10]);
     }
+
   }
   cout << "Flux data loaded." << endl;
 
@@ -786,35 +797,47 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
   }
 }
 
+double AbsModel::interpolateInvCDF(const double c, 
+                                   const AbsModel::doubles& xValues, const AbsModel::doubles& yValues, const AbsModel::doubles& cValues)
+{
+  size_t i = rnd_->find(c, cValues);
+  if ( i < 0 or i == xValues.size()-1 ) i = xValues.size()-1;
+
+  const double x1 = xValues[i], x2 = xValues[i+1];
+  if ( x1 == x2 ) return x1;
+
+  const double y1 = yValues[i], y2 = yValues[i+1];
+  const double c1 = cValues[i];// c2 = cValues[i+1];
+
+  const double a = (y2-y1)/(x2-x1);
+  if ( a == 0 ) return x1 + (c-c1)/y1;
+
+  const double ya = y1/a;
+  const double r = sqrt(ya*ya + 2*(c-c1)/a);
+
+  return x1-ya + (a >= 0 ? r : -r);
+}
+
 double AbsModel::generateFromMorphedCurve(const int mode, const double astar)
 {
-/*
-  const double ast10 = astar*10;
-  std::map<int, Pairs>& nFluxTab = nFluxTabs_[mode];
-  std::map<int, Pairs>& cFluxTab = cFluxTabs_[mode];
-  std::map<int, Pairs> fluxTab = cNFluxTabs_[mode];
+  const std::vector<double>& aValues = modeToAst_[mode];
 
-  // Find two nearest a10 curve to interpolate
-  std::map<int, Pairs>::const_iterator pre = fluxTab.begin(), post = fluxTab.begin();
-  for ( std::map<int, Pairs>::const_iterator iter = fluxTab.begin();
-        iter != fluxTab.end(); ++iter )
-  {
-    const int& a10 = iter->first;
-    const int& a10Pre = pre->first;
-    const int& a10Post = post->first;
+  const size_t aIndex = rnd_->find(astar, aValues);
 
-    // a10 <= a* -> check if lower bound can be set by a10
-    if ( a10 <= ast10 and a10Pre <= a10 ) pre = iter;
-    // a* <= a10 -> check if upper bound can be set by a10
-    if ( ast10 < a10 and a10 < a10Post ) post = iter;
-  }
+  const double a1 = aValues[aIndex], a2 = aValues[aIndex+1];
+  const doubles& fluxW1 = modeToFluxW_[mode].at(aIndex);
+  const doubles& fluxY1 = modeToFluxY_[mode].at(aIndex);
+  const doubles& fluxC1 = modeToFluxC_[mode].at(aIndex);
+  const doubles& fluxW2 = modeToFluxW_[mode].at(aIndex+1);
+  const doubles& fluxY2 = modeToFluxY_[mode].at(aIndex+1);
+  const doubles& fluxC2 = modeToFluxC_[mode].at(aIndex+1);
 
-  // Do the interpolation or morph
-  // FIXME: Implementation to be done
-  return pre->second;
-*/
+  // Do the integral morph.
+  const double c = rnd_->uniform(0, 1);
+  const double x1 = interpolateInvCDF(c, fluxW1, fluxY1, fluxC1);
+  const double x2 = interpolateInvCDF(c, fluxW2, fluxY1, fluxC1);
 
-  return 0;
+  return x1 + (x2-x1)/(a2-a1)*(astar-a1);
 }
 
 int AbsModel::encodeMode(const int nDim, const int s2, const int l2, const int m2) const

@@ -28,6 +28,11 @@ struct Particle
 class AbsModel
 {
 public:
+  typedef std::vector<int> ints;
+  typedef std::vector<double> doubles;
+  typedef std::vector<std::pair<double, double> > Pairs;
+
+public:
   AbsModel(const ConfigReader& cfg);
   virtual ~AbsModel();
 
@@ -52,8 +57,6 @@ public:
   virtual void endJob();
   virtual void event();
 
-  typedef std::vector<std::pair<double, double> > Pairs;
-
 protected:
   void loadYoshinoDataTable();
   void loadFluxDataTable();
@@ -61,8 +64,9 @@ protected:
   double computeRh(const double m0, const double j0) const;
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
-  void getIntegratedFluxes(const double astar, std::vector<int>& modes, std::vector<double>& fluxes) const;
+  void getIntegratedFluxes(const double astar, ints& modes, doubles& fluxes) const;
   double generateFromMorphedCurve(const int mode, const double astar);
+  double interpolateInvCDF(const double c, const doubles& xValues, const doubles& yValues, const doubles& cValues);
   bool checkBHState(const double bh_mass, const double bh_spin = 0, const int bh_charge = 0) const;
 
   int encodeMode(const int nDim, const int s2, const int l2, const int m2) const;
@@ -93,12 +97,13 @@ protected:
 
   // Full data tables
   Pairs mLossTab_;
-  typedef std::vector<boost::tuple<double, double, double> > FluxTuples;
-  std::map<int, std::vector<double> > modeToAst_; // mode->a10 values
-  std::map<int, std::vector<double> > modeToWeights_; // mode->integrated weights
-  std::map<int, std::vector<FluxTuples> > modeToFlux_; // mode->(w, nFlux, cFlux) curve, sorted by a10 values
-  std::vector<int> decayPdgIds_[3];
-  std::vector<double> decayNDoFs_[3];
+  std::map<int, doubles> modeToAst_; // mode->a10 values
+  std::map<int, doubles> modeToWeights_; // mode->integrated weights
+  std::map<int, std::vector<doubles> > modeToFluxW_; // mode->(w, nFlux, cFlux) curve, sorted by a10 values
+  std::map<int, std::vector<doubles> > modeToFluxY_;
+  std::map<int, std::vector<doubles> > modeToFluxC_;
+  ints decayPdgIds_[3];
+  doubles decayNDoFs_[3];
 
   // Cached variables for convenience
   double s_;
