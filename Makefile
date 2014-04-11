@@ -5,9 +5,11 @@
 ifeq ($(shell uname),Darwin)
 CC=clang++
 SWPATH=$(HOME)/sw/osx_x86_64_gcc482
+BOOSTFLAGS=-L/opt/local/lib -lboost_iostreams-mt
 else
 CC=g++
 SWPATH=$(HOME)/sw/slc5_x86_64_gcc412
+BOOSTFLAGS=-lboost_iostreams
 endif
 INCLUDES=. /opt/local/include
 
@@ -19,7 +21,7 @@ MYPATH=$(shell pwd)
 
 EXE=bex
 CCFLAGS=-Wall $(addprefix -I,$(INCLUDES))
-LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm -lz -L/opt/local/lib -lboost_iostreams-mt
+LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm -lz $(BOOSTFLAGS)
 
 ## Detect ROOT for debugging
 ifdef ROOTSYS
