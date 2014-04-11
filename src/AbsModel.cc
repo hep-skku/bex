@@ -779,7 +779,7 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
     const std::vector<double>& weights = modeToWeights_.find(mode)->second;
 
     // Find interval of aPre <= astar < aPost
-    const size_t lo = rnd_->find(astar, aValues);
+    const int lo = rnd_->find(astar, aValues);
     const double aLo = aValues[lo], aHi = aValues[lo+1];
     const double wLo = weights[lo], wHi = weights[lo+1];
 
@@ -800,7 +800,7 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
 double AbsModel::interpolateInvCDF(const double c, 
                                    const AbsModel::doubles& xValues, const AbsModel::doubles& yValues, const AbsModel::doubles& cValues)
 {
-  size_t i = rnd_->find(c, cValues);
+  int i = rnd_->find(c, cValues);
   if ( i < 0 or i == xValues.size()-1 ) i = xValues.size()-1;
 
   const double x1 = xValues[i], x2 = xValues[i+1];
@@ -822,7 +822,7 @@ double AbsModel::generateFromMorphedCurve(const int mode, const double astar)
 {
   const std::vector<double>& aValues = modeToAst_[mode];
 
-  const size_t aIndex = rnd_->find(astar, aValues);
+  const int aIndex = rnd_->find(astar, aValues);
 
   const double a1 = aValues[aIndex], a2 = aValues[aIndex+1];
   const doubles& fluxW1 = modeToFluxW_[mode].at(aIndex);
@@ -835,7 +835,7 @@ double AbsModel::generateFromMorphedCurve(const int mode, const double astar)
   // Do the integral morph.
   const double c = rnd_->uniform(0, 1);
   const double x1 = interpolateInvCDF(c, fluxW1, fluxY1, fluxC1);
-  const double x2 = interpolateInvCDF(c, fluxW2, fluxY1, fluxC1);
+  const double x2 = interpolateInvCDF(c, fluxW2, fluxY2, fluxC2);
 
   return x1 + (x2-x1)/(a2-a1)*(astar-a1);
 }
