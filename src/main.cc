@@ -21,7 +21,7 @@ TH1F* _hEDecay = new TH1F("hEDecay", "hEDecay", 100, 0, 1500);
 TGraph* _grpFlux[3];
 TGraph* _grpTemVsPeakPos[3];
 TGraph* _grpTemVsTotalFlux[3];
-std::vector<TGraph*> _grpMBHHistory;
+std::vector<TGraph*> _grpMBHHistory, _grpJBHHistory;
 #endif
 
 using namespace std;
@@ -64,6 +64,7 @@ int main(int argc, char* argv[])
 
 #ifdef DEBUGROOT
   TDirectory* dirMBHHistory = f->mkdir("MBHHistory");
+  TDirectory* dirJBHHistory = f->mkdir("JBHHistory");
   for ( int i=0; i<3; ++i )
   {
     _grpFlux[i] = new TGraph();
@@ -85,6 +86,7 @@ int main(int argc, char* argv[])
   {
 #ifdef DEBUGROOT
     _grpMBHHistory.push_back(new TGraph());
+    _grpJBHHistory.push_back(new TGraph());
 #endif
     printEventNumber(i, nEvent);
     model->event();
@@ -93,6 +95,10 @@ int main(int argc, char* argv[])
     _grpMBHHistory.back()->SetName(Form("grpMBHHistory_%d", i));
     _grpMBHHistory.back()->SetTitle(Form("BH history %d;Iteration;Mass/Initial mass", i));
     _grpMBHHistory.back()->Write();
+    dirJBHHistory->cd();
+    _grpJBHHistory.back()->SetName(Form("grpJBHHistory_%d", i));
+    _grpJBHHistory.back()->SetTitle(Form("BH history %d;Iteration;J/Initial J", i));
+    _grpJBHHistory.back()->Write();
     f->cd();
 #endif
   }
