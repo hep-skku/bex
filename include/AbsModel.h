@@ -49,9 +49,9 @@ public:
   virtual void selectParton(const PDF& pdf1, const PDF& pdf2, Particle& parton1, Particle& parton2);
   // Select decay particle via Hawking radiation.
   // Daughter particles varialbes are calculated at the BH rest frame.
-  virtual bool selectDecay(const NVector& bh_momentum, const NVector& bh_position,
-                           const int bh_charge, const double bh_spin,
-                           Particle& daughter);
+  virtual int selectDecay(const NVector& bh_momentum, const NVector& bh_position,
+                          const int bh_charge, const double bh_spin,
+                          Particle& daughter);
 
   virtual void beginJob();
   virtual void endJob();
