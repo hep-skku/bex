@@ -22,6 +22,7 @@ extern TH2F* _hMJLoss;
 extern TH1F* _hNDecay, * _hEDecay;
 extern TGraph* _grpFlux[], * _grpTemVsTotalFlux[], * _grpTemVsPeakPos[];
 extern std::vector<TGraph*> _grpMBHHistory;
+extern std::vector<TGraph*> _grpJBHHistory;
 #endif
 
 using namespace std;
@@ -399,6 +400,7 @@ void AbsModel::event()
 
 #ifdef DEBUGROOT
   TGraph* grpMBHHistory = _grpMBHHistory.back();
+  TGraph* grpJBHHistory = _grpJBHHistory.back();
 #endif
 
   // Start BH production
@@ -512,7 +514,8 @@ void AbsModel::event()
   }
 
 #ifdef DEBUGROOT
-  grpMBHHistory->SetPoint(grpMBHHistory->GetN(), grpMBHHistory->GetN(), 1);
+  grpMBHHistory->SetPoint(grpMBHHistory->GetN(), grpMBHHistory->GetN(), bh_mass);
+  grpJBHHistory->SetPoint(grpJBHHistory->GetN(), grpJBHHistory->GetN(), bh_spin);
 #endif
   // Start evaporation by hawking radiation
   double b[3], p4[4];
@@ -520,7 +523,11 @@ void AbsModel::event()
   {
     // Select daughter particle
     Particle daughter(0, 1, 3, 4, 0., 0., 0.); // A dummy particle
-    if ( !selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, daughter) ) break;
+    const int mode = selectDecay(bh_momentum, bh_position, bh_charge, bh_spin, daughter);
+    if ( mode == 0 ) break;
+    int nDim, s2, l2, m2;
+    decodeMode(mode, nDim, s2, l2, m2);
+    bh_spin -= m2/2.; // FIXME : angular momentum to be refined
 
     // Particle is selected.
     // Boost along BH momentum direction
@@ -535,7 +542,9 @@ void AbsModel::event()
     bh_momentum -= daughter.p4();
 #ifdef DEBUGROOT
     _hEDecay->Fill(daughter.e_);
-    grpMBHHistory->SetPoint(grpMBHHistory->GetN(), grpMBHHistory->GetN(), bh_momentum.mass()/bh_mass);
+if ( bh_spin < -5 ) cout << bh_momentum.mass() << ' ' << daughter.e_ << endl;
+    grpMBHHistory->SetPoint(grpMBHHistory->GetN(), grpMBHHistory->GetN(), bh_momentum.mass());
+    grpJBHHistory->SetPoint(grpJBHHistory->GetN(), grpJBHHistory->GetN(), bh_spin);
 #endif
   }
 #ifdef DEBUGROOT
@@ -597,9 +606,9 @@ bool AbsModel::checkBHState(const double bh_mass, const double bh_spin, const in
   return true;
 }
 
-bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position,
-                           const int bh_charge, const double bh_spin,
-                           Particle& daughter)
+int AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position,
+                          const int bh_charge, const double bh_spin,
+                          Particle& daughter)
 {
   const double bh_mass2 = bh_momentum.m2();
   if ( bh_mass2 < 0 ) return false;
@@ -608,7 +617,7 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
   // INFO : We applied slightly tight max energy requirement
   //        the true maximum is (bh_mass^2 - massMin^2 + particle_mass^2)/bh_mass/2.
   const double maxE = (bh_mass - massMin_*massMin_/bh_mass)/2;
-  if ( maxE < 1e-5 ) return false;
+  if ( maxE < 20 ) return false;
   // Check BH state for safety
   if ( !checkBHState(bh_mass, bh_spin, bh_charge) ) return false;
 
@@ -635,6 +644,8 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
     //Pairs fluxCurve = getFluxCurve(s2, l2, m2, astar);
     //const double energy = rnd_->curve(fluxCurve, 0, fluxCurve.back().second)/rh;
     const double energy = generateFromMorphedCurve(selectedMode, astar)/rh;
+    //if ( energy > maxE ) { cout << energy << ' ' << maxE << endl; continue; }
+    if ( energy > maxE ) continue;
 
     // Step 3 : pick specific particle
     const int id = decayPdgIds_[s2][rnd_->pickFromHist(decayNDoFs_[s2])];
@@ -650,10 +661,10 @@ bool AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_positio
     rnd_->sphere(p, px, py, pz);
     daughter = Particle(id, -1, 0, 0, px, py, pz);
 
-    return true;
+    return selectedMode;
   }
 
-  return false;
+  return 0;
 }
 
 double AbsModel::computeMirr(const double mFrac, const double jFrac, const double b0) const
