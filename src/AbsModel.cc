@@ -34,7 +34,6 @@ using namespace std;
 
 AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
 {
-cout << BASEDIR << endl;
   isValid_ = false;
 
   beamId1_ = beamId2_ = 2212;
