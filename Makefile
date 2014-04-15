@@ -4,6 +4,7 @@
 ## Detect OSX
 ifeq ($(shell uname),Darwin)
 CC=clang++
+#CC=g++
 SWPATH=$(HOME)/sw/osx_x86_64_gcc482
 BOOSTFLAGS=-L/opt/local/lib -lboost_iostreams-mt
 else
@@ -20,7 +21,7 @@ HEPMC=$(SWPATH)/HepMC
 MYPATH=$(shell pwd)
 
 EXE=bex
-CCFLAGS=-Wall $(addprefix -I,$(INCLUDES))
+CCFLAGS=-Wall $(addprefix -I,$(INCLUDES)) -O3
 LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm -lz $(BOOSTFLAGS)
 
 ## Detect ROOT for debugging
