@@ -7,7 +7,7 @@
 bin/*
 tmp
 .DS_Store
-test/*.xml
-test/*.hepmc
-test/*.png
-test/*.pdf
+*.xml
+*.hepmc
+*.png
+*.pdf
