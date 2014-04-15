@@ -820,7 +820,7 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
 }
 
 double AbsModel::interpolateInvCDF(const double c,
-                                   const AbsModel::doubles& xValues, const AbsModel::doubles& yValues, const AbsModel::doubles& cValues)
+                                   const AbsModel::doubles& xValues, const AbsModel::doubles& yValues, const AbsModel::doubles& cValues) const
 {
   int i = findNearest(c, cValues);
   if ( i < 0 or i == xValues.size()-1 ) i = xValues.size()-1;
@@ -840,19 +840,19 @@ double AbsModel::interpolateInvCDF(const double c,
   return x1-ya + (a >= 0 ? r : -r);
 }
 
-double AbsModel::generateFromMorphedCurve(const int mode, const double astar, const double xMin, const double xMax)
+double AbsModel::generateFromMorphedCurve(const int mode, const double astar, const double xMin, const double xMax) const
 {
-  const std::vector<double>& aValues = modeToAst_[mode];
+  const std::vector<double>& aValues = modeToAst_.at(mode);
 
   const int aIndex = findNearest(astar, aValues);
 
   const double a1 = aValues[aIndex], a2 = aValues[aIndex+1];
-  const doubles& fluxW1 = modeToFluxW_[mode].at(aIndex);
-  const doubles& fluxY1 = modeToFluxY_[mode].at(aIndex);
-  const doubles& fluxC1 = modeToFluxC_[mode].at(aIndex);
-  const doubles& fluxW2 = modeToFluxW_[mode].at(aIndex+1);
-  const doubles& fluxY2 = modeToFluxY_[mode].at(aIndex+1);
-  const doubles& fluxC2 = modeToFluxC_[mode].at(aIndex+1);
+  const doubles& fluxW1 = modeToFluxW_.at(mode).at(aIndex);
+  const doubles& fluxY1 = modeToFluxY_.at(mode).at(aIndex);
+  const doubles& fluxC1 = modeToFluxC_.at(mode).at(aIndex);
+  const doubles& fluxW2 = modeToFluxW_.at(mode).at(aIndex+1);
+  const doubles& fluxY2 = modeToFluxY_.at(mode).at(aIndex+1);
+  const doubles& fluxC2 = modeToFluxC_.at(mode).at(aIndex+1);
 
   // Do the integral morph.
   const double cMin = min(fluxC1[findNearest(xMin, fluxW1)], fluxC2[findNearest(xMin, fluxW2)]);
