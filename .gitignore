@@ -1,6 +1,7 @@
 *.pyc
 *.o
 *.d
+*.so
 *.swp
 *.bak
 *.root
