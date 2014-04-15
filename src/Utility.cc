@@ -6,6 +6,8 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 
 using namespace std;
 
@@ -248,5 +250,17 @@ istream& operator>>(istream& in, std::vector<double>& data)
     data.push_back(x);
   }
   return in;
+}
+
+void readValues(const char* in, std::vector<double>& data)
+{
+  std::vector<string> fields;
+  boost::split(fields, in, boost::is_any_of(" ,\t\n"));
+  BOOST_FOREACH(const string& s, fields)
+  {
+    if ( s.empty() ) continue;
+    const double x = boost::lexical_cast<double>(s);
+    data.push_back(x);
+  }
 }
 

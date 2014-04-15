@@ -28,6 +28,7 @@ void printEventNumber(const int eventNumber, const int nEvent);
 std::istream& operator>>(std::istream& in, std::vector<std::pair<double, double> >& data);
 std::istream& operator>>(std::istream& in, std::vector<std::vector<double> >& data);
 std::istream& operator>>(std::istream& in, std::vector<double>& data);
+void readValues(const char* in, std::vector<double>& data);
 
 #endif
 

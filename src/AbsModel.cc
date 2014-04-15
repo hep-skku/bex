@@ -195,11 +195,14 @@ void AbsModel::loadFluxDataTable()
       if ( line.empty() ) continue;
 
       const char key = line[0];
-      stringstream ss(line.substr(2));
-      if ( key == 'I' ) ss >> nDim >> s2 >> l2 >> m2 >> a10 >> weight;
-      else if ( key == 'X' ) ss >> xValues;
-      else if ( key == 'Y' ) ss >> yValues;
-      else if ( key == 'C' ) ss >> cValues;
+      if ( key == 'I' )
+      {
+        stringstream ss(line.substr(2));
+        ss >> nDim >> s2 >> l2 >> m2 >> a10 >> weight;
+      }
+      else if ( key == 'X' ) readValues(&line[2], xValues);
+      else if ( key == 'Y' ) readValues(&line[2], yValues);
+      else if ( key == 'C' ) readValues(&line[2], cValues);
 
       if ( !(nDim == 0 or xValues.empty() or yValues.empty() or cValues.empty()) )
       {
