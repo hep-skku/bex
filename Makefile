@@ -21,7 +21,7 @@ HEPMC=$(SWPATH)/HepMC
 MYPATH=$(shell pwd)
 
 EXE=bex
-CCFLAGS=-Wall $(addprefix -I,$(INCLUDES)) -O3
+CCFLAGS=-Wall $(addprefix -I,$(INCLUDES)) -O3 -DBASEDIR=\"$(shell pwd)\"
 LDFLAGS=-L$(LHAPDF)/lib -lLHAPDF -lm -lz $(BOOSTFLAGS)
 
 ## Detect ROOT for debugging
