@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
   const double xsec = model->getCrossSection();
   const double xsecErr = model->getCrossSectionError();
   printCrossSection(xsec, xsecErr);
-  cout << boost::format("** Maximum weight = %-21.5g           **\n") % model->getWeightMax();
+  cout << boost::format("** Maximum weight    = %-21.5g        **\n") % model->getWeightMax();
   cout << "******************************************************\n";
 
 #ifdef DEBUGROOT
