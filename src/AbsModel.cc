@@ -798,7 +798,7 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
   {
     const int& mode = iter->first;
     const std::vector<double>& aValues = iter->second;
-    const std::vector<double>& weights = modeToWeights_.find(mode)->second;
+    const std::vector<double>& weights = modeToWeights_.at(mode);
 
     // Find interval of aPre <= astar < aPost
     const int lo = findNearest(astar, aValues);
