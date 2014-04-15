@@ -264,3 +264,21 @@ void readValues(const char* in, std::vector<double>& data)
   }
 }
 
+int findNearest(const double x, const std::vector<double>& v)
+{
+  // Do binary search
+  size_t lo = 0, hi=v.size()-1;
+  // Special case when hitting upper bound, x == v[hi]
+  // This case can appear depending on implementation of random number algorithm
+  if ( x == v[hi] ) return hi;
+  while ( true )
+  {
+    const size_t curr = (hi+lo)/2;
+    const double currX = v[curr];
+    if ( x < currX ) hi = curr;
+    else if ( currX <= x ) lo = curr;
+    if ( hi - lo <= 1 ) break;
+  }
+
+  return lo;
+}

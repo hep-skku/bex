@@ -26,10 +26,15 @@ extern std::vector<TGraph*> _grpMBHHistory;
 extern std::vector<TGraph*> _grpJBHHistory;
 #endif
 
+#ifndef BASEDIR
+#define BASEDIR "."
+#endif
+
 using namespace std;
 
 AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
 {
+cout << BASEDIR << endl;
   isValid_ = false;
 
   beamId1_ = beamId2_ = 2212;
@@ -50,7 +55,7 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
   if ( formFactorType_ == FormFactorType::YOSHINO )
   {
     doubles maxBValues;
-    std::ifstream fin("data/yoshino/max_b.data");
+    std::ifstream fin((string(BASEDIR)+"/data/yoshino/max_b.data").c_str());
     fin >> maxBValues;
     bMax_ = physics::r0ToRs(nDim_, maxBValues[nDim_-4]);
   }
@@ -148,7 +153,7 @@ AbsModel::AbsModel(const ConfigReader& cfg):name_("bex"),cfg_(cfg)
 
 void AbsModel::loadYoshinoDataTable()
 {
-  const std::string mLossFileName = (boost::format("data/yoshino/MLB_N%1%.data") % (nDim_-4)).str();
+  const std::string mLossFileName = (boost::format("%1%/data/yoshino/MLB_N%2%.data") % BASEDIR % (nDim_-4)).str();
   ifstream mLossFile(mLossFileName.c_str());
   mLossFile >> mLossTab_;
 
@@ -165,7 +170,7 @@ void AbsModel::loadYoshinoDataTable()
 void AbsModel::loadFluxDataTable()
 {
   // Load flux data. data is stored in the data/flux/D*/cFlux.dat
-  const std::string fileName = (boost::format("data/flux/cFlux_D%1%.dat") % nDim_).str();
+  const std::string fileName = (boost::format("%1%/data/flux/cFlux_D%2%.dat") % BASEDIR % nDim_).str();
   //ifstream zin((fileName+".gz"   ).c_str(), std::ios_base::in | std::ios_base::binary);
   //ifstream zin((fileName+".bzip2").c_str(), std::ios_base::in | std::ios_base::binary);
   //if ( !zin ) throw runtime_error(string("Cannot open flux file") + fileName);
@@ -545,7 +550,6 @@ void AbsModel::event()
     bh_momentum -= daughter.p4();
 #ifdef DEBUGROOT
     _hEDecay->Fill(daughter.e_);
-if ( bh_spin < -5 ) cout << bh_momentum.mass() << ' ' << daughter.e_ << endl;
     grpMBHHistory->SetPoint(grpMBHHistory->GetN(), grpMBHHistory->GetN(), bh_momentum.mass());
     grpJBHHistory->SetPoint(grpJBHHistory->GetN(), grpJBHHistory->GetN(), bh_spin);
 #endif
@@ -620,7 +624,7 @@ int AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position
   // INFO : We applied slightly tight max energy requirement
   //        the true maximum is (bh_mass^2 - massMin^2 + particle_mass^2)/bh_mass/2.
   const double maxE = (bh_mass - massMin_*massMin_/bh_mass)/2;
-  if ( maxE < 20 ) return false;
+  if ( maxE < 1e-9 ) return false;
   // Check BH state for safety
   if ( !checkBHState(bh_mass, bh_spin, bh_charge) ) return false;
 
@@ -635,7 +639,7 @@ int AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position
   //    <- we need values of g \int_0^\infty d\omega dN/d\omega
   std::vector<int> modes;
   std::vector<double> fluxes;
-  getIntegratedFluxes(astar, modes, fluxes);
+  getIntegratedFluxes(astar, modes, fluxes, 0, maxE);
 
   int nDim, s2, l2, m2;
   while ( true )
@@ -646,8 +650,8 @@ int AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position
     // Step 2 : pick particle energy from cumulative dN/dw distribution
     //Pairs fluxCurve = getFluxCurve(s2, l2, m2, astar);
     //const double energy = rnd_->curve(fluxCurve, 0, fluxCurve.back().second)/rh;
-    const double energy = generateFromMorphedCurve(selectedMode, astar)/rh;
-    //if ( energy > maxE ) { cout << energy << ' ' << maxE << endl; continue; }
+    const double energy = generateFromMorphedCurve(selectedMode, astar, 0, maxE)/rh;
+    if ( energy < 0 ) break;
     if ( energy > maxE ) continue;
 
     // Step 3 : pick specific particle
@@ -782,7 +786,8 @@ double AbsModel::computeRh(const double m0, const double j0) const
 
 }
 
-void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, std::vector<double>& fluxes) const
+void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, std::vector<double>& fluxes,
+                                   const double wMin, const double wMax) const
 {
   // Initialize integrated flux values
   modes.clear();
@@ -796,7 +801,7 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
     const std::vector<double>& weights = modeToWeights_.find(mode)->second;
 
     // Find interval of aPre <= astar < aPost
-    const int lo = rnd_->find(astar, aValues);
+    const int lo = findNearest(astar, aValues);
     const double aLo = aValues[lo], aHi = aValues[lo+1];
     const double wLo = weights[lo], wHi = weights[lo+1];
 
@@ -814,10 +819,10 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
   }
 }
 
-double AbsModel::interpolateInvCDF(const double c, 
+double AbsModel::interpolateInvCDF(const double c,
                                    const AbsModel::doubles& xValues, const AbsModel::doubles& yValues, const AbsModel::doubles& cValues)
 {
-  int i = rnd_->find(c, cValues);
+  int i = findNearest(c, cValues);
   if ( i < 0 or i == xValues.size()-1 ) i = xValues.size()-1;
 
   const double x1 = xValues[i], x2 = xValues[i+1];
@@ -835,11 +840,11 @@ double AbsModel::interpolateInvCDF(const double c,
   return x1-ya + (a >= 0 ? r : -r);
 }
 
-double AbsModel::generateFromMorphedCurve(const int mode, const double astar)
+double AbsModel::generateFromMorphedCurve(const int mode, const double astar, const double xMin, const double xMax)
 {
   const std::vector<double>& aValues = modeToAst_[mode];
 
-  const int aIndex = rnd_->find(astar, aValues);
+  const int aIndex = findNearest(astar, aValues);
 
   const double a1 = aValues[aIndex], a2 = aValues[aIndex+1];
   const doubles& fluxW1 = modeToFluxW_[mode].at(aIndex);
@@ -850,11 +855,21 @@ double AbsModel::generateFromMorphedCurve(const int mode, const double astar)
   const doubles& fluxC2 = modeToFluxC_[mode].at(aIndex+1);
 
   // Do the integral morph.
-  const double c = rnd_->uniform(0, 1);
-  const double x1 = interpolateInvCDF(c, fluxW1, fluxY1, fluxC1);
-  const double x2 = interpolateInvCDF(c, fluxW2, fluxY2, fluxC2);
+  const double cMin = min(fluxC1[findNearest(xMin, fluxW1)], fluxC2[findNearest(xMin, fluxW2)]);
+  const double cMax = max(fluxC1[findNearest(xMax, fluxW1)], fluxC2[findNearest(xMax, fluxW2)]);
+  if ( cMax < 1e-7 ) return xMin-1;
 
-  return x1 + (x2-x1)/(a2-a1)*(astar-a1);
+  double x = xMin-1;
+  while ( true )
+  {
+    const double c = rnd_->uniform(cMin, cMax);
+    const double x1 = interpolateInvCDF(c, fluxW1, fluxY1, fluxC1);
+    const double x2 = interpolateInvCDF(c, fluxW2, fluxY2, fluxC2);
+    x = max(x1 + (x2-x1)/(a2-a1)*(astar-a1), xMin);
+    if ( x >= xMin and x <= xMax ) break;
+  }
+
+  return x;
 }
 
 int AbsModel::encodeMode(const int nDim, const int s2, const int l2, const int m2) const

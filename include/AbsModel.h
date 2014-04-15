@@ -64,8 +64,8 @@ protected:
   double computeRh(const double m0, const double j0) const;
   double computeMirr(const double m0, const double mFrac, const double jFrac) const;
 
-  void getIntegratedFluxes(const double astar, ints& modes, doubles& fluxes) const;
-  double generateFromMorphedCurve(const int mode, const double astar);
+  void getIntegratedFluxes(const double astar, ints& modes, doubles& fluxes, const double wMin, const double wMax) const;
+  double generateFromMorphedCurve(const int mode, const double astar, const double wMin, const double wMax);
   double interpolateInvCDF(const double c, const doubles& xValues, const doubles& yValues, const doubles& cValues);
   bool checkBHState(const double bh_mass, const double bh_spin = 0, const int bh_charge = 0) const;
 
