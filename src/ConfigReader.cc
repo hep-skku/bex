@@ -63,7 +63,7 @@ void ConfigReader::print(ostream& out) const
   {
     out << boost::format("** %1% %|20t| = %2% %|42t|**\n") % key->first % key->second;
   }
-  for ( int i=0, n=44; i<n; ++i ) out << "*";
+  for ( int i=0, n=60; i<n; ++i ) out << "*";
   out << endl;
 }
 
