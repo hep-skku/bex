@@ -9,6 +9,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/assign/std/vector.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
@@ -242,9 +243,8 @@ void AbsModel::loadFluxDataTable()
     std::vector<doubles>& fluxY = modeToFluxY_[mode];
     std::vector<doubles>& fluxC = modeToFluxC_[mode];
 
-    for ( int i=0, n=a10Values.size(); i<n; ++i )
+    BOOST_FOREACH(const int a10, a10Values)
     {
-      const int a10 = a10Values[i];
       astars.push_back(a10/10.);
       weights.push_back(modeA10WeightMap[mode][a10]);
       fluxW.push_back(modeA10FluxWMap[mode][a10]);
@@ -560,14 +560,14 @@ if ( bh_spin < -5 ) cout << bh_momentum.mass() << ' ' << daughter.e_ << endl;
   // since we assumed BH rotation axis is parallel to x axis
   double totalpx = 0, totalpy = 0, totalpz = 0;
   const double phi = rnd_->uniform(0, 2*physics::Pi);
-  for ( int i=0, n=decays.size(); i<n; ++i )
+  BOOST_FOREACH(Particle& p, decays)
   {
-    physics::rotate(phi, decays[i].px_, decays[i].py_);
-    if ( decays[i].status_ == 1 )
+    physics::rotate(phi, p.px_, p.py_);
+    if ( p.status_ == 1 )
     {
-      totalpx += decays[i].px_;
-      totalpy += decays[i].py_;
-      totalpz += decays[i].pz_;
+      totalpx += p.px_;
+      totalpy += p.py_;
+      totalpz += p.pz_;
     }
   }
 
