@@ -7,3 +7,4 @@
 bin/*
 tmp
 test/*.xml
+.DS_Store
