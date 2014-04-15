@@ -6,5 +6,8 @@
 *.root
 bin/*
 tmp
-test/*.xml
 .DS_Store
+test/*.xml
+test/*.hepmc
+test/*.png
+test/*.pdf
