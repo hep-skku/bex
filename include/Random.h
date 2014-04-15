@@ -30,8 +30,6 @@ public:
   int pickFromHist(const std::vector<double>& v);
   double curve(const std::vector<std::pair<double, double> >& points, const double min, const double max);
 
-public:
-  size_t find(const double x, const std::vector<double>& v) const;
 private:
   boost::mt19937 rnd_;
   double rnd_min_, rnd_width_;

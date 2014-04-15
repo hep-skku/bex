@@ -1,4 +1,5 @@
 #include "include/Random.h"
+#include "include/Utility.h"
 
 #include <cmath>
 
@@ -61,7 +62,7 @@ int Random::pickFromCHist(const std::vector<double>& v)
 
   const double x = uniform(0, v.back());
 
-  return find(x, v);
+  return findNearest(x, v);
 }
 
 int Random::pickFromHist(const std::vector<double>& v)
@@ -109,7 +110,7 @@ double Random::curve(const std::vector<std::pair<double, double> >& points, cons
 
   // Generate by inverse method
   const double y = uniform(0, sumArea);
-  const size_t index = find(y, cdf);
+  const size_t index = findNearest(y, cdf);
 
   const double x0 = points[index].first;
   const double x1 = points[index+1].first;
@@ -125,21 +126,3 @@ double Random::curve(const std::vector<std::pair<double, double> >& points, cons
 
 }
 
-size_t Random::find(const double x, const std::vector<double>& v) const
-{
-  // Do binary search
-  size_t lo = 0, hi=v.size()-1;
-  // Special case when hitting upper bound, x == v[hi]
-  // This case can appear depending on implementation of random number algorithm
-  if ( x == v[hi] ) return hi;
-  while ( true )
-  {
-    const size_t curr = (hi+lo)/2;
-    const double currX = v[curr];
-    if ( x < currX ) hi = curr;
-    else if ( currX <= x ) lo = curr;
-    if ( hi - lo <= 1 ) break;
-  }
-
-  return lo;
-}
