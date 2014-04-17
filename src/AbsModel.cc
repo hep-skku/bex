@@ -822,7 +822,7 @@ double AbsModel::interpolateInvCDF(const double c,
                                    const AbsModel::doubles& xValues, const AbsModel::doubles& yValues, const AbsModel::doubles& cValues) const
 {
   int i = findNearest(c, cValues);
-  if ( i < 0 or i == xValues.size()-1 ) i = xValues.size()-1;
+  if ( i < 0 or i == (int)xValues.size()-1 ) i = xValues.size()-1;
 
   const double x1 = xValues[i], x2 = xValues[i+1];
   if ( x1 == x2 ) return x1;
