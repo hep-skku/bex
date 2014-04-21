@@ -50,6 +50,12 @@ int Random::pick(const int min, const int max)
 
 int Random::pickFromCHist(const std::vector<double>& v)
 {
+  // Check validity of CDF : is there any phase space?
+  if ( v.back() <= 0 )
+  {
+    std::cerr << "Invalid CDF, empty phase space\n";
+    return -1;
+  }
   // Check validity of CDF : is it monolothic array?
   for ( int i=0, n=v.size()-1; i<n; ++i )
   {

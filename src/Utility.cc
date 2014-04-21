@@ -11,6 +11,8 @@
 
 using namespace std;
 
+typedef std::vector<double> doubles;
+
 namespace physics
 {
 
@@ -282,3 +284,40 @@ int findNearest(const double x, const std::vector<double>& v)
 
   return lo;
 }
+
+double interpolateInvCDF(const double c, const doubles& xValues, const doubles& yValues, const doubles& cValues)
+{
+  int i = findNearest(c, cValues);
+  if ( i < 0 or i == (int)xValues.size()-1 ) i = xValues.size()-1;
+
+  const double x1 = xValues[i], x2 = xValues[i+1];
+  if ( x1 == x2 ) return x1;
+
+  const double y1 = yValues[i], y2 = yValues[i+1];
+  const double c1 = cValues[i];// c2 = cValues[i+1];
+
+  const double a = (y2-y1)/(x2-x1);
+  if ( a == 0 ) return x1 + (c-c1)/y1;
+
+  const double ya = y1/a;
+  const double r = sqrt(ya*ya + 2*(c-c1)/a);
+
+  return x1-ya + (a >= 0 ? r : -r);
+}
+
+double interpolateCDF(const double x, const doubles& xValues, const doubles& yValues, const doubles& cValues)
+{
+  int i = findNearest(x, xValues);
+  if ( i < 0 or i == (int)xValues.size()-1 ) i = xValues.size()-1;
+
+  const double x1 = xValues[i], x2 = xValues[i+1];
+  const double dx = x2-x1;
+  if ( dx == 0 ) return cValues[i];
+  const double y1 = yValues[i], y2 = yValues[i+1];
+  const double c1 = cValues[i];//, c2 = cValues[i+1];
+
+  const double dy = (y2-y1)/(x2-x1)*dx;
+
+  return c1 + c1*dx + dy*dx/2;
+}
+

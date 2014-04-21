@@ -638,18 +638,20 @@ int AbsModel::selectDecay(const NVector& bh_momentum, const NVector& bh_position
   //    <- we need values of g \int_0^\infty d\omega dN/d\omega
   std::vector<int> modes;
   std::vector<double> fluxes;
-  getIntegratedFluxes(astar, modes, fluxes, 0, maxE);
+  getIntegratedFluxes(astar, modes, fluxes, maxE);
 
   int nDim, s2, l2, m2;
   while ( true )
   {
-    const int selectedMode = modes[rnd_->pickFromHist(fluxes)];
+    const int selectedIndex = rnd_->pickFromHist(fluxes);
+    if ( selectedIndex <= 0 ) break;
+    const int selectedMode = modes[selectedIndex];
     decodeMode(selectedMode, nDim, s2, l2, m2);
 
     // Step 2 : pick particle energy from cumulative dN/dw distribution
     //Pairs fluxCurve = getFluxCurve(s2, l2, m2, astar);
     //const double energy = rnd_->curve(fluxCurve, 0, fluxCurve.back().second)/rh;
-    const double energy = generateFromMorphedCurve(selectedMode, astar, 0, maxE)/rh;
+    const double energy = generateFromMorphedCurve(selectedMode, astar, maxE*rh)/rh;
     if ( energy < 0 ) break;
     if ( energy > maxE ) continue;
 
@@ -785,8 +787,7 @@ double AbsModel::computeRh(const double m0, const double j0) const
 
 }
 
-void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, std::vector<double>& fluxes,
-                                   const double wMin, const double wMax) const
+void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, std::vector<double>& fluxes, const double wMax) const
 {
   // Initialize integrated flux values
   modes.clear();
@@ -801,12 +802,16 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
 
     // Find interval of aPre <= astar < aPost
     const int lo = findNearest(astar, aValues);
-    const double aLo = aValues[lo], aHi = aValues[lo+1];
-    const double wLo = weights[lo], wHi = weights[lo+1];
+    const int hi = lo+1;
+    const double aLo = aValues[lo], aHi = aValues[hi];
+    const double weightLo = weights[lo], weightHi = weights[hi];
 
     // Interpolate cFlux
-    const double slope = (wHi-wLo)/(aHi-aLo);
-    const double w = max(0., slope*(astar-aLo)+wLo);
+    const double frac = (astar-aLo)/(aHi-aLo);
+    const double weight = max(0., frac*(weightHi-weightLo)+weightLo);
+    const double fluxNormLo = interpolateCDF(wMax, modeToFluxW_.at(mode).at(lo), modeToFluxY_.at(mode).at(lo), modeToFluxC_.at(mode).at(lo));
+    const double fluxNormHi = interpolateCDF(wMax, modeToFluxW_.at(mode).at(hi), modeToFluxY_.at(mode).at(hi), modeToFluxC_.at(mode).at(hi));
+    const double fluxNorm = min(1., max(0., frac*(fluxNormHi-fluxNormLo)+fluxNormLo));
 
     // multiply by nDoF
     int nDim, s2, l2, m2;
@@ -814,32 +819,11 @@ void AbsModel::getIntegratedFluxes(const double astar, std::vector<int>& modes, 
     const double nDoF = nDoF_[s2];
 
     modes.push_back(mode);
-    fluxes.push_back(w*nDoF);
+    fluxes.push_back(weight*fluxNorm*nDoF);
   }
 }
 
-double AbsModel::interpolateInvCDF(const double c,
-                                   const AbsModel::doubles& xValues, const AbsModel::doubles& yValues, const AbsModel::doubles& cValues) const
-{
-  int i = findNearest(c, cValues);
-  if ( i < 0 or i == (int)xValues.size()-1 ) i = xValues.size()-1;
-
-  const double x1 = xValues[i], x2 = xValues[i+1];
-  if ( x1 == x2 ) return x1;
-
-  const double y1 = yValues[i], y2 = yValues[i+1];
-  const double c1 = cValues[i];// c2 = cValues[i+1];
-
-  const double a = (y2-y1)/(x2-x1);
-  if ( a == 0 ) return x1 + (c-c1)/y1;
-
-  const double ya = y1/a;
-  const double r = sqrt(ya*ya + 2*(c-c1)/a);
-
-  return x1-ya + (a >= 0 ? r : -r);
-}
-
-double AbsModel::generateFromMorphedCurve(const int mode, const double astar, const double xMin, const double xMax) const
+double AbsModel::generateFromMorphedCurve(const int mode, const double astar, const double xMax) const
 {
   const std::vector<double>& aValues = modeToAst_.at(mode);
 
@@ -854,18 +838,16 @@ double AbsModel::generateFromMorphedCurve(const int mode, const double astar, co
   const doubles& fluxC2 = modeToFluxC_.at(mode).at(aIndex+1);
 
   // Do the integral morph.
-  const double cMin = min(fluxC1[findNearest(xMin, fluxW1)], fluxC2[findNearest(xMin, fluxW2)]);
   const double cMax = max(fluxC1[findNearest(xMax, fluxW1)], fluxC2[findNearest(xMax, fluxW2)]);
-  if ( cMax < 1e-7 ) return xMin-1;
+  if ( cMax < 1e-7 ) return -1;
 
-  double x = xMin-1;
-  while ( true )
+  double x = xMax+1;
+  while ( x > xMax )
   {
-    const double c = rnd_->uniform(cMin, cMax);
+    const double c = rnd_->uniform(0, cMax);
     const double x1 = interpolateInvCDF(c, fluxW1, fluxY1, fluxC1);
     const double x2 = interpolateInvCDF(c, fluxW2, fluxY2, fluxC2);
-    x = max(x1 + (x2-x1)/(a2-a1)*(astar-a1), xMin);
-    if ( x >= xMin and x <= xMax ) break;
+    x = max(0., x1 + (x2-x1)/(a2-a1)*(astar-a1));
   }
 
   return x;

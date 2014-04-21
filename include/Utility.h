@@ -30,6 +30,8 @@ std::istream& operator>>(std::istream& in, std::vector<std::vector<double> >& da
 std::istream& operator>>(std::istream& in, std::vector<double>& data);
 void readValues(const char* in, std::vector<double>& data);
 int findNearest(const double x, const std::vector<double>& v);
+double interpolateCDF(const double x, const std::vector<double>& xValues, const std::vector<double>& yValues, const std::vector<double>& cValues);
+double interpolateInvCDF(const double c, const std::vector<double>& xValues, const std::vector<double>& yValues, const std::vector<double>& cValues);
 
 #endif
 
